@@ -1,67 +1,60 @@
 /**
  * Tenant resolution — maps a domain to a shop spec.
  *
- * Phase 1 (current): mock resolver, hardcoded tenants.
- * Phase 2: live lookup against the Koureia API.
+ * Calls the Koureia internal API. Falls back to mock data in local dev
+ * when KOUREIA_API_URL is not set.
  */
 
 export type TenantSpec = {
   slug: string
   name: string
   domain: string
-  status: "live" | "provisioning" | "deprovisioned"
-  /** branding_json — @json-render ComponentSpec[] (null until phase 2) */
-  spec: unknown | null
-  branding: {
-    primaryColor: string
-    backgroundColor: string
-    textColor: string
-    displayFont: string
-  }
+  site_status: "provisioning" | "live" | "error" | "deprovisioned"
+  site_visibility: "private" | "preview" | "public"
+  branding_json: unknown | null
 }
 
-// ── Mock tenants (phase 1) ────────────────────────────────────
+// ── Mock (local dev only) ─────────────────────────────────────
 
 const MOCK_TENANTS: Record<string, TenantSpec> = {
   "beautyandthebarber.koureia.com": {
     slug: "beauty-and-the-barber",
     name: "Beauty and the Barber",
     domain: "beautyandthebarber.koureia.com",
-    status: "live",
-    spec: null,
-    branding: {
-      primaryColor: "#c9a84c",
-      backgroundColor: "#1a1410",
-      textColor: "#e8ddd0",
-      displayFont: "Playfair Display",
-    },
+    site_status: "live",
+    site_visibility: "public",
+    branding_json: null,
   },
   "olliemay.koureia.com": {
     slug: "olliemay",
     name: "Ollie May Hair",
     domain: "olliemay.koureia.com",
-    status: "live",
-    spec: null,
-    branding: {
-      primaryColor: "#c9a84c",
-      backgroundColor: "#1a1410",
-      textColor: "#e8ddd0",
-      displayFont: "Playfair Display",
-    },
+    site_status: "live",
+    site_visibility: "public",
+    branding_json: null,
   },
 }
 
 // ── Resolver ──────────────────────────────────────────────────
 
 export async function resolveTenant(domain: string): Promise<TenantSpec | null> {
-  // Phase 1: mock
-  return MOCK_TENANTS[domain] ?? null
+  const apiBase = process.env.KOUREIA_API_URL
 
-  // Phase 2: live API (swap in when Koureia API route exists)
-  // const apiBase = process.env.KOUREIA_API_URL
-  // const res = await fetch(`${apiBase}/api/shops/by-domain?domain=${domain}`, {
-  //   next: { revalidate: 60 },
-  // })
-  // if (!res.ok) return null
-  // return res.json()
+  if (!apiBase) {
+    // Local dev fallback
+    return MOCK_TENANTS[domain] ?? null
+  }
+
+  try {
+    const res = await fetch(
+      `${apiBase}/api/shops/by-domain?domain=${encodeURIComponent(domain)}`,
+      { next: { revalidate: 60 } }
+    )
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`API error ${res.status}`)
+    return (await res.json()) as TenantSpec
+  } catch (err) {
+    console.error("[koureia-shell] resolveTenant failed:", err)
+    return null
+  }
 }

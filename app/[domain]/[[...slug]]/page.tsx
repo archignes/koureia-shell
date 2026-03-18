@@ -21,11 +21,11 @@ export default async function TenantPage({ params }: Props) {
     notFound()
   }
 
-  if (tenant.status === "deprovisioned") {
+  if (tenant.site_status === "deprovisioned") {
     return <DecommissionedPage name={tenant.name} />
   }
 
-  if (tenant.status === "provisioning") {
+  if (tenant.site_status === "provisioning") {
     return <ProvisioningPage name={tenant.name} />
   }
 
@@ -36,8 +36,16 @@ export default async function TenantPage({ params }: Props) {
 
 // ── Phase 1 placeholder renders ──────────────────────────────
 
+const DEFAULT_BRANDING = {
+  primaryColor: "#c9a84c",
+  backgroundColor: "#1a1410",
+  textColor: "#e8ddd0",
+  displayFont: "Playfair Display",
+}
+
 function TenantShell({ tenant }: { tenant: Awaited<ReturnType<typeof resolveTenant>> & object }) {
-  const { name, domain, branding } = tenant!
+  const { name, domain } = tenant!
+  const branding = DEFAULT_BRANDING
 
   return (
     <div
