@@ -2,10 +2,16 @@
 
 ## Overview
 
-The **koureia-shell** is the single Vercel project that serves all Koureia tenant public sites. One deployment handles all shops via hostname-based routing. New tenants are onboarded by attaching their domain to this project via the Vercel API — no new project, no rebuild.
+The **koureia-shell** is the **entire customer-facing product** for all Koureia tenants. One Vercel deployment serves every shop via hostname-based routing. This is NOT a brochure site — it's where customers browse, learn about the shop, and book appointments. The main koureia platform (`~/projects/koureia/`) is the staff back-office (behind auth); customers never see it.
+
+**Pages the shell serves:**
+- `/` — Landing page (shop story, team intro, vibes, location, CTA)
+- `/book` — Customer booking flow (pick person → pick service → pick time → confirm)
+
+**The shell calls the koureia API for data but owns the entire customer UX.**
 
 **Linear:** DEV-2414
-**GitHub:** `danielsgriffin/koureia-shell`
+**GitHub:** `archignes/koureia-shell`
 **Live:** `*.koureia.com` (wildcard domain, NS delegated to Vercel)
 
 Full architecture docs: `~/projects/cb/builds/koureia/docs/multi-tenant-provisioning.md`
@@ -50,9 +56,11 @@ In local dev (no `KOUREIA_API_URL`), `lib/tenant.ts` falls back to hardcoded moc
 
 ## Current phase
 
-**Phase 1:** Branded placeholder page — confirms routing works end-to-end. Shows shop name, domain, gold/dark branding.
+**Phase 1:** ~~Branded placeholder~~ Done — routing works, site-spec API wired.
 
-**Phase 2 (next):** Wire `@json-render/react` + `@json-render/shadcn` + Koureia custom component registry. Replace placeholder with real spec-driven site.
+**Phase 2 (current):** Landing page + booking flow. Landing page shows shop story and team (not a service menu). Booking flow at `/book` is the customer funnel: pick person → pick service → pick time → confirm.
+
+**Phase 3:** Real availability checking, time slot selection, booking submission via koureia API.
 
 ## Deployment
 

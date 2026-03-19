@@ -1,10 +1,16 @@
-import type { SiteSpec, SiteService, SiteStaffMember, SiteHours } from "@/lib/site-spec"
-import { dayName, formatTime, formatPrice } from "@/lib/utils"
+import type { SiteSpec, SiteStaffMember, SiteHours } from "@/lib/site-spec"
+import { dayName, formatTime } from "@/lib/utils"
 
 type Props = { spec: SiteSpec }
 
 export function SiteRenderer({ spec }: Props) {
-  const { shop, branding, staff, hours, social, bookingUrl } = spec
+  const { shop, branding, staff, hours, social } = spec
+  const bookUrl = "/book"
+
+  // Collect unique service categories across all staff
+  const categories = [
+    ...new Set(staff.flatMap((s) => s.services.map((svc) => svc.category ?? "Services"))),
+  ]
 
   return (
     <div
@@ -22,11 +28,7 @@ export function SiteRenderer({ spec }: Props) {
       >
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           {branding.logoUrl ? (
-            <img
-              src={branding.logoUrl}
-              alt={shop.name}
-              className="h-10 w-auto"
-            />
+            <img src={branding.logoUrl} alt={shop.name} className="h-10 w-auto" />
           ) : (
             <span
               className="text-xl font-semibold"
@@ -36,7 +38,7 @@ export function SiteRenderer({ spec }: Props) {
             </span>
           )}
           <a
-            href={bookingUrl}
+            href={bookUrl}
             className="rounded-md px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
             style={{ backgroundColor: branding.primaryColor, color: branding.backgroundColor }}
           >
@@ -46,26 +48,26 @@ export function SiteRenderer({ spec }: Props) {
       </header>
 
       {/* Hero */}
-      <section className="px-6 py-16 md:py-24">
+      <section className="px-6 py-20 md:py-28">
         <div className="mx-auto max-w-3xl text-center">
           <h1
-            className="text-4xl font-bold md:text-5xl"
+            className="text-4xl font-bold md:text-5xl lg:text-6xl"
             style={{ color: branding.primaryColor, fontFamily: `'${branding.displayFont}', serif` }}
           >
             {shop.name}
           </h1>
           {shop.tagline && (
-            <p className="mt-3 text-lg opacity-70">{shop.tagline}</p>
+            <p className="mt-4 text-lg opacity-70 md:text-xl">{shop.tagline}</p>
           )}
           {shop.description && (
-            <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed opacity-60">
+            <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed opacity-50">
               {shop.description}
             </p>
           )}
-          <div className="mt-8">
+          <div className="mt-10">
             <a
-              href={bookingUrl}
-              className="inline-block rounded-md px-6 py-3 text-sm font-medium transition-opacity hover:opacity-90"
+              href={bookUrl}
+              className="inline-block rounded-md px-8 py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
               style={{ backgroundColor: branding.primaryColor, color: branding.backgroundColor }}
             >
               Book an Appointment
@@ -74,15 +76,53 @@ export function SiteRenderer({ spec }: Props) {
         </div>
       </section>
 
-      {/* Staff sections — each staff member with their services */}
-      {staff.map((member) => (
-        <StaffSection key={member.name} member={member} branding={branding} bookingUrl={bookingUrl} />
-      ))}
+      {/* Meet the Team */}
+      {staff.length > 0 && (
+        <section
+          className="border-t px-6 py-16"
+          style={{ borderColor: `${branding.primaryColor}12` }}
+        >
+          <div className="mx-auto max-w-5xl">
+            <SectionHeading branding={branding}>Meet the Team</SectionHeading>
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {staff.map((member) => (
+                <TeamCard key={member.name} member={member} branding={branding} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-      {/* Hours + Contact */}
+      {/* What We Offer */}
+      {categories.length > 0 && (
+        <section
+          className="border-t px-6 py-16"
+          style={{ borderColor: `${branding.primaryColor}12` }}
+        >
+          <div className="mx-auto max-w-5xl">
+            <SectionHeading branding={branding}>What We Offer</SectionHeading>
+            <div className="mt-10 flex flex-wrap gap-3">
+              {categories.map((cat) => (
+                <span
+                  key={cat}
+                  className="rounded-full border px-5 py-2.5 text-sm"
+                  style={{ borderColor: `${branding.primaryColor}30`, color: branding.primaryColor }}
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
+            <p className="mt-6 text-sm opacity-40">
+              View full services and pricing when you book.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Hours & Location */}
       <section
         className="border-t px-6 py-16"
-        style={{ borderColor: `${branding.primaryColor}15` }}
+        style={{ borderColor: `${branding.primaryColor}12` }}
       >
         <div className="mx-auto grid max-w-5xl gap-12 md:grid-cols-2">
           {hours.length > 0 && (
@@ -97,7 +137,7 @@ export function SiteRenderer({ spec }: Props) {
           )}
 
           <div>
-            <SectionHeading branding={branding}>Contact</SectionHeading>
+            <SectionHeading branding={branding}>Find Us</SectionHeading>
             <div className="mt-6 space-y-3 text-sm">
               {shop.address && (
                 <p className="opacity-70">{shop.address}</p>
@@ -117,7 +157,7 @@ export function SiteRenderer({ spec }: Props) {
                 </p>
               )}
               {social.length > 0 && (
-                <div className="flex gap-4 pt-2">
+                <div className="flex gap-4 pt-3">
                   {social.map((link) => (
                     <a
                       key={link.platform}
@@ -134,6 +174,28 @@ export function SiteRenderer({ spec }: Props) {
               )}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Bottom CTA */}
+      <section
+        className="border-t px-6 py-16 text-center"
+        style={{ borderColor: `${branding.primaryColor}12` }}
+      >
+        <p
+          className="text-2xl font-bold"
+          style={{ color: branding.primaryColor, fontFamily: `'${branding.displayFont}', serif` }}
+        >
+          Ready to book?
+        </p>
+        <div className="mt-6">
+          <a
+            href={bookUrl}
+            className="inline-block rounded-md px-8 py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
+            style={{ backgroundColor: branding.primaryColor, color: branding.backgroundColor }}
+          >
+            Book an Appointment
+          </a>
         </div>
       </section>
 
@@ -166,133 +228,39 @@ function SectionHeading({ children, branding }: { children: React.ReactNode } & 
   )
 }
 
-function StaffSection({
-  member,
-  branding,
-  bookingUrl,
-}: { member: SiteStaffMember; bookingUrl: string } & BrandingProp) {
-  const accentColor = member.colorHex ?? branding.primaryColor
+function TeamCard({ member, branding }: { member: SiteStaffMember } & BrandingProp) {
+  const color = member.colorHex ?? branding.primaryColor
 
-  // Group this staff member's services by category
-  const servicesByCategory = member.services.reduce<Record<string, SiteService[]>>((acc, s) => {
-    const cat = s.category ?? "Services"
-    ;(acc[cat] ??= []).push(s)
-    return acc
-  }, {})
-
-  const workingDays = member.hours.filter((h) => !h.isClosed)
-
-  return (
-    <section
-      className="border-t px-6 py-16"
-      style={{ borderColor: `${branding.primaryColor}15` }}
-    >
-      <div className="mx-auto max-w-5xl">
-        {/* Staff header */}
-        <div className="mb-10 flex items-start gap-5">
-          {member.imageUrl ? (
-            <img
-              src={member.imageUrl}
-              alt={member.name}
-              className="h-20 w-20 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-xl font-bold"
-              style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
-            >
-              {member.name
-                .split(" ")
-                .map((w) => w[0])
-                .join("")
-                .slice(0, 2)}
-            </div>
-          )}
-          <div>
-            <h2
-              className="text-2xl font-bold"
-              style={{ color: accentColor, fontFamily: `'${branding.displayFont}', serif` }}
-            >
-              {member.name}
-            </h2>
-            <p className="text-sm opacity-50">{member.role}</p>
-            {member.bio && (
-              <p className="mt-2 max-w-lg text-sm leading-relaxed opacity-60">{member.bio}</p>
-            )}
-            {member.specialties.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {member.specialties.map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-full px-2.5 py-0.5 text-xs"
-                    style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
-            )}
-            {workingDays.length > 0 && (
-              <p className="mt-3 text-xs opacity-40">
-                {workingDays.map((h) => dayName(h.dayOfWeek).slice(0, 3)).join(" · ")}
-                {" · "}
-                {formatTime(workingDays[0].startTime)}–{formatTime(workingDays[0].endTime)}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Services for this staff member */}
-        {member.services.length > 0 && (
-          <div className="space-y-8">
-            {Object.entries(servicesByCategory).map(([category, items]) => (
-              <div key={category}>
-                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider opacity-50">
-                  {category}
-                </h3>
-                <div className="space-y-1">
-                  {items.map((service) => (
-                    <ServiceRow key={service.name} service={service} accentColor={accentColor} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Book with this person */}
-        <div className="mt-8">
-          <a
-            href={bookingUrl}
-            className="inline-block rounded-md px-5 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
-            style={{ backgroundColor: accentColor, color: branding.backgroundColor }}
-          >
-            Book with {member.name}
-          </a>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function ServiceRow({ service, accentColor }: { service: SiteService; accentColor: string }) {
   return (
     <div
-      className="flex items-baseline justify-between rounded-lg px-4 py-3 transition-colors"
-      style={{ backgroundColor: `${accentColor}08` }}
+      className="rounded-xl border p-6"
+      style={{ borderColor: `${branding.primaryColor}15` }}
     >
-      <div className="min-w-0 flex-1">
-        <span className="text-sm font-medium">{service.name}</span>
-        {service.description && (
-          <p className="mt-0.5 text-xs opacity-50">{service.description}</p>
+      <div className="flex items-center gap-4">
+        {member.imageUrl ? (
+          <img
+            src={member.imageUrl}
+            alt={member.name}
+            className="h-14 w-14 rounded-full object-cover"
+          />
+        ) : (
+          <div
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold"
+            style={{ backgroundColor: `${color}20`, color }}
+          >
+            {member.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+          </div>
         )}
+        <div>
+          <h3 className="font-semibold" style={{ color }}>{member.name}</h3>
+          <p className="text-sm capitalize opacity-50">{member.role}</p>
+        </div>
       </div>
-      <div className="ml-4 flex shrink-0 items-baseline gap-3 text-sm">
-        <span className="opacity-40">{service.durationMinutes} min</span>
-        <span className="font-medium" style={{ color: accentColor }}>
-          {formatPrice(service.priceCents, service.priceDisplay)}
-        </span>
-      </div>
+      {member.specialties.length > 0 && (
+        <p className="mt-3 text-sm opacity-40">
+          {member.specialties.map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(" · ")}
+        </p>
+      )}
     </div>
   )
 }
