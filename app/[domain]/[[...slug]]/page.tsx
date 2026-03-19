@@ -1,6 +1,7 @@
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
-import { resolveTenant } from "@/lib/tenant"
+import { resolveTenant, resolveSiteSpec } from "@/lib/tenant"
+import { SiteRenderer } from "@/components/site-renderer"
 
 type Props = {
   params: Promise<{ domain: string; slug?: string[] }>
@@ -29,63 +30,24 @@ export default async function TenantPage({ params }: Props) {
     return <ProvisioningPage name={tenant.name} />
   }
 
-  // Phase 1: placeholder shell branded per tenant
-  // Phase 2: replace with <Renderer spec={tenant.spec} registry={registry} />
-  return <TenantShell tenant={tenant} />
+  // Fetch the full site spec for rendering
+  const spec = await resolveSiteSpec(tenant.slug)
+
+  if (!spec) {
+    // Spec not available yet — show minimal branded page
+    return <PlaceholderPage tenant={tenant} />
+  }
+
+  return <SiteRenderer spec={spec} />
 }
 
-// ── Phase 1 placeholder renders ──────────────────────────────
+// ── Fallback renders ─────────────────────────────────────────
 
-const DEFAULT_BRANDING = {
-  primaryColor: "#c9a84c",
-  backgroundColor: "#1a1410",
-  textColor: "#e8ddd0",
-  displayFont: "Playfair Display",
-}
-
-function TenantShell({ tenant }: { tenant: Awaited<ReturnType<typeof resolveTenant>> & object }) {
-  const { name, domain } = tenant!
-  const branding = DEFAULT_BRANDING
-
+function PlaceholderPage({ tenant }: { tenant: { name: string; domain: string } }) {
   return (
-    <div
-      className="flex min-h-screen flex-col"
-      style={{
-        backgroundColor: branding.backgroundColor,
-        color: branding.textColor,
-        fontFamily: `'${branding.displayFont}', serif`,
-      }}
-    >
-      <header
-        className="border-b px-6 py-4"
-        style={{ borderColor: `${branding.primaryColor}30` }}
-      >
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <span className="text-xl font-semibold" style={{ color: branding.primaryColor }}>
-            {name}
-          </span>
-          <span className="font-mono text-xs opacity-40">{domain}</span>
-        </div>
-      </header>
-
-      <main className="flex flex-1 items-center justify-center px-6">
-        <div className="max-w-lg space-y-4 text-center">
-          <h1 className="text-4xl font-bold" style={{ color: branding.primaryColor }}>
-            {name}
-          </h1>
-          <p className="text-sm opacity-60">
-            Tenant shell — routing confirmed. Spec renderer coming next.
-          </p>
-          <div
-            className="mt-6 rounded-xl border p-4 font-mono text-xs opacity-40"
-            style={{ borderColor: `${branding.primaryColor}20` }}
-          >
-            <p>domain: {domain}</p>
-            <p>status: live</p>
-            <p>spec: not yet wired</p>
-          </div>
-        </div>
-      </main>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#1a1410] text-[#e8ddd0]">
+      <h1 className="text-3xl font-bold text-[#c9a84c]">{tenant.name}</h1>
+      <p className="mt-2 text-sm opacity-50">Site coming soon</p>
     </div>
   )
 }
@@ -112,11 +74,21 @@ function DecommissionedPage({ name }: { name: string }) {
   )
 }
 
-// Generate a 404 page for unknown domains
+// Generate metadata from tenant name
 export async function generateMetadata({ params }: Props) {
   const { domain } = await params
   const tenant = await resolveTenant(domain)
+
+  if (!tenant) {
+    return { title: "Not Found" }
+  }
+
+  const spec = await resolveSiteSpec(tenant.slug)
+
   return {
-    title: tenant?.name ?? "Not Found",
+    title: spec?.shop.tagline
+      ? `${tenant.name} — ${spec.shop.tagline}`
+      : tenant.name,
+    description: spec?.shop.description,
   }
 }
