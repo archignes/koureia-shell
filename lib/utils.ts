@@ -22,3 +22,11 @@ export function formatPrice(priceCents: number, priceDisplay?: string): string {
   if (priceDisplay) return priceDisplay
   return `$${(priceCents / 100).toFixed(0)}`
 }
+
+export function formatLabel(value: string) {
+  return value
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
