@@ -19,8 +19,12 @@ export default async function TenantPage({ params }: Props) {
   // but double-check against the actual host header for safety.
   const host = headersList.get("host") ?? ""
   const normalizedHost = host.toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "")
+  const isLocalDev = normalizedHost === "localhost" || normalizedHost === "127.0.0.1"
+  const tenantDomain = isLocalDev
+    ? (domain.includes(".") ? domain : `${domain}.koureia.com`)
+    : (normalizedHost || domain)
 
-  const tenant = await resolveTenant(normalizedHost || domain)
+  const tenant = await resolveTenant(tenantDomain)
 
   if (!tenant) {
     notFound()
