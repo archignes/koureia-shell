@@ -1,9 +1,11 @@
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { resolveTenant, resolveSiteSpec } from "@/lib/tenant"
-import { SiteRenderer } from "@/components/site-renderer"
+// import { SiteRenderer } from "@/components/site-renderer"
+import { SiteRendererJR } from "@/components/site-renderer-jr"
 import { BookingPage } from "@/components/site/booking-page"
 import { getTheme } from "@/components/site/theme"
+import { buildSiteSpec, type SiteSpec as JsonRenderSiteSpec } from "@/lib/json-render/load-spec"
 
 type Props = {
   params: Promise<{ domain: string; slug?: string[] }>
@@ -51,7 +53,14 @@ export default async function TenantPage({ params }: Props) {
     notFound()
   }
 
-  return <SiteRenderer spec={spec} />
+  try {
+    const siteSpec = buildSiteSpec(spec as unknown as JsonRenderSiteSpec)
+    return <SiteRendererJR spec={siteSpec} />
+  } catch (error) {
+    console.error("[koureia-shell] buildSiteSpec failed, falling back to legacy renderer:", error)
+    const { SiteRenderer } = await import("@/components/site-renderer")
+    return <SiteRenderer spec={spec} />
+  }
 }
 
 // ── Fallback renders ─────────────────────────────────────────

@@ -1,0 +1,166 @@
+import { defineCatalog } from "@json-render/core"
+import { schema } from "@json-render/react/schema"
+import { z } from "zod"
+
+export const catalog = defineCatalog(schema, {
+  components: {
+    SiteNav: {
+      props: z.object({
+        shopName: z.string(),
+        logoUrl: z.string().optional(),
+        links: z.array(
+          z.object({
+            label: z.string(),
+            href: z.string(),
+          })
+        ),
+      }),
+      description: "Site navigation with optional logo, shop name, and link list",
+    },
+    Hero: {
+      props: z.object({
+        headline: z.string(),
+        subtitle: z.string(),
+        coverImageUrl: z.string().optional(),
+        ctaLabel: z.string().optional(),
+        ctaHref: z.string().optional(),
+      }),
+      description: "Hero header with headline, subtitle, optional cover image, and optional CTA",
+    },
+    StaffGrid: {
+      props: z.object({
+        staff: z.array(
+          z.object({
+            name: z.string(),
+            role: z.string().optional(),
+            photoUrl: z.string().optional(),
+            bio: z.string().optional(),
+          })
+        ),
+      }),
+      description: "Grid of staff cards with names and optional role, photo, and bio",
+    },
+    ServiceAccordion: {
+      props: z.object({
+        categories: z.array(
+          z.object({
+            name: z.string(),
+            services: z.array(
+              z.object({
+                name: z.string(),
+                duration: z.string(),
+                price: z.string(),
+                description: z.string().optional(),
+              })
+            ),
+          })
+        ),
+      }),
+      description: "Service categories with nested service rows, duration, price, and optional description",
+    },
+    HoursTable: {
+      props: z.object({
+        hours: z.array(
+          z.object({
+            day: z.string(),
+            open: z.string(),
+            close: z.string(),
+            closed: z.boolean().optional(),
+          })
+        ),
+      }),
+      description: "Opening hours table with per-day open, close, and optional closed state",
+    },
+    PolicyBlock: {
+      props: z.object({
+        title: z.string(),
+        body: z.string(),
+      }),
+      description: "Policy section with a title and supporting body copy",
+    },
+    BookingCTA: {
+      props: z.object({
+        label: z.string(),
+        href: z.string(),
+        variant: z.enum(["sticky", "inline"]),
+      }),
+      description: "Booking call-to-action rendered as either an inline button or sticky bottom bar",
+    },
+    RequestHero: {
+      props: z.object({
+        headline: z.string(),
+        subtitle: z.string(),
+        shopName: z.string(),
+        staffName: z.string().optional(),
+      }),
+      description: "Hero section for booking request pages with shop/staff context",
+    },
+    ServicePicker: {
+      props: z.object({
+        services: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            duration: z.string(),
+            price: z.string(),
+          })
+        ),
+        preselectedId: z.string().optional(),
+      }),
+      description: "Radio group for selecting a service, with name/price/duration display",
+    },
+    StaffPicker: {
+      props: z.object({
+        staff: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            photoUrl: z.string().optional(),
+            role: z.string().optional(),
+          })
+        ),
+        preselectedId: z.string().optional(),
+      }),
+      description: "Avatar radio group for selecting a staff member",
+    },
+    PreferenceForm: {
+      props: z.object({
+        fields: z.array(
+          z.enum(["dateRange", "timeWindow", "notes", "phone", "name", "email"])
+        ),
+        dateRangeLabel: z.string().optional(),
+        timeWindowLabel: z.string().optional(),
+        notesPlaceholder: z.string().optional(),
+      }),
+      description: "Configurable preference capture form -- only renders fields listed in the fields array",
+    },
+    SubmitButton: {
+      props: z.object({
+        label: z.string(),
+        submittingLabel: z.string().optional(),
+      }),
+      description: "Form submit button with loading state",
+    },
+    ConfirmationMessage: {
+      props: z.object({
+        headline: z.string(),
+        body: z.string(),
+      }),
+      description: "Success message shown after form submission",
+    },
+    SiteFooter: {
+      props: z.object({
+        text: z.string(),
+        linkText: z.string(),
+        linkHref: z.string(),
+      }),
+      description: "Footer with text and a single link",
+    },
+    Container: {
+      props: z.object({}),
+      slots: ["default"],
+      description: "Root container that renders children in sequence",
+    },
+  },
+  actions: {},
+})
