@@ -474,123 +474,238 @@ textarea {
   margin: 0 auto;
 }
 
-.service-picker__fieldset,
-.staff-picker__fieldset {
-  display: grid;
-  gap: 0.9rem;
+/* --- Shared picker styles --- */
+.service-picker,
+.staff-picker {
   padding: 0;
   border: 0;
-  margin: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.service-picker__legend,
+.staff-picker__legend {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--shell-border);
+  color: var(--shell-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.service-picker {
+  margin-top: 2rem;
+}
+
+.service-picker__radio,
+.staff-picker__radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+/* --- Service picker --- */
+.service-picker__options {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--shell-border);
+  border-radius: var(--shell-radius-md);
+  overflow: hidden;
 }
 
 .service-picker__option {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   width: 100%;
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--shell-border);
-  border-radius: var(--shell-radius-md);
-  background: rgba(228, 231, 239, 0.03);
+  padding: 0.75rem 1rem;
+  border: none;
+  border-bottom: 1px solid rgba(228, 231, 239, 0.06);
+  background: rgba(228, 231, 239, 0.02);
   color: var(--shell-text);
+  cursor: pointer;
 }
 
-.service-picker__option:hover,
-.staff-picker__card:hover {
-  border-color: var(--shell-border-strong);
+.service-picker__option:last-child {
+  border-bottom: none;
+}
+
+.service-picker__option:hover {
   background: rgba(228, 231, 239, 0.05);
 }
 
 .service-picker__option--selected {
-  border-color: var(--shell-accent);
   background: rgba(199, 164, 106, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(199, 164, 106, 0.28);
+  border-left: 2px solid var(--shell-accent);
+}
+
+.service-picker__option::before {
+  content: "";
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid var(--shell-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  transition: border-color var(--shell-transition), background var(--shell-transition);
+}
+
+.service-picker__option--selected::before {
+  border-color: var(--shell-accent);
+  background: var(--shell-accent);
+  box-shadow: inset 0 0 0 3px var(--shell-bg-elevated);
+}
+
+.service-picker__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .service-picker__name {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
+  min-width: 0;
 }
 
-.service-picker__duration,
-.service-picker__price {
-  color: var(--shell-text-muted);
-  font-size: 0.95rem;
+.service-picker__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.service-picker__duration {
+  color: var(--shell-text-subtle);
+  font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
 }
 
 .service-picker__price {
   color: var(--shell-accent);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
 }
 
-.staff-picker__fieldset {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+/* --- Staff picker --- */
+.staff-picker__options {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--shell-border);
+  border-radius: var(--shell-radius-md);
+  overflow: hidden;
 }
 
 .staff-picker__card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.9rem;
+  display: flex;
   align-items: center;
-  padding: 1rem;
-  border: 1px solid var(--shell-border);
-  border-radius: var(--shell-radius-lg);
-  background: rgba(228, 231, 239, 0.03);
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(228, 231, 239, 0.06);
+  background: rgba(228, 231, 239, 0.02);
+  cursor: pointer;
+}
+
+.staff-picker__card:last-child {
+  border-bottom: none;
+}
+
+.staff-picker__card:hover {
+  background: rgba(228, 231, 239, 0.05);
 }
 
 .staff-picker__card--selected {
-  border-color: var(--shell-accent);
   background: rgba(199, 164, 106, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(199, 164, 106, 0.28);
+  border-color: var(--shell-accent);
 }
 
-.staff-picker__photo,
-.staff-picker__placeholder {
-  width: 5rem;
-  height: 5rem;
+.staff-picker__card::before {
+  content: "";
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid var(--shell-border-strong);
   border-radius: 999px;
+  background: transparent;
+  transition: border-color var(--shell-transition), background var(--shell-transition);
+}
+
+.staff-picker__card--selected::before {
+  border-color: var(--shell-accent);
+  background: var(--shell-accent);
+  box-shadow: inset 0 0 0 3px var(--shell-bg-elevated);
 }
 
 .staff-picker__photo {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
-.staff-picker__placeholder {
+.staff-picker__photo--placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(199, 164, 106, 0.14);
   color: var(--shell-accent);
-  font-size: 1.1rem;
+  font-size: 0.75rem;
   font-weight: 700;
+}
+
+.staff-picker__content {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
 .staff-picker__name {
   color: var(--shell-text);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
 }
 
-.staff-picker__role {
-  margin-top: 0.25rem;
-  color: var(--shell-text-muted);
-  font-size: 0.95rem;
+.staff-picker__sep {
+  color: var(--shell-text-subtle);
+  font-size: 0.8rem;
 }
 
+.staff-picker__role {
+  color: var(--shell-text-muted);
+  font-size: 0.85rem;
+}
+
+/* --- Preference form --- */
 .preference-form {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
+  margin-top: 2rem;
+  border: 1px solid var(--shell-border);
+  border-radius: var(--shell-radius-md);
+  padding: 1.1rem 1.25rem;
+  background: rgba(228, 231, 239, 0.02);
 }
 
 .preference-form__field {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
 .preference-form__label {
   color: var(--shell-text-muted);
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   line-height: 1.4;
 }
 
@@ -598,13 +713,12 @@ textarea {
 .preference-form__select,
 .preference-form__textarea {
   width: 100%;
-  min-height: 3rem;
-  padding: 0.85rem 1rem;
+  padding: 0.6rem 0.85rem;
   border: 1px solid var(--shell-border-strong);
-  border-radius: var(--shell-radius-sm);
+  border-radius: 0.625rem;
   background: var(--shell-bg-elevated);
   color: var(--shell-text);
-  font-size: 1rem;
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
@@ -618,7 +732,7 @@ textarea {
 }
 
 .preference-form__textarea {
-  min-height: 8rem;
+  min-height: 5rem;
   resize: vertical;
 }
 
@@ -627,21 +741,26 @@ textarea {
 .preference-form__textarea:focus {
   border-color: var(--shell-accent);
   background: var(--shell-bg-soft);
+  outline: none;
 }
 
+/* --- Submit button --- */
 .submit-button {
   display: inline-flex;
   width: 100%;
+  max-width: var(--shell-content-narrow);
+  margin: 1.5rem auto 0;
   align-items: center;
   justify-content: center;
-  min-height: 3.35rem;
-  padding: 0.95rem 1.4rem;
+  min-height: 3.25rem;
+  padding: 0.85rem 1.4rem;
   border: 0;
   border-radius: 999px;
   background: var(--shell-accent);
   color: var(--shell-accent-contrast);
   font-size: 0.95rem;
   font-weight: 700;
+  cursor: pointer;
   box-shadow: 0 16px 36px rgba(199, 164, 106, 0.18);
 }
 
@@ -650,11 +769,12 @@ textarea {
   transform: translateY(-1px);
 }
 
-.submit-button--loading {
+.submit-button:disabled {
   opacity: 0.72;
   cursor: wait;
 }
 
+/* --- Confirmation --- */
 .confirmation-message {
   padding: 2rem 1.5rem;
   border: 1px solid var(--shell-border);
@@ -663,7 +783,7 @@ textarea {
   text-align: center;
 }
 
-.confirmation-message__icon {
+.confirmation-message__check {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -716,21 +836,22 @@ textarea {
     min-height: 16rem;
   }
 
-  .staff-grid__list,
-  .staff-picker__fieldset {
+  .staff-grid__list {
     grid-template-columns: 1fr;
   }
 
-  .staff-grid__card,
-  .staff-picker__card {
+  .staff-grid__card {
     grid-template-columns: 3.75rem minmax(0, 1fr);
   }
 
-  .staff-grid__photo,
-  .staff-picker__photo,
-  .staff-picker__placeholder {
+  .staff-grid__photo {
     width: 3.75rem;
     height: 3.75rem;
+  }
+
+  .staff-picker__photo {
+    width: 2rem;
+    height: 2rem;
   }
 
   .service-accordion__meta {

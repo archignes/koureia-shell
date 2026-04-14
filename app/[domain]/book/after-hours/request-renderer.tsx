@@ -1,7 +1,7 @@
 "use client"
 
 import { JSONUIProvider, Renderer, createStateStore } from "@json-render/react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { registry } from "@/lib/json-render/registry"
 import type { Spec } from "@json-render/core"
 
@@ -15,6 +15,13 @@ type RequestRendererProps = {
 type RequestSource = "after-hours" | "waitlist" | "sms-refinement"
 type TimeWindow = "morning" | "afternoon" | "evening" | "anytime"
 
+type FormattedService = {
+  id: string
+  name: string
+  duration: string
+  price: string
+}
+
 type RequestState = {
   selectedServiceId?: string
   selectedStaffId?: string
@@ -24,6 +31,8 @@ type RequestState = {
   timeWindow?: TimeWindow
   notes?: string
   source?: RequestSource
+  serviceStaffMap?: Record<string, string[]>
+  allFormattedServices?: FormattedService[]
 }
 
 export function RequestRenderer({
@@ -35,6 +44,41 @@ export function RequestRenderer({
   const [spec, setSpec] = useState(initialSpec)
   const [error, setError] = useState<string | null>(null)
   const store = useMemo(() => createStateStore(initialSpec.state ?? {}), [initialSpec])
+  const lastStaffIdRef = useRef<string | undefined>(
+    (initialSpec.state as RequestState | undefined)?.selectedStaffId
+  )
+
+  useEffect(() => {
+    return store.subscribe(() => {
+      const state = store.getSnapshot() as RequestState
+      const staffId = state.selectedStaffId
+
+      if (staffId === lastStaffIdRef.current) return
+      lastStaffIdRef.current = staffId
+
+      const allServices = state.allFormattedServices
+      const staffMap = state.serviceStaffMap
+      if (!allServices || !staffMap) return
+
+      const filtered = staffId
+        ? allServices.filter((s) => staffMap[s.id]?.includes(staffId))
+        : allServices
+
+      setSpec((prev) => ({
+        ...prev,
+        elements: {
+          ...prev.elements,
+          "service-pick": {
+            ...prev.elements["service-pick"],
+            props: {
+              ...prev.elements["service-pick"].props,
+              services: filtered.length > 0 ? filtered : allServices,
+            },
+          },
+        },
+      }))
+    })
+  }, [store])
 
   async function handleSubmit() {
     setError(null)

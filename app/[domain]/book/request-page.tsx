@@ -47,8 +47,12 @@ export async function BookingRequestPage({
 
   const host = headersList.get("host") ?? ""
   const normalizedHost = host.toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "")
+  const isLocalDev = normalizedHost === "localhost" || normalizedHost === "127.0.0.1"
+  const tenantDomain = isLocalDev
+    ? (domain.includes(".") ? domain : `${domain}.koureia.com`)
+    : (normalizedHost || domain)
 
-  const tenant = await resolveTenant(normalizedHost || domain)
+  const tenant = await resolveTenant(tenantDomain)
 
   if (!tenant) {
     notFound()
@@ -158,6 +162,18 @@ function buildRequestSpec({
   preselectedStaffId?: string
   staffName?: string
 }): Spec {
+  const allFormattedServices = services.map((service) => ({
+    id: service.id,
+    name: service.name,
+    duration: formatDuration(service.duration_minutes),
+    price: formatPrice(service.price_cents, service.price_display),
+  }))
+
+  const serviceStaffMap: Record<string, string[]> = {}
+  for (const service of services) {
+    serviceStaffMap[service.id] = service.staff_ids
+  }
+
   const elements: Spec["elements"] = {
     container: {
       type: "Container",
@@ -192,12 +208,7 @@ function buildRequestSpec({
     "service-pick": {
       type: "ServicePicker",
       props: {
-        services: services.map((service) => ({
-          id: service.id,
-          name: service.name,
-          duration: formatDuration(service.duration_minutes),
-          price: formatPrice(service.price_cents, service.price_display),
-        })),
+        services: allFormattedServices,
         preselectedId: preselectedServiceId,
       },
     },
@@ -224,6 +235,8 @@ function buildRequestSpec({
       selectedStaffId: preselectedStaffId,
       selectedServiceId: preselectedServiceId,
       source,
+      serviceStaffMap,
+      allFormattedServices,
     },
   }
 }
