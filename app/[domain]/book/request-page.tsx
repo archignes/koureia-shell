@@ -123,6 +123,8 @@ export async function BookingRequestPage({
     staffName: selectedStaff?.name.split(" ")[0],
     afterHours: variant === "after-hours" && afterHours ? afterHours : undefined,
     shopTimezone: bookingContext.shop.timezone,
+    apiUrl,
+    shopSlug: tenant.slug,
   })
 
   return (
@@ -146,6 +148,8 @@ function buildRequestSpec({
   staffName,
   afterHours,
   shopTimezone,
+  apiUrl,
+  shopSlug,
 }: {
   shopName: string
   source: "after-hours" | "waitlist" | "sms-refinement"
@@ -161,6 +165,8 @@ function buildRequestSpec({
     min_advance_hours: number
   }
   shopTimezone?: string
+  apiUrl?: string
+  shopSlug?: string
 }): Spec {
   const fmt = (s: BookingContext["services"][number]) => ({
     id: s.id,
@@ -246,6 +252,9 @@ function buildRequestSpec({
           "availability-pick": {
             type: "AvailabilityPicker",
             props: {
+              apiUrl,
+              shopSlug,
+              staffId: preselectedStaffId,
               minAdvanceHours: afterHours.min_advance_hours,
               surchargeCents: afterHours.surcharge_cents,
               shopTimezone,

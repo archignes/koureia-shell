@@ -165,6 +165,9 @@ export const catalog = defineCatalog(schema, {
     },
     AvailabilityPicker: {
       props: z.object({
+        apiUrl: z.string().optional(),
+        shopSlug: z.string(),
+        staffId: z.string().optional(),
         minAdvanceHours: z.number().optional(),
         surchargeCents: z.number().optional(),
         shopTimezone: z.string().optional(),

@@ -71,9 +71,13 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
   ),
 
   AvailabilityPicker: ({ props }) => {
-    const { update } = useStateStore()
+    const { update, state } = useStateStore()
+    const staffId = (state as { selectedStaffId?: string }).selectedStaffId ?? props.staffId
     return (
       <AvailabilityPicker
+        apiUrl={props.apiUrl}
+        shopSlug={props.shopSlug}
+        staffId={staffId}
         minAdvanceHours={props.minAdvanceHours}
         shopTimezone={props.shopTimezone}
         onSlotSelect={(date, slot) => update({
