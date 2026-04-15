@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { DayPicker } from "react-day-picker"
 import { fetchAvailability, type AvailabilitySlot } from "@/lib/availability"
 import { cn, formatTime } from "@/lib/utils"
@@ -79,6 +79,16 @@ export function AvailabilityPicker({
     },
     [apiUrl, shopSlug, staffId, shopTimezone]
   )
+
+  // Refetch when staffId changes and a date is already selected
+  const prevStaffIdRef = useRef(staffId)
+  useEffect(() => {
+    if (prevStaffIdRef.current === staffId) return
+    prevStaffIdRef.current = staffId
+    if (selectedDate) {
+      handleDateSelect(selectedDate)
+    }
+  }, [staffId, selectedDate, handleDateSelect])
 
   const handleSlotClick = useCallback(
     (slot: AvailabilitySlot) => {
