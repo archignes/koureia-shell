@@ -3,6 +3,8 @@
 import { useBoundProp, useStateStore, type Components } from "@json-render/react"
 import { AvailabilityPicker } from "@/lib/components/availability-picker"
 import { ServiceMenu as ServiceMenuComponent } from "@/lib/components/service-menu"
+import { OrderSummary as OrderSummaryComponent } from "@/lib/components/order-summary"
+import { PreferenceForm as PreferenceFormComponent } from "@/lib/components/preference-form"
 
 import { catalog } from "../catalog"
 
@@ -13,13 +15,10 @@ type RequestComponentKeys =
   | "StaffPicker"
   | "SurchargeBanner"
   | "AvailabilityPicker"
+  | "OrderSummary"
   | "PreferenceForm"
   | "SubmitButton"
   | "ConfirmationMessage"
-
-function formatDateInputValue(date: Date) {
-  return date.toISOString().slice(0, 10)
-}
 
 export const requestComponents: Pick<Components<typeof catalog>, RequestComponentKeys> = {
   RequestHero: ({ props }) => (
@@ -81,6 +80,7 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
       primary={props.primary}
       extras={props.extras}
       preselectedId={props.preselectedId}
+      sectionLabel={props.sectionLabel}
     />
   ),
 
@@ -139,121 +139,14 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     )
   },
 
-  PreferenceForm: ({ props }) => {
-    const [dateRange, setDateRange] = useBoundProp<string | undefined>(
-      undefined,
-      "dateRange"
-    )
-    const [timeWindow, setTimeWindow] = useBoundProp<string | undefined>(
-      undefined,
-      "timeWindow"
-    )
-    const [notes, setNotes] = useBoundProp<string | undefined>(undefined, "notes")
-    const [phone, setPhone] = useBoundProp<string | undefined>(undefined, "phone")
-    const [name, setName] = useBoundProp<string | undefined>(undefined, "name")
-    const [email, setEmail] = useBoundProp<string | undefined>(undefined, "email")
-
-    const minDate = formatDateInputValue(new Date())
-    const maxDateValue = new Date()
-    maxDateValue.setDate(maxDateValue.getDate() + 14)
-    const maxDate = formatDateInputValue(maxDateValue)
-
-    const fieldRenderers: Record<string, () => React.ReactNode> = {
-      name: () => (
-        <label className="preference-form__field" htmlFor="preference-name" key="name">
-          <span className="preference-form__label">Name</span>
-          <input
-            autoComplete="name"
-            className="preference-form__input"
-            id="preference-name"
-            type="text"
-            value={name ?? ""}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </label>
-      ),
-      phone: () => (
-        <label className="preference-form__field" htmlFor="preference-phone" key="phone">
-          <span className="preference-form__label">Phone</span>
-          <input
-            autoComplete="tel"
-            className="preference-form__input"
-            id="preference-phone"
-            type="tel"
-            value={phone ?? ""}
-            onChange={(event) => setPhone(event.target.value)}
-          />
-        </label>
-      ),
-      email: () => (
-        <label className="preference-form__field" htmlFor="preference-email" key="email">
-          <span className="preference-form__label">Email</span>
-          <input
-            autoComplete="email"
-            className="preference-form__input"
-            id="preference-email"
-            type="email"
-            value={email ?? ""}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </label>
-      ),
-      dateRange: () => (
-        <label className="preference-form__field" htmlFor="preference-date-range" key="dateRange">
-          <span className="preference-form__label">
-            {props.dateRangeLabel ?? "Preferred date"}
-          </span>
-          <input
-            className="preference-form__input"
-            id="preference-date-range"
-            max={maxDate}
-            min={minDate}
-            type="date"
-            value={dateRange ?? ""}
-            onChange={(event) => setDateRange(event.target.value)}
-          />
-        </label>
-      ),
-      timeWindow: () => (
-        <label className="preference-form__field" htmlFor="preference-time-window" key="timeWindow">
-          <span className="preference-form__label">
-            {props.timeWindowLabel ?? "Preferred time window"}
-          </span>
-          <select
-            className="preference-form__select"
-            id="preference-time-window"
-            value={timeWindow ?? ""}
-            onChange={(event) => setTimeWindow(event.target.value)}
-          >
-            <option value="">Select a time window</option>
-            <option value="morning">Morning (before noon)</option>
-            <option value="afternoon">Afternoon (noon-5pm)</option>
-            <option value="evening">Evening (after 5pm)</option>
-            <option value="anytime">Anytime</option>
-          </select>
-        </label>
-      ),
-      notes: () => (
-        <label className="preference-form__field" htmlFor="preference-notes" key="notes">
-          <span className="preference-form__label">Notes</span>
-          <textarea
-            className="preference-form__textarea"
-            id="preference-notes"
-            placeholder={props.notesPlaceholder ?? "Anything we should know?"}
-            rows={3}
-            value={notes ?? ""}
-            onChange={(event) => setNotes(event.target.value)}
-          />
-        </label>
-      ),
-    }
-
-    return (
-      <div className="preference-form">
-        {props.fields.map((field) => fieldRenderers[field]?.())}
-      </div>
-    )
-  },
+  PreferenceForm: ({ props }) => (
+    <PreferenceFormComponent
+      fields={props.fields}
+      dateRangeLabel={props.dateRangeLabel}
+      timeWindowLabel={props.timeWindowLabel}
+      notesPlaceholder={props.notesPlaceholder}
+    />
+  ),
 
   SurchargeBanner: ({ props }) => (
     <div className="surcharge-banner">{props.message}</div>
@@ -274,15 +167,40 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     )
   },
 
+  OrderSummary: ({ props }) => (
+    <OrderSummaryComponent
+      allServices={props.allServices}
+      surchargeCents={props.surchargeCents}
+    />
+  ),
+
   SubmitButton: ({ props, emit, loading }) => (
-    <button
-      className="submit-button"
-      disabled={loading}
-      type="button"
-      onClick={() => emit("submit")}
-    >
-      {loading ? props.submittingLabel ?? "Sending..." : props.label}
-    </button>
+    <div className="submit-section">
+      <p className="submit-section__consent">
+        By submitting, you agree to receive appointment-related messages via
+        text from this shop (powered by Koureia). Message &amp; data rates may
+        apply. Reply STOP to opt out.
+      </p>
+      <div className="submit-section__legal">
+        <a href="https://koureia.com/terms" target="_blank" rel="noopener noreferrer">
+          Terms of Service
+        </a>
+        <a href="https://koureia.com/privacy" target="_blank" rel="noopener noreferrer">
+          Privacy Policy
+        </a>
+        <a href="https://koureia.com/sms-consent" target="_blank" rel="noopener noreferrer">
+          SMS Policy
+        </a>
+      </div>
+      <button
+        className="submit-button"
+        disabled={loading}
+        type="button"
+        onClick={() => emit("submit")}
+      >
+        {loading ? props.submittingLabel ?? "Sending..." : props.label}
+      </button>
+    </div>
   ),
 
   ConfirmationMessage: ({ props }) => (

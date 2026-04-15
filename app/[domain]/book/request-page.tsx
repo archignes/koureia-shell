@@ -69,7 +69,7 @@ export async function BookingRequestPage({
   const afterHours = bookingContext.after_hours ?? (variant === "after-hours" ? {
     enabled: true,
     surcharge_cents: 10000,
-    surcharge_display: "After-hours appointments include a $100 surcharge",
+    surcharge_display: "+$100 after-hours fee added to the service total",
     min_advance_hours: 24,
     staff_ids: mockAfterHoursStaffIds(bookingContext.staff),
   } : null)
@@ -167,6 +167,7 @@ function buildRequestSpec({
     name: s.name,
     duration: formatDuration(s.duration_minutes),
     price: formatPrice(s.price_cents, s.price_display),
+    priceCents: s.price_cents,
   })
 
   const allFormattedServices = services.map(fmt)
@@ -181,7 +182,7 @@ function buildRequestSpec({
 
   const children = isAfterHours
     ? ["hero", "surcharge-banner", ...(hideStaffPicker ? [] : ["staff-pick"]),
-       "service-menu", "availability-pick", "contact-fields", "submit"]
+       "service-menu", "availability-pick", "contact-fields", "order-summary", "submit"]
     : ["hero", ...(hideStaffPicker ? [] : ["staff-pick"]),
        "service-pick", "prefs", "submit"]
 
@@ -196,10 +197,10 @@ function buildRequestSpec({
       props: {
         headline:
           variant === "after-hours"
-            ? "Request an after-hours appointment"
+            ? "After-Hours Booking Request"
             : "Request an appointment",
         subtitle: staffName
-          ? `Pick a time that works and ${staffName} will confirm.`
+          ? `Choose a service and preferred time. ${staffName} will confirm by text.`
           : "Pick your preferences and we'll confirm your time.",
         shopName,
         staffName,
@@ -230,6 +231,7 @@ function buildRequestSpec({
           primary: primary.map(fmt),
           extras: extras.map(fmt),
           preselectedId: preselectedServiceId,
+          sectionLabel: "Barber cuts",
         },
       },
     } : {}),
@@ -254,7 +256,14 @@ function buildRequestSpec({
             props: {
               fields: ["name", "phone", "notes"],
               notesPlaceholder:
-                "Anything we should know? First time, specific requests, etc.",
+                "Special requests or notes",
+            },
+          },
+          "order-summary": {
+            type: "OrderSummary",
+            props: {
+              allServices: [...primary, ...extras].map(fmt),
+              surchargeCents: afterHours.surcharge_cents,
             },
           },
         }
@@ -264,7 +273,7 @@ function buildRequestSpec({
             props: {
               fields: ["name", "phone", "dateRange", "timeWindow", "notes"],
               notesPlaceholder:
-                "Anything we should know? First time, specific requests, etc.",
+                "Special requests or notes",
             },
           },
         }),

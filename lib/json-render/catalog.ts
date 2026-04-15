@@ -153,6 +153,7 @@ export const catalog = defineCatalog(schema, {
           })
         ),
         preselectedId: z.string().optional(),
+        sectionLabel: z.string().optional(),
       }),
       description: "Service menu with primary single-select and extras multi-select",
     },
@@ -169,6 +170,21 @@ export const catalog = defineCatalog(schema, {
         shopTimezone: z.string().optional(),
       }),
       description: "Calendar date picker with time slot selection for after-hours booking",
+    },
+    OrderSummary: {
+      props: z.object({
+        allServices: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            duration: z.string(),
+            price: z.string(),
+            priceCents: z.number(),
+          })
+        ),
+        surchargeCents: z.number(),
+      }),
+      description: "Live order summary showing selected services, date/time, and estimated total",
     },
     SubmitButton: {
       props: z.object({
