@@ -71,7 +71,10 @@ export function AvailabilityPicker({
         setSlots([])
         setError(true)
       } finally {
-        setLoading(false)
+        // Only clear loading if this is still the active request
+        if (abortRef.current === controller) {
+          setLoading(false)
+        }
       }
     },
     [apiUrl, shopSlug, staffId, shopTimezone]
