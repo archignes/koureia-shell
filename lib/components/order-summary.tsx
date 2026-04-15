@@ -70,19 +70,19 @@ export function OrderSummary({ allServices, surchargeCents }: OrderSummaryProps)
   )
 
   return (
-    <div className="order-summary">
+    <div className="mt-4 snap-start scroll-mt-2 rounded-xl border border-[rgba(199,164,106,0.2)] bg-[rgba(199,164,106,0.04)] px-3 py-[0.65rem]">
       {serviceNames.length > 0 && (
-        <p className="order-summary__services">
+        <p className="m-0 text-[0.85rem] leading-[1.4] font-medium text-[var(--shell-text)] text-pretty">
           {serviceNames.join(" · ")}
         </p>
       )}
       {date && slotStart && (
-        <p className="order-summary__datetime">
+        <p className="mt-[0.15rem] text-[0.8rem] text-[var(--shell-text-muted)]">
           {formatDate(date)} at {formatSlotTime(slotStart)}
         </p>
       )}
       {serviceCents > 0 && (
-        <p className="order-summary__total">
+        <p className="mt-[0.35rem] border-t border-t-[rgba(199,164,106,0.12)] pt-[0.35rem] text-[0.9rem] font-semibold text-[var(--shell-accent)]">
           Estimated total {hasVariable ? "from " : ""}
           {formatCents(total)}
         </p>

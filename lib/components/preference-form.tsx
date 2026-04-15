@@ -14,6 +14,10 @@ function formatDateInputValue(date: Date) {
   return date.toISOString().slice(0, 10)
 }
 
+const fieldClassName = "grid gap-[0.2rem]"
+const labelClassName = "text-[0.75rem] leading-[1.3] text-[var(--shell-text-muted)]"
+const inputClassName = "w-full rounded-lg border border-[var(--shell-border-strong)] bg-[var(--shell-bg-elevated)] px-3 py-2 text-[0.85rem] leading-[1.4] text-[var(--shell-text)] placeholder:text-[var(--shell-text-subtle)] focus:border-[var(--shell-accent)] focus:bg-[var(--shell-bg-soft)] focus:outline-none autofill:shadow-[inset_0_0_0_100px_var(--shell-bg-elevated)] autofill:[-webkit-text-fill-color:var(--shell-text)] autofill:caret-[var(--shell-text)]"
+
 export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesPlaceholder }: PreferenceFormProps) {
   const { set } = useStateStore()
   const [dateRange, setDateRange] = useBoundProp<string | undefined>(undefined, "dateRange")
@@ -31,11 +35,11 @@ export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesP
 
   const fieldRenderers: Record<string, () => React.ReactNode> = {
     name: () => (
-      <label className="preference-form__field" htmlFor="preference-name">
-        <span className="preference-form__label">Name <span className="preference-form__req">*</span></span>
+      <label className={fieldClassName} htmlFor="preference-name">
+        <span className={labelClassName}>Name <span className="font-semibold text-[var(--shell-accent)]">*</span></span>
         <input
           autoComplete="name"
-          className="preference-form__input"
+          className={inputClassName}
           id="preference-name"
           required
           type="text"
@@ -46,11 +50,11 @@ export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesP
       </label>
     ),
     phone: () => (
-      <label className="preference-form__field" htmlFor="preference-phone">
-        <span className="preference-form__label">Phone <span className="preference-form__req">*</span></span>
+      <label className={fieldClassName} htmlFor="preference-phone">
+        <span className={labelClassName}>Phone <span className="font-semibold text-[var(--shell-accent)]">*</span></span>
         <input
           autoComplete="tel"
-          className="preference-form__input"
+          className={inputClassName}
           id="preference-phone"
           inputMode="tel"
           required
@@ -62,11 +66,11 @@ export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesP
       </label>
     ),
     email: () => (
-      <label className="preference-form__field" htmlFor="preference-email">
-        <span className="preference-form__label">Email</span>
+      <label className={fieldClassName} htmlFor="preference-email">
+        <span className={labelClassName}>Email</span>
         <input
           autoComplete="email"
-          className="preference-form__input"
+          className={inputClassName}
           id="preference-email"
           type="email"
           value={email}
@@ -76,12 +80,12 @@ export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesP
       </label>
     ),
     dateRange: () => (
-      <label className="preference-form__field" htmlFor="preference-date-range">
-        <span className="preference-form__label">
+      <label className={fieldClassName} htmlFor="preference-date-range">
+        <span className={labelClassName}>
           {dateRangeLabel ?? "Preferred date"}
         </span>
         <input
-          className="preference-form__input"
+          className={inputClassName}
           id="preference-date-range"
           max={maxDate}
           min={minDate}
@@ -92,12 +96,12 @@ export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesP
       </label>
     ),
     timeWindow: () => (
-      <label className="preference-form__field" htmlFor="preference-time-window">
-        <span className="preference-form__label">
+      <label className={fieldClassName} htmlFor="preference-time-window">
+        <span className={labelClassName}>
           {timeWindowLabel ?? "Preferred time window"}
         </span>
         <select
-          className="preference-form__select"
+          className={`${inputClassName} appearance-none`}
           id="preference-time-window"
           value={timeWindow ?? ""}
           onChange={(event) => setTimeWindow(event.target.value)}
@@ -111,10 +115,10 @@ export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesP
       </label>
     ),
     notes: () => (
-      <label className="preference-form__field" htmlFor="preference-notes">
-        <span className="preference-form__label">Notes <span className="preference-form__opt">(optional)</span></span>
+      <label className={fieldClassName} htmlFor="preference-notes">
+        <span className={labelClassName}>Notes <span className="text-[0.7rem] font-normal text-[var(--shell-text-subtle)]">(optional)</span></span>
         <textarea
-          className="preference-form__textarea"
+          className={`${inputClassName} min-h-14 resize-y`}
           id="preference-notes"
           placeholder={notesPlaceholder ?? "Anything we should know?"}
           rows={2}
@@ -127,7 +131,7 @@ export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesP
   }
 
   return (
-    <div className="preference-form">
+    <div className="mt-4 grid snap-start scroll-mt-2 gap-[0.6rem] rounded-xl border border-[var(--shell-border)] bg-[rgba(228,231,239,0.02)] p-3">
       {fields.map((field) => (
         <React.Fragment key={field}>{fieldRenderers[field]?.()}</React.Fragment>
       ))}
