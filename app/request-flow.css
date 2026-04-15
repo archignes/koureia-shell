@@ -1,4 +1,21 @@
 /* Request flow */
+.request-flow-container {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  scroll-snap-type: y proximity;
+}
+
+/* Snap points on major sections */
+.service-menu,
+.availability-picker,
+.preference-form,
+.order-summary {
+  scroll-snap-align: start;
+  scroll-margin-top: 0.5rem;
+}
+
 .request-hero {
   margin: 0;
   padding: 0 0 0.5rem;
@@ -288,6 +305,24 @@
   color: var(--shell-text-subtle);
 }
 
+.preference-form__input:-webkit-autofill,
+.preference-form__textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 100px var(--shell-bg-elevated) inset;
+  -webkit-text-fill-color: var(--shell-text);
+  caret-color: var(--shell-text);
+}
+
+.preference-form__req {
+  color: var(--shell-accent);
+  font-weight: 600;
+}
+
+.preference-form__opt {
+  color: var(--shell-text-subtle);
+  font-weight: 400;
+  font-size: 0.7rem;
+}
+
 .preference-form__select {
   appearance: none;
 }
@@ -305,11 +340,73 @@
   outline: none;
 }
 
+/* --- Order summary --- */
+.order-summary {
+  margin-top: 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(199, 164, 106, 0.2);
+  border-radius: 0.75rem;
+  background: rgba(199, 164, 106, 0.04);
+}
+
+.order-summary__services {
+  margin: 0;
+  color: var(--shell-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.order-summary__datetime {
+  margin: 0.15rem 0 0;
+  color: var(--shell-text-muted);
+  font-size: 0.8rem;
+}
+
+.order-summary__total {
+  margin: 0.35rem 0 0;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(199, 164, 106, 0.12);
+  color: var(--shell-accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* --- Submit section (consent + legal + button) --- */
+.submit-section {
+  margin-top: 1rem;
+}
+
+.submit-section__consent {
+  margin: 0 0 0.5rem;
+  color: var(--shell-text-subtle);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.submit-section__legal {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.submit-section__legal a {
+  color: var(--shell-text-muted);
+  font-size: 0.7rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--shell-transition);
+}
+
+.submit-section__legal a:hover {
+  color: var(--shell-accent);
+}
+
 /* --- Submit button --- */
 .submit-button {
   display: inline-flex;
   width: 100%;
-  margin: 1rem 0 0;
+  margin: 0 0 0.5rem;
   align-items: center;
   justify-content: center;
   min-height: 2.75rem;
@@ -402,7 +499,7 @@
   display: grid;
   gap: 0;
   border: 1px solid var(--shell-border);
-  border-radius: var(--shell-radius-md);
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -414,7 +511,7 @@
   padding: 0.5rem 0.75rem;
   border: none;
   border-bottom: 1px solid rgba(228, 231, 239, 0.06);
-  border-left: 2px solid transparent;
+  border-left: none;
   background: rgba(228, 231, 239, 0.02);
   color: var(--shell-text);
   font: inherit;
@@ -432,8 +529,27 @@
 }
 
 .service-menu__item--active {
-  background: rgba(199, 164, 106, 0.1);
-  border-left-color: var(--shell-accent);
+  background: rgba(199, 164, 106, 0.12) !important;
+  border-left: none !important;
+}
+
+.service-menu__item--active .service-menu__name {
+  color: var(--shell-text) !important;
+  font-weight: 600;
+}
+
+.service-menu__item--active .service-menu__price {
+  color: var(--shell-accent) !important;
+  font-weight: 700;
+}
+
+.service-menu__item--active .service-menu__dur {
+  color: var(--shell-text-muted) !important;
+}
+
+.service-menu__item--active .service-menu__badge {
+  background: rgba(199, 164, 106, 0.2) !important;
+  color: var(--shell-accent) !important;
 }
 
 .service-menu__check {
@@ -456,19 +572,59 @@
   color: var(--shell-accent-contrast);
 }
 
-.service-menu__name {
+/* Radio indicator for primary services */
+.service-menu__radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid var(--shell-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  transition: border-color var(--shell-transition), background var(--shell-transition), box-shadow var(--shell-transition);
+}
+
+.service-menu__item--active .service-menu__radio {
+  border-color: var(--shell-accent);
+  background: var(--shell-accent);
+  box-shadow: inset 0 0 0 3px var(--shell-bg-elevated);
+}
+
+.service-menu__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
   flex: 1;
   min-width: 0;
+}
+
+.service-menu__name {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   font-size: 0.9rem;
   font-weight: 500;
+}
+
+.service-menu__badge {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  background: rgba(199, 164, 106, 0.15);
+  color: var(--shell-accent);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .service-menu__meta {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
-  white-space: nowrap;
 }
 
 .service-menu__dur {
@@ -479,20 +635,22 @@
 
 .service-menu__price {
   color: var(--shell-accent);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 /* --- Surcharge banner --- */
 .surcharge-banner {
   margin: 0.5rem 0 0;
-  padding: 0.45rem 0.75rem;
-  border: 1px solid rgba(199, 164, 106, 0.2);
-  border-radius: 0.5rem;
-  background: rgba(199, 164, 106, 0.06);
+  padding: 0.6rem 0.85rem;
+  border-left: 3px solid var(--shell-accent);
+  border-radius: 0;
+  background: rgba(199, 164, 106, 0.1);
   color: var(--shell-accent);
-  font-size: 0.8rem;
-  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
 }
 
 /* --- Availability picker --- */
@@ -710,9 +868,15 @@
 }
 
 .availability-picker__slot--selected {
-  background: rgba(199, 164, 106, 0.14);
-  border-color: var(--shell-accent);
-  color: var(--shell-accent);
+  background: var(--shell-accent) !important;
+  border-color: var(--shell-accent) !important;
+  color: var(--shell-accent-contrast) !important;
+  font-weight: 700;
+}
+
+.availability-picker__slot--selected:hover:not(:disabled) {
+  background: var(--shell-accent-strong);
+  border-color: var(--shell-accent-strong);
 }
 
 .availability-picker__slot--taken {
