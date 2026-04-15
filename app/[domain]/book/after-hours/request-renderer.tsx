@@ -29,6 +29,10 @@ type RequestState = {
   phone?: string
   dateRange?: string
   timeWindow?: TimeWindow
+  preferredDate?: string
+  preferredSlotStart?: string
+  preferredSlotEnd?: string
+  surchargeCents?: number
   notes?: string
   source?: RequestSource
   serviceStaffMap?: Record<string, string[]>
@@ -90,7 +94,10 @@ export function RequestRenderer({
       staffId: toNonEmptyString(state.selectedStaffId),
       clientName: toNonEmptyString(state.name),
       clientPhone: normalizePhoneForApi(state.phone),
-      preferredDate: toNonEmptyString(state.dateRange),
+      preferredDate:
+        toNonEmptyString(state.preferredDate) ?? toNonEmptyString(state.dateRange),
+      preferredSlotStart: toNonEmptyString(state.preferredSlotStart),
+      preferredSlotEnd: toNonEmptyString(state.preferredSlotEnd),
       timeWindow: isTimeWindow(state.timeWindow) ? state.timeWindow : undefined,
       notes: toNonEmptyString(state.notes),
       source: isRequestSource(state.source) ? state.source : "waitlist",
@@ -122,7 +129,7 @@ export function RequestRenderer({
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
+    <div className="mx-auto w-full max-w-md px-4 py-4">
       {error ? (
         <div
           className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
