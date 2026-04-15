@@ -68,9 +68,14 @@ Deploys via GitHub push to `main` → Vercel auto-deploys. Do not use `vercel --
 
 Adding a new tenant domain: handled by `POST /api/admin/provision-site` in the Koureia internal app — no changes to this repo needed.
 
+## Styling
+
+Use Tailwind utility classes for all styling. Do not write custom CSS class selectors in `globals.css` — Tailwind v4's `@layer` system creates specificity conflicts with plain CSS. `globals.css` should only contain `@tailwind`/`@import` directives, CSS custom properties (`:root`), base element resets, and keyframe animations. Third-party component overrides (e.g. react-day-picker) may use scoped selectors inside `@layer components`.
+
 ## What NOT to do
 
 - Do not add a database connection — this project is stateless
 - Do not add auth — all routes are public
 - Do not hardcode tenant data (except in the mock fallback for dev)
 - Do not use `vercel --prod` — deploys go through GitHub
+- Do not write BEM or custom CSS class selectors — use Tailwind utilities

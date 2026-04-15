@@ -1,8 +1,10 @@
 "use client"
 
-import { useBoundProp, useStateStore, type Components } from "@json-render/react"
+import { useStateStore, type Components } from "@json-render/react"
 import { AvailabilityPicker } from "@/lib/components/availability-picker"
+import { ServicePicker as ServicePickerComponent } from "@/lib/components/service-picker"
 import { ServiceMenu as ServiceMenuComponent } from "@/lib/components/service-menu"
+import { StaffPicker as StaffPickerComponent } from "@/lib/components/staff-picker"
 import { OrderSummary as OrderSummaryComponent } from "@/lib/components/order-summary"
 import { PreferenceForm as PreferenceFormComponent } from "@/lib/components/preference-form"
 
@@ -22,58 +24,23 @@ type RequestComponentKeys =
 
 export const requestComponents: Pick<Components<typeof catalog>, RequestComponentKeys> = {
   RequestHero: ({ props }) => (
-    <header className="request-hero">
-      <p className="request-hero__context">
+    <header className="m-0 px-0 pb-2">
+      <p className="m-0 mb-[0.15rem] text-base font-normal text-[var(--shell-accent)]">
         {props.shopName}
         {props.staffName ? <> &middot; {props.staffName}</> : null}
       </p>
-      <h1 className="request-hero__headline">{props.headline}</h1>
-      <p className="request-hero__subtitle">{props.subtitle}</p>
+      <h1 className="m-0 text-[1.35rem] leading-[1.15] font-semibold text-[var(--shell-text)] text-balance">
+        {props.headline}
+      </h1>
+      <p className="mt-1 mr-0 mb-0 ml-0 text-[0.85rem] leading-[1.5] text-[var(--shell-text-muted)] text-pretty">
+        {props.subtitle}
+      </p>
     </header>
   ),
 
-  ServicePicker: ({ props }) => {
-    const [selectedServiceId, setSelectedServiceId] = useBoundProp(
-      props.preselectedId,
-      "selectedServiceId"
-    )
-
-    return (
-      <fieldset className="service-picker">
-        <legend className="service-picker__legend">Select a service</legend>
-        <div className="service-picker__options">
-          {props.services.map((service) => {
-            const isSelected = selectedServiceId === service.id
-            return (
-              <label
-                key={service.id}
-                className={`service-picker__option${isSelected ? " service-picker__option--selected" : ""}`}
-                htmlFor={`service-${service.id}`}
-              >
-                <input
-                  checked={isSelected}
-                  className="service-picker__radio"
-                  id={`service-${service.id}`}
-                  name="selectedServiceId"
-                  type="radio"
-                  onChange={() => setSelectedServiceId(service.id)}
-                />
-                <span className="service-picker__row">
-                  <span className="service-picker__name">{service.name}</span>
-                  <span className="service-picker__meta">
-                    <span className="service-picker__duration">
-                      {service.duration}
-                    </span>
-                    <span className="service-picker__price">{service.price}</span>
-                  </span>
-                </span>
-              </label>
-            )
-          })}
-        </div>
-      </fieldset>
-    )
-  },
+  ServicePicker: ({ props }) => (
+    <ServicePickerComponent services={props.services} preselectedId={props.preselectedId} />
+  ),
 
   ServiceMenu: ({ props }) => (
     <ServiceMenuComponent
@@ -84,60 +51,9 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     />
   ),
 
-  StaffPicker: ({ props }) => {
-    const [selectedStaffId, setSelectedStaffId] = useBoundProp(
-      props.preselectedId,
-      "selectedStaffId"
-    )
-
-    return (
-      <fieldset className="staff-picker">
-        <legend className="staff-picker__legend">Select a staff member</legend>
-        <div className="staff-picker__options">
-          {props.staff.map((member) => {
-            const isSelected = selectedStaffId === member.id
-            return (
-              <label
-                key={member.id}
-                className={`staff-picker__card${isSelected ? " staff-picker__card--selected" : ""}`}
-                htmlFor={`staff-${member.id}`}
-              >
-                <input
-                  checked={isSelected}
-                  className="staff-picker__radio"
-                  id={`staff-${member.id}`}
-                  name="selectedStaffId"
-                  type="radio"
-                  onChange={() => setSelectedStaffId(member.id)}
-                />
-                {member.photoUrl ? (
-                  <img
-                    alt={member.name}
-                    className="staff-picker__photo"
-                    src={member.photoUrl}
-                  />
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className="staff-picker__photo staff-picker__photo--placeholder"
-                  />
-                )}
-                <span className="staff-picker__content">
-                  <span className="staff-picker__name">{member.name}</span>
-                  {member.role ? (
-                    <>
-                      <span className="staff-picker__sep" aria-hidden="true">&middot;</span>
-                      <span className="staff-picker__role">{member.role}</span>
-                    </>
-                  ) : null}
-                </span>
-              </label>
-            )
-          })}
-        </div>
-      </fieldset>
-    )
-  },
+  StaffPicker: ({ props }) => (
+    <StaffPickerComponent staff={props.staff} preselectedId={props.preselectedId} />
+  ),
 
   PreferenceForm: ({ props }) => (
     <PreferenceFormComponent
@@ -149,7 +65,9 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
   ),
 
   SurchargeBanner: ({ props }) => (
-    <div className="surcharge-banner">{props.message}</div>
+    <div className="mt-2 px-[0.85rem] py-[0.6rem] border-l-[3px] border-l-[var(--shell-accent)] bg-[rgba(199,164,106,0.1)] text-left text-[0.9rem] font-semibold text-[var(--shell-accent)]">
+      {props.message}
+    </div>
   ),
 
   AvailabilityPicker: ({ props }) => {
@@ -175,25 +93,40 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
   ),
 
   SubmitButton: ({ props, emit, loading }) => (
-    <div className="submit-section">
-      <p className="submit-section__consent">
+    <div className="mt-4">
+      <p className="mb-2 text-[0.75rem] leading-[1.5] text-[var(--shell-text-subtle)] text-pretty">
         By submitting, you agree to receive appointment-related messages via
         text from this shop (powered by Koureia). Message &amp; data rates may
         apply. Reply STOP to opt out.
       </p>
-      <div className="submit-section__legal">
-        <a href="https://koureia.com/terms" target="_blank" rel="noopener noreferrer">
+      <div className="mb-3 flex gap-3">
+        <a
+          className="text-[0.7rem] text-[var(--shell-text-muted)] underline underline-offset-[2px] hover:text-[var(--shell-accent)]"
+          href="https://koureia.com/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Terms of Service
         </a>
-        <a href="https://koureia.com/privacy" target="_blank" rel="noopener noreferrer">
+        <a
+          className="text-[0.7rem] text-[var(--shell-text-muted)] underline underline-offset-[2px] hover:text-[var(--shell-accent)]"
+          href="https://koureia.com/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Privacy Policy
         </a>
-        <a href="https://koureia.com/sms-consent" target="_blank" rel="noopener noreferrer">
+        <a
+          className="text-[0.7rem] text-[var(--shell-text-muted)] underline underline-offset-[2px] hover:text-[var(--shell-accent)]"
+          href="https://koureia.com/sms-consent"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           SMS Policy
         </a>
       </div>
       <button
-        className="submit-button"
+        className="mb-2 inline-flex min-h-11 w-full items-center justify-center rounded-full border-0 bg-[var(--shell-accent)] px-5 py-[0.65rem] text-[0.9rem] font-bold text-[var(--shell-accent-contrast)] shadow-[0_12px_28px_rgba(199,164,106,0.15)] hover:-translate-y-px hover:bg-[var(--shell-accent-strong)] disabled:cursor-wait disabled:opacity-72"
         disabled={loading}
         type="button"
         onClick={() => emit("submit")}
@@ -204,12 +137,22 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
   ),
 
   ConfirmationMessage: ({ props }) => (
-    <div className="confirmation-message" role="status">
-      <div aria-hidden="true" className="confirmation-message__check">
+    <div
+      className="m-0 rounded-[2rem] border border-[var(--shell-border)] bg-[rgba(228,231,239,0.04)] px-6 py-8 text-center"
+      role="status"
+    >
+      <div
+        aria-hidden="true"
+        className="inline-flex size-14 items-center justify-center rounded-full bg-[rgba(199,164,106,0.14)] text-[1.8rem] text-[var(--shell-accent)]"
+      >
         ✓
       </div>
-      <h2 className="confirmation-message__headline">{props.headline}</h2>
-      <p className="confirmation-message__body">{props.body}</p>
+      <h2 className="mt-4 text-[1.8rem] leading-[1.15] text-[var(--shell-text)] text-balance">
+        {props.headline}
+      </h2>
+      <p className="mx-auto mt-[0.85rem] max-w-[34rem] text-[var(--shell-text-muted)] text-pretty">
+        {props.body}
+      </p>
     </div>
   ),
 }

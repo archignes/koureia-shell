@@ -129,7 +129,7 @@ export function RequestRenderer({
   }
 
   return (
-    <div className="request-flow-container">
+    <div className="mx-auto w-full max-w-md snap-y snap-proximity px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
       {error ? (
         <div
           className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
