@@ -134,6 +134,42 @@ export const catalog = defineCatalog(schema, {
       }),
       description: "Configurable preference capture form -- only renders fields listed in the fields array",
     },
+    ServiceMenu: {
+      props: z.object({
+        primary: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            duration: z.string(),
+            price: z.string(),
+          })
+        ),
+        extras: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            duration: z.string(),
+            price: z.string(),
+          })
+        ),
+        preselectedId: z.string().optional(),
+      }),
+      description: "Service menu with primary single-select and extras multi-select",
+    },
+    SurchargeBanner: {
+      props: z.object({
+        message: z.string(),
+      }),
+      description: "Banner displaying after-hours surcharge info",
+    },
+    AvailabilityPicker: {
+      props: z.object({
+        minAdvanceHours: z.number().optional(),
+        surchargeCents: z.number().optional(),
+        shopTimezone: z.string().optional(),
+      }),
+      description: "Calendar date picker with time slot selection for after-hours booking",
+    },
     SubmitButton: {
       props: z.object({
         label: z.string(),

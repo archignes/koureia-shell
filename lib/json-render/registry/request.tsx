@@ -1,13 +1,18 @@
 "use client"
 
-import { useBoundProp, type Components } from "@json-render/react"
+import { useBoundProp, useStateStore, type Components } from "@json-render/react"
+import { AvailabilityPicker } from "@/lib/components/availability-picker"
+import { ServiceMenu as ServiceMenuComponent } from "@/lib/components/service-menu"
 
 import { catalog } from "../catalog"
 
 type RequestComponentKeys =
   | "RequestHero"
   | "ServicePicker"
+  | "ServiceMenu"
   | "StaffPicker"
+  | "SurchargeBanner"
+  | "AvailabilityPicker"
   | "PreferenceForm"
   | "SubmitButton"
   | "ConfirmationMessage"
@@ -19,17 +24,12 @@ function formatDateInputValue(date: Date) {
 export const requestComponents: Pick<Components<typeof catalog>, RequestComponentKeys> = {
   RequestHero: ({ props }) => (
     <header className="request-hero">
+      <p className="request-hero__context">
+        {props.shopName}
+        {props.staffName ? <> &middot; {props.staffName}</> : null}
+      </p>
       <h1 className="request-hero__headline">{props.headline}</h1>
       <p className="request-hero__subtitle">{props.subtitle}</p>
-      <p className="request-hero__context">
-        <small>at {props.shopName}</small>
-        {props.staffName ? (
-          <>
-            {" "}
-            <small>with {props.staffName}</small>
-          </>
-        ) : null}
-      </p>
     </header>
   ),
 
@@ -75,6 +75,14 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
       </fieldset>
     )
   },
+
+  ServiceMenu: ({ props }) => (
+    <ServiceMenuComponent
+      primary={props.primary}
+      extras={props.extras}
+      preselectedId={props.preselectedId}
+    />
+  ),
 
   StaffPicker: ({ props }) => {
     const [selectedStaffId, setSelectedStaffId] = useBoundProp(
@@ -244,6 +252,25 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
       <div className="preference-form">
         {props.fields.map((field) => fieldRenderers[field]?.())}
       </div>
+    )
+  },
+
+  SurchargeBanner: ({ props }) => (
+    <div className="surcharge-banner">{props.message}</div>
+  ),
+
+  AvailabilityPicker: ({ props }) => {
+    const { update } = useStateStore()
+    return (
+      <AvailabilityPicker
+        minAdvanceHours={props.minAdvanceHours}
+        shopTimezone={props.shopTimezone}
+        onSlotSelect={(date, slot) => update({
+          preferredDate: date,
+          preferredSlotStart: slot.start,
+          preferredSlotEnd: slot.end,
+        })}
+      />
     )
   },
 
