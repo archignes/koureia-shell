@@ -1,24 +1,17 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { DayPicker } from "react-day-picker"
-import {
-  mockAvailabilityResponse,
-  type AvailabilitySlot,
-} from "@/lib/mock-availability"
-import { cn } from "@/lib/utils"
+import { fetchAvailability, type AvailabilitySlot } from "@/lib/availability"
+import { cn, formatTime } from "@/lib/utils"
 
 type AvailabilityPickerProps = {
   onSlotSelect: (date: string, slot: AvailabilitySlot) => void
+  apiUrl?: string
+  shopSlug: string
+  staffId?: string
   minAdvanceHours?: number
   shopTimezone?: string
-}
-
-function formatSlotTime(time24: string) {
-  const [h, m] = time24.split(":").map(Number)
-  const suffix = h >= 12 ? "PM" : "AM"
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-  return `${h12}:${m.toString().padStart(2, "0")} ${suffix}`
 }
 
 function toDateString(date: Date) {
@@ -27,15 +20,19 @@ function toDateString(date: Date) {
 
 export function AvailabilityPicker({
   onSlotSelect,
+  apiUrl,
+  shopSlug,
+  staffId,
   minAdvanceHours = 24,
   shopTimezone,
 }: AvailabilityPickerProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
   const [timezone, setTimezone] = useState<string>("")
-  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(
-    null
-  )
+  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   const today = new Date()
   const minDate = new Date(today.getTime() + minAdvanceHours * 60 * 60 * 1000)
@@ -43,16 +40,41 @@ export function AvailabilityPicker({
   maxDate.setDate(maxDate.getDate() + 30)
 
   const handleDateSelect = useCallback(
-    (date: Date | undefined) => {
+    async (date: Date | undefined) => {
       if (!date) return
       setSelectedDate(date)
       setSelectedSlot(null)
+      setError(false)
+      setLoading(true)
 
-      const response = mockAvailabilityResponse(toDateString(date))
-      setSlots(response.slots)
-      setTimezone(shopTimezone ?? response.timezone)
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      try {
+        const response = await fetchAvailability({
+          apiUrl,
+          shopSlug,
+          staffId,
+          date: toDateString(date),
+          signal: controller.signal,
+        })
+        if (response.error) {
+          setSlots([])
+          setError(true)
+        } else {
+          setSlots(response.slots)
+          setTimezone(shopTimezone ?? response.timezone)
+        }
+      } catch (e) {
+        if ((e as Error).name === "AbortError") return
+        setSlots([])
+        setError(true)
+      } finally {
+        setLoading(false)
+      }
     },
-    []
+    [apiUrl, shopSlug, staffId, shopTimezone]
   )
 
   const handleSlotClick = useCallback(
@@ -88,13 +110,25 @@ export function AvailabilityPicker({
           </p>
         )}
 
-        {selectedDate && slots.length === 0 && (
+        {selectedDate && loading && (
+          <p className="px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
+            Loading available times…
+          </p>
+        )}
+
+        {selectedDate && !loading && error && (
+          <p className="px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
+            Couldn't load availability. Please try another date.
+          </p>
+        )}
+
+        {selectedDate && !loading && !error && slots.length === 0 && (
           <p className="px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
             No available times on this date.
           </p>
         )}
 
-        {selectedDate && slots.length > 0 && (
+        {selectedDate && !loading && !error && slots.length > 0 && (
           <>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2 max-sm:grid-cols-1">
               {slots.map((slot) => (
@@ -108,7 +142,7 @@ export function AvailabilityPicker({
                   )}
                   onClick={() => handleSlotClick(slot)}
                 >
-                  {formatSlotTime(slot.start)}
+                  {formatTime(slot.start)}
                 </button>
               ))}
             </div>

@@ -74,6 +74,9 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     const { update } = useStateStore()
     return (
       <AvailabilityPicker
+        apiUrl={props.apiUrl}
+        shopSlug={props.shopSlug}
+        staffId={props.staffId}
         minAdvanceHours={props.minAdvanceHours}
         shopTimezone={props.shopTimezone}
         onSlotSelect={(date, slot) => update({
