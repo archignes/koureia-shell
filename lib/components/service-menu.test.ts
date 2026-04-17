@@ -33,6 +33,9 @@ function loadSplitServiceName() {
         Fragment: Symbol.for("react.fragment"),
       }
     }
+    if (id === "@/lib/utils") {
+      return { cn: (...args: unknown[]) => args.filter(Boolean).join(" ") }
+    }
     throw new Error(`Unexpected import: ${id}`)
   }
 
