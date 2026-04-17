@@ -352,7 +352,7 @@ function buildRequestSpec({
     root: "container",
     elements,
     state: {
-      selectedStaffId: preselectedStaffId,
+      selectedStaffId: variant === "waitlist" ? undefined : preselectedStaffId,
       selectedServiceId: preselectedServiceId,
       source,
       serviceStaffMap,
