@@ -100,8 +100,8 @@ export function RequestRenderer({
       setError("Please acknowledge the booking terms to continue.")
       return
     }
-    if (!state.selectedServiceId || !state.preferredDate || !state.preferredSlotStart) {
-      setError("Please select a service, date, and time.")
+    if (!state.selectedServiceId || !state.selectedStaffId || !state.preferredDate || !state.preferredSlotStart) {
+      setError("Please select a service, staff member, date, and time.")
       return
     }
     if (!state.name?.trim() || !state.phone?.trim()) {
@@ -115,7 +115,7 @@ export function RequestRenderer({
         apiUrl,
         shopSlug,
         serviceId: state.selectedServiceId,
-        staffId: state.selectedStaffId ?? "",
+        staffId: state.selectedStaffId,
         date: state.preferredDate,
         slotStart: state.preferredSlotStart,
       })
@@ -124,11 +124,19 @@ export function RequestRenderer({
       const request = buildRequestPayload({
         shopId, shopSlug, state, variant, waitlistId,
       })
-      await fetch(`${apiUrl}${request.path}`, {
+      const requestResponse = await fetch(`${apiUrl}${request.path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request.body),
       })
+      if (!requestResponse.ok) {
+        // Hold was created successfully — slot is reserved. Log the
+        // notification failure but still show success to the customer.
+        console.error(
+          "[koureia-shell] booking request failed after hold creation:",
+          requestResponse.status
+        )
+      }
 
       const serviceName = state.allFormattedServices?.find(
         (s) => s.id === state.selectedServiceId
