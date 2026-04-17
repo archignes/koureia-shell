@@ -3,6 +3,11 @@ import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import type { Spec } from "@json-render/core"
 import { resolveSiteSpec, resolveTenant } from "@/lib/tenant"
+import {
+  fetchBookingContext,
+  mockAfterHoursStaffIds,
+  type BookingContext,
+} from "@/lib/booking-context"
 import { RequestRenderer } from "./after-hours/request-renderer"
 
 export type BookingRequestVariant = "after-hours" | "waitlist"
@@ -14,26 +19,6 @@ type SharedPageProps = {
 }
 
 export type BookingRequestPageProps = Omit<SharedPageProps, "variant">
-
-type BookingContext = {
-  shop: {
-    id: string
-    slug: string
-  }
-  staff: Array<{
-    id: string
-    name: string
-    role: string
-  }>
-  services: Array<{
-    id: string
-    name: string
-    duration_minutes: number
-    price_cents: number
-    price_display: string | null
-    staff_ids: string[]
-  }>
-}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -71,8 +56,12 @@ export async function BookingRequestPage({
 
   const host = headersList.get("host") ?? ""
   const normalizedHost = host.toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "")
+  const isLocalDev = normalizedHost === "localhost" || normalizedHost === "127.0.0.1"
+  const tenantDomain = isLocalDev
+    ? (domain.includes(".") ? domain : `${domain}.koureia.com`)
+    : (normalizedHost || domain)
 
-  const tenant = await resolveTenant(normalizedHost || domain)
+  const tenant = await resolveTenant(tenantDomain)
 
   if (!tenant) {
     notFound()
@@ -98,10 +87,25 @@ export async function BookingRequestPage({
   const requestedSource = getSingleParam(query.source)
   const requestedEntry = getSingleParam(query.entry)
 
-  const selectedStaff =
-    requestedStaffId
-      ? bookingContext.staff.find((member) => member.id === requestedStaffId)
-      : undefined
+  // Use real after_hours policy from API, or mock for dev until API is ready
+  const afterHours = bookingContext.after_hours ?? (variant === "after-hours" ? {
+    enabled: true,
+    surcharge_cents: 10000,
+    surcharge_display: "+$100 after-hours fee added to the service total",
+    min_advance_hours: 24,
+    staff_ids: mockAfterHoursStaffIds(bookingContext.staff),
+  } : null)
+
+  // Auto-select staff from after-hours policy if single staff member
+  const effectiveStaffId =
+    requestedStaffId ??
+    (variant === "after-hours" && afterHours?.staff_ids.length === 1
+      ? afterHours.staff_ids[0]
+      : undefined)
+
+  const selectedStaff = effectiveStaffId
+    ? bookingContext.staff.find((member) => member.id === effectiveStaffId)
+    : undefined
 
   const selectedService =
     requestedServiceId
@@ -114,7 +118,18 @@ export async function BookingRequestPage({
       : undefined
 
   const source = requestedSource === "sms-refinement" ? "sms-refinement" : variant
-  const services = selectedService ? [selectedService] : bookingContext.services
+
+  // Filter services: pre-selected takes priority, then staff-based filtering for after-hours
+  const baseServices = selectedService
+    ? [selectedService]
+    : selectedStaff
+      ? bookingContext.services.filter((s) => s.staff_ids.includes(selectedStaff.id))
+      : bookingContext.services
+
+  // Hide the catch-all "AFTER HOURS" service on the after-hours page
+  const services = variant === "after-hours"
+    ? baseServices.filter((s) => !s.name.toUpperCase().includes("AFTER HOURS"))
+    : baseServices
 
   const spec = buildRequestSpec({
     shopName: siteSpec.shop.name,
@@ -124,7 +139,7 @@ export async function BookingRequestPage({
     staff: bookingContext.staff,
     preselectedServiceId: selectedService?.id,
     preselectedStaffId: selectedStaff?.id,
-    staffName: selectedStaff?.name,
+    staffName: selectedStaff?.name?.split(" ")[0],
   })
 
   return (
@@ -141,28 +156,6 @@ export async function BookingRequestPage({
 
 function formatBookingRequestTitle(variant: BookingRequestVariant) {
   return variant === "after-hours" ? "After-Hours Booking" : "Join Waitlist"
-}
-
-async function fetchBookingContext(apiUrl: string, slug: string): Promise<BookingContext | null> {
-  try {
-    const response = await fetch(
-      `${apiUrl}/api/booking/context?shop=${encodeURIComponent(slug)}`,
-      { next: { revalidate: 60 } },
-    )
-
-    if (response.status === 404) {
-      return null
-    }
-
-    if (!response.ok) {
-      throw new Error(`API error ${response.status}`)
-    }
-
-    return (await response.json()) as BookingContext
-  } catch (error) {
-    console.error("[koureia-shell] fetchBookingContext failed:", error)
-    return null
-  }
 }
 
 function buildRequestSpec({

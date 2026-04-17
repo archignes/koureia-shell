@@ -128,7 +128,8 @@ function buildRequestPayload({
         staffId: toNullableString(state.selectedStaffId),
         flexibleDates: toNonEmptyString(state.flexibleDates),
         notes: toNonEmptyString(state.notes),
-        source: "public" as const,
+        source: isRequestSource(state.source) ? state.source : "public",
+        waitlistId,
       },
     }
   }
