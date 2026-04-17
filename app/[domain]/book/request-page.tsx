@@ -131,12 +131,17 @@ export async function BookingRequestPage({
     ? baseServices.filter((s) => !s.name.toUpperCase().includes("AFTER HOURS"))
     : baseServices
 
+  // Filter staff to after-hours eligible members when policy exists
+  const staff = variant === "after-hours" && afterHours
+    ? bookingContext.staff.filter((m) => afterHours.staff_ids.includes(m.id))
+    : bookingContext.staff
+
   const spec = buildRequestSpec({
     shopName: siteSpec.shop.name,
     source,
     variant,
     services,
-    staff: bookingContext.staff,
+    staff,
     preselectedServiceId: selectedService?.id,
     preselectedStaffId: selectedStaff?.id,
     staffName: selectedStaff?.name?.split(" ")[0],
