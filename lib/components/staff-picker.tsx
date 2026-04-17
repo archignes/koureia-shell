@@ -1,6 +1,6 @@
 "use client"
 
-import { useBoundProp } from "@json-render/react"
+import { useStateBinding } from "@json-render/react"
 import { cn } from "@/lib/utils"
 
 type StaffMember = {
@@ -16,9 +16,8 @@ type StaffPickerProps = {
   allowNoPreference?: boolean
 }
 
-export function StaffPicker({ staff, preselectedId, allowNoPreference }: StaffPickerProps) {
-  const [selectedStaffId, setSelectedStaffId] = useBoundProp<string | undefined>(
-    preselectedId,
+export function StaffPicker({ staff, allowNoPreference }: StaffPickerProps) {
+  const [selectedStaffId, setSelectedStaffId] = useStateBinding<string | undefined>(
     "selectedStaffId"
   )
 
