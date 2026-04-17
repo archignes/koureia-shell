@@ -106,8 +106,12 @@ export async function BookingRequestPage({
       ? afterHours.staff_ids[0]
       : undefined)
 
+  // Match staff by ID or by display name (case-insensitive first name match)
   const selectedStaff = effectiveStaffId
-    ? bookingContext.staff.find((member) => member.id === effectiveStaffId)
+    ? bookingContext.staff.find((member) =>
+        member.id === effectiveStaffId ||
+        member.name.split(" ")[0].toLowerCase() === effectiveStaffId.toLowerCase()
+      )
     : undefined
 
   const selectedService =
@@ -129,10 +133,8 @@ export async function BookingRequestPage({
       ? bookingContext.services.filter((s) => s.staff_ids.includes(selectedStaff.id))
       : bookingContext.services
 
-  // Hide the catch-all "AFTER HOURS" service on the after-hours page
-  const services = variant === "after-hours"
-    ? baseServices.filter((s) => !s.name.toUpperCase().includes("AFTER HOURS"))
-    : baseServices
+  // Hide the catch-all "AFTER HOURS" service — it's a booking-type marker, not a real service
+  const services = baseServices.filter((s) => !s.name.toUpperCase().includes("AFTER HOURS"))
 
   // Filter staff to after-hours eligible members when policy exists
   const staff = variant === "after-hours" && afterHours

@@ -33,10 +33,9 @@ export function RequestRenderer({
     (initialSpec.state as RequestState | undefined)?.selectedStaffId
   )
 
-  // Filter displayed services by selected staff — after-hours only.
-  // Waitlist always shows all services regardless of staff selection.
+  // Filter displayed services by selected staff.
+  // No staff selected → show all services.
   useEffect(() => {
-    if (variant === "waitlist") return
     return store.subscribe(() => {
       const state = store.getSnapshot() as RequestState
       const staffId = state.selectedStaffId
@@ -66,7 +65,7 @@ export function RequestRenderer({
         },
       }))
     })
-  }, [store, variant])
+  }, [store])
 
   async function handleSubmit() {
     setError(null)
@@ -74,6 +73,20 @@ export function RequestRenderer({
 
     if (variant === "after-hours") {
       await handleAfterHoursSubmit(state)
+      return
+    }
+
+    // Waitlist validation
+    if (!state.selectedServiceId) {
+      setError("Please select a service.")
+      return
+    }
+    if (!state.flexibleDates?.trim()) {
+      setError("Please let us know when works for you.")
+      return
+    }
+    if (!state.name?.trim()) {
+      setError("Please enter your name.")
       return
     }
 
