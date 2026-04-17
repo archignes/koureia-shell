@@ -38,8 +38,10 @@ export async function fetchAvailability(opts: {
   }
 
   try {
+    // Fetch through the shell's own API route to avoid CORS issues
+    // (client-side fetch to koureia.com from *.koureia.com is cross-origin)
     const response = await fetch(
-      `${apiUrl}/api/booking/availability?${params.toString()}`,
+      `/api/booking/availability?${params.toString()}`,
       { signal }
     )
 
