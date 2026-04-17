@@ -1,20 +1,20 @@
-import tseslint from "typescript-eslint"
+import { createConfig } from '@hypandra/lint';
 
-export default tseslint.config(
+export default [
+  ...createConfig({
+    next: true,
+    ignores: ['.next/**', 'postcss.config.mjs', 'eslint.config.mjs'],
+  }),
   {
-    ignores: [".next/**", "node_modules/**"],
-  },
-  ...tseslint.configs.recommended,
-  {
-    files: ["next-env.d.ts"],
     rules: {
-      "@typescript-eslint/triple-slash-reference": "off",
+      'max-lines': ['warn', { max: 300, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
     },
   },
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ['**/*.test.{ts,tsx}'],
     rules: {
-      "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
+      '@next/next/no-assign-module-variable': 'off',
     },
   },
-)
+];

@@ -21,6 +21,7 @@
     "zod": "4"
   },
   "devDependencies": {
+    "@hypandra/lint": "0.2.0",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^22",
     "@types/react": "^19",
