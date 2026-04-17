@@ -1,9 +1,9 @@
 "use client"
 
 import { JSONUIProvider, Renderer, createStateStore } from "@json-render/react"
-import { useMemo, useState } from "react"
-import type { Spec } from "@json-render/core"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { registry } from "@/lib/json-render/registry"
+import type { Spec } from "@json-render/core"
 import type { BookingRequestVariant } from "../request-page"
 
 type RequestRendererProps = {
@@ -18,6 +18,13 @@ type RequestRendererProps = {
 type RequestSource = "after-hours" | "waitlist" | "sms-refinement"
 type TimeWindow = "morning" | "afternoon" | "evening" | "anytime"
 
+type FormattedService = {
+  id: string
+  name: string
+  duration: string
+  price: string
+}
+
 type RequestState = {
   selectedServiceId?: string
   selectedStaffId?: string
@@ -27,8 +34,14 @@ type RequestState = {
   dateRange?: string
   flexibleDates?: string
   timeWindow?: TimeWindow
+  preferredDate?: string
+  preferredSlotStart?: string
+  preferredSlotEnd?: string
+  surchargeCents?: number
   notes?: string
   source?: RequestSource
+  serviceStaffMap?: Record<string, string[]>
+  allFormattedServices?: FormattedService[]
 }
 
 export function RequestRenderer({
@@ -42,18 +55,46 @@ export function RequestRenderer({
   const [spec, setSpec] = useState(initialSpec)
   const [error, setError] = useState<string | null>(null)
   const store = useMemo(() => createStateStore(initialSpec.state ?? {}), [initialSpec])
+  const lastStaffIdRef = useRef<string | undefined>(
+    (initialSpec.state as RequestState | undefined)?.selectedStaffId
+  )
+
+  useEffect(() => {
+    return store.subscribe(() => {
+      const state = store.getSnapshot() as RequestState
+      const staffId = state.selectedStaffId
+
+      if (staffId === lastStaffIdRef.current) return
+      lastStaffIdRef.current = staffId
+
+      const allServices = state.allFormattedServices
+      const staffMap = state.serviceStaffMap
+      if (!allServices || !staffMap) return
+
+      const filtered = staffId
+        ? allServices.filter((s) => staffMap[s.id]?.includes(staffId))
+        : allServices
+
+      setSpec((prev) => ({
+        ...prev,
+        elements: {
+          ...prev.elements,
+          "service-pick": {
+            ...prev.elements["service-pick"],
+            props: {
+              ...prev.elements["service-pick"].props,
+              services: filtered.length > 0 ? filtered : allServices,
+            },
+          },
+        },
+      }))
+    })
+  }, [store])
 
   async function handleSubmit() {
     setError(null)
 
     const state = store.getSnapshot() as RequestState
-    if (
-      variant === "after-hours" &&
-      !(toNonEmptyString(state.dateRange) && isTimeWindow(state.timeWindow))
-    ) {
-      setError("Select a preferred date and time window before sending your request.")
-      return
-    }
     const request = buildRequestPayload({
       shopId,
       shopSlug,
@@ -87,7 +128,7 @@ export function RequestRenderer({
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
+    <div className="mx-auto w-full max-w-md snap-y snap-proximity px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
       {error ? (
         <div
           className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
@@ -142,7 +183,10 @@ function buildRequestPayload({
       staffId: toNonEmptyString(state.selectedStaffId),
       clientName: toNonEmptyString(state.name),
       clientPhone: normalizePhoneForApi(state.phone),
-      preferredDate: toNonEmptyString(state.dateRange),
+      preferredDate:
+        toNonEmptyString(state.preferredDate) ?? toNonEmptyString(state.dateRange),
+      preferredSlotStart: toNonEmptyString(state.preferredSlotStart),
+      preferredSlotEnd: toNonEmptyString(state.preferredSlotEnd),
       timeWindow: isTimeWindow(state.timeWindow) ? state.timeWindow : undefined,
       notes: toNonEmptyString(state.notes),
       source: isRequestSource(state.source) ? state.source : "waitlist",
@@ -168,7 +212,7 @@ function buildConfirmationSpec(variant: BookingRequestVariant): Spec {
           body:
             variant === "waitlist"
               ? "We'll reach out when a slot opens."
-              : "We’ll review your preferences and follow up to confirm a time.",
+              : "We'll review your preferences and follow up to confirm a time.",
         },
       },
     },
