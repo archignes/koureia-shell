@@ -1,14 +1,8 @@
+import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import type { Spec } from "@json-render/core"
 import { resolveSiteSpec, resolveTenant } from "@/lib/tenant"
-import { formatDuration, formatPrice } from "@/lib/format"
-import {
-  fetchBookingContext,
-  splitServices,
-  mockAfterHoursStaffIds,
-  type BookingContext,
-} from "@/lib/booking-context"
 import { RequestRenderer } from "./after-hours/request-renderer"
 
 export type BookingRequestVariant = "after-hours" | "waitlist"
@@ -19,7 +13,50 @@ type SharedPageProps = {
   variant: BookingRequestVariant
 }
 
+export type BookingRequestPageProps = Omit<SharedPageProps, "variant">
+
+type BookingContext = {
+  shop: {
+    id: string
+    slug: string
+  }
+  staff: Array<{
+    id: string
+    name: string
+    role: string
+  }>
+  services: Array<{
+    id: string
+    name: string
+    duration_minutes: number
+    price_cents: number
+    price_display: string | null
+    staff_ids: string[]
+  }>
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export async function generateBookingRequestMetadata({
+  params,
+  variant,
+}: {
+  params: BookingRequestPageProps["params"]
+  variant: BookingRequestVariant
+}): Promise<Metadata> {
+  const { domain } = await params
+  const tenant = await resolveTenant(domain)
+
+  if (!tenant) {
+    return {
+      title: formatBookingRequestTitle(variant),
+    }
+  }
+
+  return {
+    title: `${formatBookingRequestTitle(variant)} | ${tenant.name}`,
+  }
+}
 
 export async function BookingRequestPage({
   params,
@@ -34,12 +71,8 @@ export async function BookingRequestPage({
 
   const host = headersList.get("host") ?? ""
   const normalizedHost = host.toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "")
-  const isLocalDev = normalizedHost === "localhost" || normalizedHost === "127.0.0.1"
-  const tenantDomain = isLocalDev
-    ? (domain.includes(".") ? domain : `${domain}.koureia.com`)
-    : (normalizedHost || domain)
 
-  const tenant = await resolveTenant(tenantDomain)
+  const tenant = await resolveTenant(normalizedHost || domain)
 
   if (!tenant) {
     notFound()
@@ -65,25 +98,10 @@ export async function BookingRequestPage({
   const requestedSource = getSingleParam(query.source)
   const requestedEntry = getSingleParam(query.entry)
 
-  // Use real after_hours policy from API, or mock for dev until API is ready
-  const afterHours = bookingContext.after_hours ?? (variant === "after-hours" ? {
-    enabled: true,
-    surcharge_cents: 10000,
-    surcharge_display: "+$100 after-hours fee added to the service total",
-    min_advance_hours: 24,
-    staff_ids: mockAfterHoursStaffIds(bookingContext.staff),
-  } : null)
-
-  // Auto-select staff from after-hours policy if single staff member
-  const effectiveStaffId =
-    requestedStaffId ??
-    (variant === "after-hours" && afterHours?.staff_ids.length === 1
-      ? afterHours.staff_ids[0]
-      : undefined)
-
-  const selectedStaff = effectiveStaffId
-    ? bookingContext.staff.find((member) => member.id === effectiveStaffId)
-    : undefined
+  const selectedStaff =
+    requestedStaffId
+      ? bookingContext.staff.find((member) => member.id === requestedStaffId)
+      : undefined
 
   const selectedService =
     requestedServiceId
@@ -95,22 +113,8 @@ export async function BookingRequestPage({
       ? requestedEntry
       : undefined
 
-  const source =
-    requestedSource === "sms-refinement" ? "sms-refinement" : variant
-
-  // Pre-filter services by staff when staff is pre-selected
-  // Hide the catch-all "AFTER HOURS" service on the after-hours page
-  const baseServices = selectedService
-    ? [selectedService]
-    : selectedStaff
-      ? bookingContext.services.filter(
-          (s) => s.staff_ids.includes(selectedStaff.id)
-        )
-      : bookingContext.services
-
-  const services = variant === "after-hours"
-    ? baseServices.filter((s) => !s.name.toUpperCase().includes("AFTER HOURS"))
-    : baseServices
+  const source = requestedSource === "sms-refinement" ? "sms-refinement" : variant
+  const services = selectedService ? [selectedService] : bookingContext.services
 
   const spec = buildRequestSpec({
     shopName: siteSpec.shop.name,
@@ -120,21 +124,45 @@ export async function BookingRequestPage({
     staff: bookingContext.staff,
     preselectedServiceId: selectedService?.id,
     preselectedStaffId: selectedStaff?.id,
-    staffName: selectedStaff?.name.split(" ")[0],
-    afterHours: variant === "after-hours" && afterHours ? afterHours : undefined,
-    shopTimezone: bookingContext.shop.timezone,
-    apiUrl,
-    shopSlug: tenant.slug,
+    staffName: selectedStaff?.name,
   })
 
   return (
     <RequestRenderer
       apiUrl={apiUrl}
+      shopSlug={bookingContext.shop.slug}
       shopId={bookingContext.shop.id}
       spec={spec}
+      variant={variant}
       waitlistId={waitlistId}
     />
   )
+}
+
+function formatBookingRequestTitle(variant: BookingRequestVariant) {
+  return variant === "after-hours" ? "After-Hours Booking" : "Join Waitlist"
+}
+
+async function fetchBookingContext(apiUrl: string, slug: string): Promise<BookingContext | null> {
+  try {
+    const response = await fetch(
+      `${apiUrl}/api/booking/context?shop=${encodeURIComponent(slug)}`,
+      { next: { revalidate: 60 } },
+    )
+
+    if (response.status === 404) {
+      return null
+    }
+
+    if (!response.ok) {
+      throw new Error(`API error ${response.status}`)
+    }
+
+    return (await response.json()) as BookingContext
+  } catch (error) {
+    console.error("[koureia-shell] fetchBookingContext failed:", error)
+    return null
+  }
 }
 
 function buildRequestSpec({
@@ -146,10 +174,6 @@ function buildRequestSpec({
   preselectedServiceId,
   preselectedStaffId,
   staffName,
-  afterHours,
-  shopTimezone,
-  apiUrl,
-  shopSlug,
 }: {
   shopName: string
   source: "after-hours" | "waitlist" | "sms-refinement"
@@ -159,57 +183,28 @@ function buildRequestSpec({
   preselectedServiceId?: string
   preselectedStaffId?: string
   staffName?: string
-  afterHours?: {
-    surcharge_cents: number
-    surcharge_display: string
-    min_advance_hours: number
-  }
-  shopTimezone?: string
-  apiUrl?: string
-  shopSlug?: string
 }): Spec {
-  const fmt = (s: BookingContext["services"][number]) => ({
-    id: s.id,
-    name: s.name,
-    duration: formatDuration(s.duration_minutes),
-    price: formatPrice(s.price_cents, s.price_display),
-    priceCents: s.price_cents,
-  })
-
-  const allFormattedServices = services.map(fmt)
-  const serviceStaffMap: Record<string, string[]> = {}
-  for (const service of services) {
-    serviceStaffMap[service.id] = service.staff_ids
-  }
-
-  const isAfterHours = variant === "after-hours" && afterHours
-  const hideStaffPicker = isAfterHours && preselectedStaffId
-  const { primary, extras } = splitServices(services)
-
-  const children = isAfterHours
-    ? ["hero", "surcharge-banner", ...(hideStaffPicker ? [] : ["staff-pick"]),
-       "service-menu", "availability-pick", "contact-fields", "order-summary", "submit"]
-    : ["hero", ...(hideStaffPicker ? [] : ["staff-pick"]),
-       "service-pick", "prefs", "submit"]
-
   const elements: Spec["elements"] = {
     container: {
       type: "Container",
       props: {},
-      children,
+      children: ["hero", "staff-pick", "service-pick", "prefs", "submit"],
     },
     hero: {
       type: "RequestHero",
       props: {
         headline:
           variant === "after-hours"
-            ? "After-Hours Booking Request"
-            : "Request an appointment",
-        subtitle: staffName
-          ? `Choose a service and preferred time. ${staffName} will confirm by text.`
-          : "Pick your preferences and we'll confirm your time.",
+            ? "Request an after-hours appointment"
+            : "Join the Waitlist",
+        subtitle:
+          variant === "waitlist"
+            ? "Tell us what you're looking for and when works for you. We'll reach out when a slot opens."
+            : staffName
+              ? `Pick a time that works and ${staffName} will confirm.`
+              : "Pick your preferences and we'll confirm your time.",
         shopName,
-        staffName,
+        staffName: variant === "after-hours" ? staffName : undefined,
       },
     },
     "staff-pick": {
@@ -220,76 +215,47 @@ function buildRequestSpec({
           name: member.name,
           role: member.role,
         })),
-        preselectedId: preselectedStaffId,
+        allowNoPreference: variant === "waitlist",
+        preselectedId: variant === "after-hours" ? preselectedStaffId : undefined,
       },
     },
     "service-pick": {
       type: "ServicePicker",
       props: {
-        services: allFormattedServices,
+        services: services.map((service) => ({
+          id: service.id,
+          name: service.name,
+          duration: formatDuration(service.duration_minutes),
+          price: formatPrice(service.price_cents, service.price_display),
+        })),
         preselectedId: preselectedServiceId,
       },
     },
-    ...(isAfterHours ? {
-      "service-menu": {
-        type: "ServiceMenu",
-        props: {
-          primary: primary.map(fmt),
-          extras: extras.map(fmt),
-          preselectedId: preselectedServiceId,
-          sectionLabel: "Barber cuts",
-        },
+    prefs: {
+      type: "PreferenceForm",
+      props: {
+        fields:
+          variant === "waitlist"
+            ? ["flexibleDates", "notes", "name", "email", "phone"]
+            : ["name", "phone", "dateRange", "timeWindow", "notes"],
+        dateRangeLabel:
+          variant === "waitlist" ? "When works for you?" : undefined,
+        dateRangePlaceholder:
+          variant === "waitlist"
+            ? "e.g., Weekday evenings, any Saturday, flexible on timing..."
+            : undefined,
+        notesLabel:
+          variant === "waitlist" ? "What are you looking for?" : undefined,
+        notesPlaceholder:
+          variant === "waitlist"
+            ? "e.g., Color correction, balayage touch-up, first-time consultation..."
+            : "Anything we should know? First time, specific requests, etc.",
       },
-    } : {}),
-    ...(isAfterHours
-      ? {
-          "surcharge-banner": {
-            type: "SurchargeBanner",
-            props: {
-              message: afterHours.surcharge_display,
-            },
-          },
-          "availability-pick": {
-            type: "AvailabilityPicker",
-            props: {
-              apiUrl,
-              shopSlug,
-              staffId: preselectedStaffId,
-              minAdvanceHours: afterHours.min_advance_hours,
-              surchargeCents: afterHours.surcharge_cents,
-              shopTimezone,
-            },
-          },
-          "contact-fields": {
-            type: "PreferenceForm",
-            props: {
-              fields: ["name", "phone", "notes"],
-              notesPlaceholder:
-                "Special requests or notes",
-            },
-          },
-          "order-summary": {
-            type: "OrderSummary",
-            props: {
-              allServices: [...primary, ...extras].map(fmt),
-              surchargeCents: afterHours.surcharge_cents,
-            },
-          },
-        }
-      : {
-          prefs: {
-            type: "PreferenceForm",
-            props: {
-              fields: ["name", "phone", "dateRange", "timeWindow", "notes"],
-              notesPlaceholder:
-                "Special requests or notes",
-            },
-          },
-        }),
+    },
     submit: {
       type: "SubmitButton",
       props: {
-        label: "Send Request",
+        label: variant === "waitlist" ? "Join Waitlist" : "Send Request",
         submittingLabel: "Sending...",
       },
     },
@@ -299,14 +265,9 @@ function buildRequestSpec({
     root: "container",
     elements,
     state: {
-      selectedStaffId: preselectedStaffId,
+      selectedStaffId: variant === "after-hours" ? preselectedStaffId : undefined,
       selectedServiceId: preselectedServiceId,
       source,
-      serviceStaffMap,
-      allFormattedServices,
-      ...(isAfterHours
-        ? { surchargeCents: afterHours.surcharge_cents }
-        : {}),
     },
   }
 }
@@ -315,3 +276,21 @@ function getSingleParam(value: string | string[] | undefined) {
   return typeof value === "string" ? value : value?.[0]
 }
 
+function formatDuration(durationMinutes: number) {
+  return `${durationMinutes}min`
+}
+
+function formatPrice(priceCents: number, priceDisplay: string | null) {
+  if (priceDisplay?.trim()) {
+    return priceDisplay
+  }
+
+  const amount = priceCents / 100
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
+}

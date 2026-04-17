@@ -120,16 +120,19 @@ export const catalog = defineCatalog(schema, {
           })
         ),
         preselectedId: z.string().optional(),
+        allowNoPreference: z.boolean().optional(),
       }),
       description: "Avatar radio group for selecting a staff member",
     },
     PreferenceForm: {
       props: z.object({
         fields: z.array(
-          z.enum(["dateRange", "timeWindow", "notes", "phone", "name", "email"])
+          z.enum(["dateRange", "flexibleDates", "timeWindow", "notes", "phone", "name", "email"])
         ),
         dateRangeLabel: z.string().optional(),
+        dateRangePlaceholder: z.string().optional(),
         timeWindowLabel: z.string().optional(),
+        notesLabel: z.string().optional(),
         notesPlaceholder: z.string().optional(),
       }),
       description: "Configurable preference capture form -- only renders fields listed in the fields array",

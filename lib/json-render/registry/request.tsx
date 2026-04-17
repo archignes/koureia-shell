@@ -52,14 +52,16 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
   ),
 
   StaffPicker: ({ props }) => (
-    <StaffPickerComponent staff={props.staff} preselectedId={props.preselectedId} />
+    <StaffPickerComponent staff={props.staff} preselectedId={props.preselectedId} allowNoPreference={props.allowNoPreference} />
   ),
 
   PreferenceForm: ({ props }) => (
     <PreferenceFormComponent
       fields={props.fields}
       dateRangeLabel={props.dateRangeLabel}
+      dateRangePlaceholder={props.dateRangePlaceholder}
       timeWindowLabel={props.timeWindowLabel}
+      notesLabel={props.notesLabel}
       notesPlaceholder={props.notesPlaceholder}
     />
   ),

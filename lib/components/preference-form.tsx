@@ -6,7 +6,9 @@ import { useBoundProp, useStateStore } from "@json-render/react"
 type PreferenceFormProps = {
   fields: string[]
   dateRangeLabel?: string
+  dateRangePlaceholder?: string
   timeWindowLabel?: string
+  notesLabel?: string
   notesPlaceholder?: string
 }
 
@@ -18,9 +20,10 @@ const fieldClassName = "grid gap-[0.2rem]"
 const labelClassName = "text-[0.75rem] leading-[1.3] text-[var(--shell-text-muted)]"
 const inputClassName = "w-full rounded-lg border border-[var(--shell-border-strong)] bg-[var(--shell-bg-elevated)] px-3 py-2 text-[0.85rem] leading-[1.4] text-[var(--shell-text)] placeholder:text-[var(--shell-text-subtle)] focus:border-[var(--shell-accent)] focus:bg-[var(--shell-bg-soft)] focus:outline-none autofill:shadow-[inset_0_0_0_100px_var(--shell-bg-elevated)] autofill:[-webkit-text-fill-color:var(--shell-text)] autofill:caret-[var(--shell-text)]"
 
-export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesPlaceholder }: PreferenceFormProps) {
+export function PreferenceForm({ fields, dateRangeLabel, dateRangePlaceholder, timeWindowLabel, notesLabel, notesPlaceholder }: PreferenceFormProps) {
   const { set } = useStateStore()
   const [dateRange, setDateRange] = useBoundProp<string | undefined>(undefined, "dateRange")
+  const [flexibleDates, setFlexibleDates] = useBoundProp<string | undefined>(undefined, "flexibleDates")
   const [timeWindow, setTimeWindow] = useBoundProp<string | undefined>(undefined, "timeWindow")
   const [notes, setNotes] = React.useState("")
   const [phone, setPhone] = React.useState("")
@@ -114,9 +117,22 @@ export function PreferenceForm({ fields, dateRangeLabel, timeWindowLabel, notesP
         </select>
       </label>
     ),
+    flexibleDates: () => (
+      <label className={fieldClassName} htmlFor="preference-flexible-dates">
+        <span className={labelClassName}>{dateRangeLabel ?? "When works for you?"}</span>
+        <textarea
+          className={`${inputClassName} min-h-14 resize-y`}
+          id="preference-flexible-dates"
+          placeholder={dateRangePlaceholder ?? "e.g., Weekday evenings, any Saturday, flexible on timing..."}
+          rows={2}
+          value={flexibleDates ?? ""}
+          onChange={(e) => setFlexibleDates(e.target.value)}
+        />
+      </label>
+    ),
     notes: () => (
       <label className={fieldClassName} htmlFor="preference-notes">
-        <span className={labelClassName}>Notes <span className="text-[0.7rem] font-normal text-[var(--shell-text-subtle)]">(optional)</span></span>
+        <span className={labelClassName}>{notesLabel ?? "Notes"} <span className="text-[0.7rem] font-normal text-[var(--shell-text-subtle)]">(optional)</span></span>
         <textarea
           className={`${inputClassName} min-h-14 resize-y`}
           id="preference-notes"
