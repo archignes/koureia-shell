@@ -5,6 +5,9 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { registry } from "@/lib/json-render/registry"
 import type { Spec } from "@json-render/core"
 import type { BookingRequestVariant } from "../request-page"
+import { buildRequestPayload, type RequestState } from "@/lib/booking-payload"
+import { createBookingHold } from "@/lib/booking-api"
+import { formatTime } from "@/lib/utils"
 
 type RequestRendererProps = {
   spec: Spec
@@ -13,35 +16,6 @@ type RequestRendererProps = {
   apiUrl: string
   variant: BookingRequestVariant
   waitlistId?: string
-}
-
-type RequestSource = "after-hours" | "waitlist" | "sms-refinement"
-type TimeWindow = "morning" | "afternoon" | "evening" | "anytime"
-
-type FormattedService = {
-  id: string
-  name: string
-  duration: string
-  price: string
-}
-
-type RequestState = {
-  selectedServiceId?: string
-  selectedStaffId?: string
-  name?: string
-  email?: string
-  phone?: string
-  dateRange?: string
-  flexibleDates?: string
-  timeWindow?: TimeWindow
-  preferredDate?: string
-  preferredSlotStart?: string
-  preferredSlotEnd?: string
-  surchargeCents?: number
-  notes?: string
-  source?: RequestSource
-  serviceStaffMap?: Record<string, string[]>
-  allFormattedServices?: FormattedService[]
 }
 
 export function RequestRenderer({
@@ -93,31 +67,77 @@ export function RequestRenderer({
 
   async function handleSubmit() {
     setError(null)
-
     const state = store.getSnapshot() as RequestState
-    const request = buildRequestPayload({
-      shopId,
-      shopSlug,
-      state,
-      variant,
-      waitlistId,
-    })
 
+    if (variant === "after-hours") {
+      await handleAfterHoursSubmit(state)
+      return
+    }
+
+    const request = buildRequestPayload({ shopId, shopSlug, state, variant, waitlistId })
     try {
       const response = await fetch(`${apiUrl}${request.path}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request.body),
       })
-
       if (!response.ok) {
         const data = await response.json().catch(() => null)
         throw new Error(data?.error || "Something went wrong. Please try again.")
       }
+      setSpec(buildWaitlistSuccessSpec(variant))
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Something went wrong. Please try again.",
+      )
+    }
+  }
 
-      setSpec(buildConfirmationSpec(variant))
+  async function handleAfterHoursSubmit(state: RequestState) {
+    if (!state.policyAccepted) {
+      setError("Please acknowledge the booking terms to continue.")
+      return
+    }
+    if (!state.selectedServiceId || !state.preferredDate || !state.preferredSlotStart) {
+      setError("Please select a service, date, and time.")
+      return
+    }
+    if (!state.name?.trim() || !state.phone?.trim()) {
+      setError("Please enter your name and phone number.")
+      return
+    }
+
+    try {
+      // Create hold on the time slot
+      await createBookingHold({
+        apiUrl,
+        shopSlug,
+        serviceId: state.selectedServiceId,
+        staffId: state.selectedStaffId ?? "",
+        date: state.preferredDate,
+        slotStart: state.preferredSlotStart,
+      })
+
+      // Create booking request so staff is notified
+      const request = buildRequestPayload({
+        shopId, shopSlug, state, variant, waitlistId,
+      })
+      await fetch(`${apiUrl}${request.path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request.body),
+      })
+
+      const serviceName = state.allFormattedServices?.find(
+        (s) => s.id === state.selectedServiceId
+      )?.name
+      setSpec(buildAfterHoursSuccessSpec({
+        serviceName,
+        date: state.preferredDate,
+        slotStart: state.preferredSlotStart,
+      }))
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -144,66 +164,11 @@ export function RequestRenderer({
   )
 }
 
-function buildRequestPayload({
-  shopId,
-  shopSlug,
-  state,
-  variant,
-  waitlistId,
-}: {
-  shopId: string
-  shopSlug: string
-  state: RequestState
-  variant: BookingRequestVariant
-  waitlistId?: string
-}) {
-  if (variant === "waitlist") {
-    return {
-      path: "/api/booking/waitlist",
-      body: {
-        shopSlug,
-        clientName: toNonEmptyString(state.name),
-        clientEmail: toNonEmptyString(state.email),
-        clientPhone: normalizePhoneForApi(state.phone),
-        serviceId: toNonEmptyString(state.selectedServiceId),
-        staffId: toNullableString(state.selectedStaffId),
-        flexibleDates: toNonEmptyString(state.flexibleDates),
-        notes: toNonEmptyString(state.notes),
-        source: isRequestSource(state.source) ? state.source : "public",
-        waitlistId,
-      },
-    }
-  }
-
-  return {
-    path: "/api/booking/request",
-    body: {
-      shopId,
-      serviceId: toNonEmptyString(state.selectedServiceId),
-      staffId: toNonEmptyString(state.selectedStaffId),
-      clientName: toNonEmptyString(state.name),
-      clientPhone: normalizePhoneForApi(state.phone),
-      preferredDate:
-        toNonEmptyString(state.preferredDate) ?? toNonEmptyString(state.dateRange),
-      preferredSlotStart: toNonEmptyString(state.preferredSlotStart),
-      preferredSlotEnd: toNonEmptyString(state.preferredSlotEnd),
-      timeWindow: isTimeWindow(state.timeWindow) ? state.timeWindow : undefined,
-      notes: toNonEmptyString(state.notes),
-      source: isRequestSource(state.source) ? state.source : "waitlist",
-      waitlistId,
-    },
-  }
-}
-
-function buildConfirmationSpec(variant: BookingRequestVariant): Spec {
+function buildWaitlistSuccessSpec(variant: BookingRequestVariant): Spec {
   return {
     root: "container",
     elements: {
-      container: {
-        type: "Container",
-        props: {},
-        children: ["confirmation"],
-      },
+      container: { type: "Container", props: {}, children: ["confirmation"] },
       confirmation: {
         type: "ConfirmationMessage",
         props: {
@@ -219,43 +184,31 @@ function buildConfirmationSpec(variant: BookingRequestVariant): Spec {
   }
 }
 
-function toNonEmptyString(value: string | undefined) {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : undefined
-}
+function buildAfterHoursSuccessSpec(opts: {
+  serviceName?: string
+  date?: string
+  slotStart?: string
+}): Spec {
+  const dateStr = opts.date
+    ? new Date(opts.date + "T12:00:00").toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      })
+    : ""
 
-function toNullableString(value: string | undefined) {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : null
-}
-
-function normalizePhoneForApi(value: string | undefined) {
-  const trimmed = toNonEmptyString(value)
-  if (!trimmed) return undefined
-  if (/^\+[1-9]\d{1,14}$/.test(trimmed)) return trimmed
-
-  const digits = trimmed.replace(/\D/g, "")
-
-  if (digits.length === 10) {
-    return `+1${digits}`
+  return {
+    root: "container",
+    elements: {
+      container: { type: "Container", props: {}, children: ["success"] },
+      success: {
+        type: "BookingSuccess",
+        props: {
+          serviceName: opts.serviceName ?? "Your service",
+          date: dateStr,
+          time: opts.slotStart ? formatTime(opts.slotStart) : "",
+        },
+      },
+    },
   }
-
-  if (digits.length === 11 && digits.startsWith("1")) {
-    return `+${digits}`
-  }
-
-  return trimmed
-}
-
-function isRequestSource(value: string | undefined): value is RequestSource {
-  return value === "after-hours" || value === "waitlist" || value === "sms-refinement"
-}
-
-function isTimeWindow(value: string | undefined): value is TimeWindow {
-  return (
-    value === "morning" ||
-    value === "afternoon" ||
-    value === "evening" ||
-    value === "anytime"
-  )
 }
