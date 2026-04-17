@@ -206,6 +206,21 @@ export const catalog = defineCatalog(schema, {
       }),
       description: "Success message shown after form submission",
     },
+    PolicyConfirm: {
+      props: z.object({
+        message: z.string(),
+      }),
+      description: "Checkbox for policy/surcharge acknowledgment before booking",
+    },
+    BookingSuccess: {
+      props: z.object({
+        serviceName: z.string(),
+        date: z.string(),
+        time: z.string(),
+        holdExpiresAt: z.string().optional(),
+      }),
+      description: "Success screen after hold creation with appointment details",
+    },
     SiteFooter: {
       props: z.object({
         text: z.string(),

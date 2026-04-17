@@ -21,6 +21,8 @@ type RequestComponentKeys =
   | "PreferenceForm"
   | "SubmitButton"
   | "ConfirmationMessage"
+  | "PolicyConfirm"
+  | "BookingSuccess"
 
 export const requestComponents: Pick<Components<typeof catalog>, RequestComponentKeys> = {
   RequestHero: ({ props }) => (
@@ -158,6 +160,53 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
       </h2>
       <p className="mx-auto mt-[0.85rem] max-w-[34rem] text-[var(--shell-text-muted)] text-pretty">
         {props.body}
+      </p>
+    </div>
+  ),
+
+  PolicyConfirm: ({ props }) => {
+    const { state, set } = useStateStore()
+    const accepted = (state as Record<string, unknown>).policyAccepted as boolean | undefined
+    return (
+      <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--shell-border)] bg-[rgba(228,231,239,0.02)] px-3 py-3">
+        <input
+          type="checkbox"
+          checked={accepted ?? false}
+          onChange={(e) => set("policyAccepted", e.target.checked)}
+          className="mt-0.5 size-4 shrink-0 accent-[var(--shell-accent)]"
+        />
+        <span className="text-[0.8rem] leading-[1.5] text-[var(--shell-text-muted)]">
+          {props.message}
+        </span>
+      </label>
+    )
+  },
+
+  BookingSuccess: ({ props }) => (
+    <div
+      className="m-0 rounded-[2rem] border border-[var(--shell-border)] bg-[rgba(228,231,239,0.04)] px-6 py-8 text-center"
+      role="status"
+    >
+      <div
+        aria-hidden="true"
+        className="inline-flex size-14 items-center justify-center rounded-full bg-[rgba(199,164,106,0.14)] text-[1.8rem] text-[var(--shell-accent)]"
+      >
+        ✓
+      </div>
+      <h2 className="mt-4 text-[1.8rem] leading-[1.15] text-[var(--shell-text)] text-balance">
+        Your time is being held
+      </h2>
+      <div className="mx-auto mt-3 max-w-[28rem] rounded-xl border border-[rgba(199,164,106,0.15)] bg-[rgba(199,164,106,0.04)] px-4 py-3">
+        <p className="text-[0.95rem] font-medium text-[var(--shell-text)]">
+          {props.serviceName}
+        </p>
+        <p className="mt-1 text-[0.85rem] text-[var(--shell-text-muted)]">
+          {props.date} at {props.time}
+        </p>
+      </div>
+      <p className="mx-auto mt-4 max-w-[28rem] text-[0.85rem] leading-[1.6] text-[var(--shell-text-muted)] text-pretty">
+        We&apos;ve held this slot for you. You&apos;ll receive a confirmation
+        text shortly once your booking is approved.
       </p>
     </div>
   ),

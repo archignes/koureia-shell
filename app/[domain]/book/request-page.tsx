@@ -221,7 +221,8 @@ function buildRequestSpec({
 
   const children = isAfterHours
     ? ["hero", "surcharge-banner", ...(hideStaffPicker ? [] : ["staff-pick"]),
-       "service-menu", "availability-pick", "contact-fields", "order-summary", "submit"]
+       "service-menu", "availability-pick", "contact-fields", "order-summary",
+       "policy-confirm", "submit"]
     : variant === "waitlist"
       ? ["hero", "staff-pick", "service-pick", "prefs", "submit"]
       : ["hero", ...(hideStaffPicker ? [] : ["staff-pick"]),
@@ -312,6 +313,12 @@ function buildRequestSpec({
           surchargeCents: afterHours.surcharge_cents,
         },
       },
+      "policy-confirm": {
+        type: "PolicyConfirm",
+        props: {
+          message: `I acknowledge the ${afterHours.surcharge_display.toLowerCase()} and agree to receive booking-related texts.`,
+        },
+      },
     } : {}),
     ...(!isAfterHours ? {
       prefs: {
@@ -331,8 +338,12 @@ function buildRequestSpec({
     submit: {
       type: "SubmitButton",
       props: {
-        label: variant === "waitlist" ? "Join Waitlist" : "Send Request",
-        submittingLabel: "Sending...",
+        label: isAfterHours
+          ? "Confirm Booking"
+          : variant === "waitlist"
+            ? "Join Waitlist"
+            : "Send Request",
+        submittingLabel: isAfterHours ? "Booking..." : "Sending...",
       },
     },
   }
