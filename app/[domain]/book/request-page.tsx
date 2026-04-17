@@ -258,7 +258,7 @@ function buildRequestSpec({
       props: {
         staff: staff.map((member) => ({
           id: member.id,
-          name: member.name,
+          name: member.name.split(" ")[0],
           role: member.role,
         })),
         allowNoPreference: variant === "waitlist",
@@ -352,7 +352,7 @@ function buildRequestSpec({
     root: "container",
     elements,
     state: {
-      selectedStaffId: variant === "waitlist" ? undefined : preselectedStaffId,
+      selectedStaffId: preselectedStaffId,
       selectedServiceId: preselectedServiceId,
       source,
       serviceStaffMap,
