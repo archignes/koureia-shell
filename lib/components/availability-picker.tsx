@@ -9,6 +9,7 @@ type AvailabilityPickerProps = {
   onSlotSelect: (date: string, slot: AvailabilitySlot) => void
   apiUrl?: string
   shopSlug: string
+  serviceId?: string
   staffId?: string
   minAdvanceHours?: number
   shopTimezone?: string
@@ -22,6 +23,7 @@ export function AvailabilityPicker({
   onSlotSelect,
   apiUrl,
   shopSlug,
+  serviceId,
   staffId,
   minAdvanceHours = 24,
   shopTimezone,
@@ -55,6 +57,7 @@ export function AvailabilityPicker({
         const response = await fetchAvailability({
           apiUrl,
           shopSlug,
+          serviceId,
           staffId,
           date: toDateString(date),
           signal: controller.signal,
@@ -77,18 +80,21 @@ export function AvailabilityPicker({
         }
       }
     },
-    [apiUrl, shopSlug, staffId, shopTimezone]
+    [apiUrl, shopSlug, serviceId, staffId, shopTimezone]
   )
 
-  // Refetch when staffId changes and a date is already selected
+  // Refetch when staffId or serviceId changes and a date is already selected
   const prevStaffIdRef = useRef(staffId)
+  const prevServiceIdRef = useRef(serviceId)
   useEffect(() => {
-    if (prevStaffIdRef.current === staffId) return
+    const staffChanged = prevStaffIdRef.current !== staffId
+    const serviceChanged = prevServiceIdRef.current !== serviceId
     prevStaffIdRef.current = staffId
-    if (selectedDate) {
+    prevServiceIdRef.current = serviceId
+    if ((staffChanged || serviceChanged) && selectedDate) {
       handleDateSelect(selectedDate)
     }
-  }, [staffId, selectedDate, handleDateSelect])
+  }, [staffId, serviceId, selectedDate, handleDateSelect])
 
   const handleSlotClick = useCallback(
     (slot: AvailabilitySlot) => {

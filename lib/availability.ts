@@ -13,12 +13,13 @@ export type { AvailabilitySlot }
 export async function fetchAvailability(opts: {
   apiUrl?: string
   shopSlug: string
+  serviceId?: string
   staffId?: string
   date: string
   mode?: "regular" | "after_hours"
   signal?: AbortSignal
 }): Promise<AvailabilityResponse> {
-  const { apiUrl, shopSlug, staffId, date, mode = "after_hours", signal } = opts
+  const { apiUrl, shopSlug, serviceId, staffId, date, mode = "after_hours", signal } = opts
 
   if (!apiUrl) {
     return mockAvailabilityResponse(date, mode)
@@ -29,6 +30,9 @@ export async function fetchAvailability(opts: {
     date,
     mode,
   })
+  if (serviceId) {
+    params.set("serviceId", serviceId)
+  }
   if (staffId) {
     params.set("staff", staffId)
   }
