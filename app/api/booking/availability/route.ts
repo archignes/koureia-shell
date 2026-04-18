@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
   const shop = params.get("shop")
   const serviceId = params.get("serviceId")
   const date = params.get("date")
-  if (!shop || !serviceId) {
+  if (!shop) {
     return NextResponse.json(
-      { error: "shop and serviceId are required" },
+      { error: "shop is required" },
       { status: 400 },
     )
   }
