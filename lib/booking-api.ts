@@ -12,7 +12,6 @@ export type HoldResult = {
 }
 
 export async function createBookingHold(opts: {
-  apiUrl: string
   shopSlug: string
   serviceId: string
   staffId: string
@@ -21,10 +20,9 @@ export async function createBookingHold(opts: {
 }): Promise<HoldResult> {
   const startsAt = `${opts.date}T${opts.slotStart}:00`
 
-  const response = await fetch(`${opts.apiUrl}/api/booking/holds`, {
+  const response = await fetch("/api/booking/holds", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({
       shopSlug: opts.shopSlug,
       serviceId: opts.serviceId,

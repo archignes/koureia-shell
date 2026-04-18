@@ -22,7 +22,7 @@ export function RequestRenderer({
   spec: initialSpec,
   shopId,
   shopSlug,
-  apiUrl,
+  apiUrl: _apiUrl,
   variant,
   waitlistId,
 }: RequestRendererProps) {
@@ -118,7 +118,7 @@ export function RequestRenderer({
 
     const request = buildRequestPayload({ shopId, shopSlug, state, variant, waitlistId })
     try {
-      const response = await fetch(`${apiUrl}${request.path}`, {
+      const response = await fetch(request.path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request.body),
@@ -154,7 +154,6 @@ export function RequestRenderer({
     try {
       // Create hold on the time slot
       await createBookingHold({
-        apiUrl,
         shopSlug,
         serviceId: state.selectedServiceId,
         staffId: state.selectedStaffId,
@@ -166,7 +165,7 @@ export function RequestRenderer({
       const request = buildRequestPayload({
         shopId, shopSlug, state, variant, waitlistId,
       })
-      const requestResponse = await fetch(`${apiUrl}${request.path}`, {
+      const requestResponse = await fetch(request.path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request.body),

@@ -564,7 +564,6 @@ describe("RequestRenderer after-hours submit flow", () => {
 
     await waitFor(() => {
       expect(createBookingHoldSpy).toHaveBeenCalledWith({
-        apiUrl: "https://api.example.com",
         shopSlug: "example-shop",
         serviceId: "svc-1",
         staffId: "staff-1",
@@ -574,7 +573,7 @@ describe("RequestRenderer after-hours submit flow", () => {
     })
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.example.com/api/booking/holds",
+      "/api/booking/request",
       expect.objectContaining({
         method: "POST",
       })
