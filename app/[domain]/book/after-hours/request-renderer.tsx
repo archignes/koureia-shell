@@ -62,19 +62,33 @@ export function RequestRenderer({
         ? allServices.filter((s) => staffMap[s.id]?.includes(staffId))
         : allServices
 
-      setSpec((prev) => ({
-        ...prev,
-        elements: {
-          ...prev.elements,
-          "service-pick": {
+      const effectiveServices = filtered.length > 0 ? filtered : allServices
+
+      setSpec((prev) => {
+        const updates: typeof prev.elements = {}
+
+        if (prev.elements["service-pick"]) {
+          updates["service-pick"] = {
             ...prev.elements["service-pick"],
             props: {
               ...prev.elements["service-pick"].props,
-              services: filtered.length > 0 ? filtered : allServices,
+              services: effectiveServices,
             },
-          },
-        },
-      }))
+          }
+        }
+
+        if (prev.elements["service-menu"]) {
+          updates["service-menu"] = {
+            ...prev.elements["service-menu"],
+            props: {
+              ...prev.elements["service-menu"].props,
+              primary: effectiveServices,
+            },
+          }
+        }
+
+        return { ...prev, elements: { ...prev.elements, ...updates } }
+      })
     })
   }, [store])
 
@@ -183,19 +197,28 @@ export function RequestRenderer({
     }
   }
 
+  const errorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView?.({ behavior: "smooth", block: "center" })
+    }
+  }, [error])
+
   return (
     <div className="mx-auto w-full max-w-md snap-y snap-proximity px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+      <JSONUIProvider handlers={{ submit: handleSubmit }} registry={registry} store={store}>
+        <Renderer registry={registry} spec={spec} />
+      </JSONUIProvider>
       {error ? (
         <div
-          className="mb-4 rounded-lg border border-red-900/30 bg-red-950/40 px-4 py-3 text-sm text-red-300"
+          ref={errorRef}
+          className="mt-3 rounded-lg border border-red-900/30 bg-red-950/40 px-4 py-3 text-sm text-red-300"
           role="alert"
         >
           {error}
         </div>
       ) : null}
-      <JSONUIProvider handlers={{ submit: handleSubmit }} registry={registry} store={store}>
-        <Renderer registry={registry} spec={spec} />
-      </JSONUIProvider>
     </div>
   )
 }
