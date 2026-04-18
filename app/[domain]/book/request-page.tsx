@@ -11,6 +11,11 @@ import {
   mockAfterHoursStaffIds,
   type BookingContext,
 } from "@/lib/booking-context"
+import {
+  findStaffByIdOrName,
+  staffToFirstNames,
+  filterAfterHoursService,
+} from "@/lib/booking-filters"
 import { RequestRenderer } from "./after-hours/request-renderer"
 
 export type BookingRequestVariant = "after-hours" | "waitlist"
@@ -106,13 +111,7 @@ export async function BookingRequestPage({
       ? afterHours.staff_ids[0]
       : undefined)
 
-  // Match staff by ID or by display name (case-insensitive first name match)
-  const selectedStaff = effectiveStaffId
-    ? bookingContext.staff.find((member) =>
-        member.id === effectiveStaffId ||
-        member.name.split(" ")[0].toLowerCase() === effectiveStaffId.toLowerCase()
-      )
-    : undefined
+  const selectedStaff = findStaffByIdOrName(bookingContext.staff, effectiveStaffId)
 
   const selectedService =
     requestedServiceId
@@ -133,8 +132,7 @@ export async function BookingRequestPage({
       ? bookingContext.services.filter((s) => s.staff_ids.includes(selectedStaff.id))
       : bookingContext.services
 
-  // Hide the catch-all "AFTER HOURS" service — it's a booking-type marker, not a real service
-  const services = baseServices.filter((s) => !s.name.toUpperCase().includes("AFTER HOURS"))
+  const services = filterAfterHoursService(baseServices)
 
   // Filter staff to after-hours eligible members when policy exists
   const staff = variant === "after-hours" && afterHours
@@ -258,11 +256,7 @@ function buildRequestSpec({
     "staff-pick": {
       type: "StaffPicker",
       props: {
-        staff: staff.map((member) => ({
-          id: member.id,
-          name: member.name.split(" ")[0],
-          role: member.role,
-        })),
+        staff: staffToFirstNames(staff),
         allowNoPreference: variant === "waitlist",
         preselectedId: variant === "waitlist" ? undefined : preselectedStaffId,
       },
