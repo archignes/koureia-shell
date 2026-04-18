@@ -159,6 +159,7 @@ export function RequestRenderer({
         staffId: state.selectedStaffId,
         date: state.preferredDate,
         slotStart: state.preferredSlotStart,
+        mode: "after_hours",
       })
 
       // Create booking request so staff is notified

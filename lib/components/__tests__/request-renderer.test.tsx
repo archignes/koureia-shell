@@ -569,6 +569,7 @@ describe("RequestRenderer after-hours submit flow", () => {
         staffId: "staff-1",
         date: "2026-05-01",
         slotStart: "14:00",
+        mode: "after_hours",
       })
     })
 
