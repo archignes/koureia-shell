@@ -341,6 +341,7 @@ function buildRequestSpec({
             : "Send Request",
         submittingLabel: isAfterHours ? "Booking..." : "Sending...",
       },
+      on: { submit: { action: "submit" } },
     },
   }
 
