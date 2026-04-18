@@ -17,6 +17,7 @@ export async function createBookingHold(opts: {
   staffId: string
   date: string
   slotStart: string
+  mode?: "regular" | "after_hours"
 }): Promise<HoldResult> {
   const startsAt = `${opts.date}T${opts.slotStart}:00`
 
@@ -29,6 +30,7 @@ export async function createBookingHold(opts: {
       staffId: opts.staffId,
       startsAt,
       source: "public",
+      mode: opts.mode,
     }),
   })
 
