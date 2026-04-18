@@ -225,7 +225,10 @@ function createJsonRenderTestModule() {
         const binding = element.on?.[eventName]
         if (!binding) return
 
-        const handler = context.handlers[binding.action]
+        const action = (Array.isArray(binding) ? binding[0] : binding)?.action
+        if (!action) return
+
+        const handler = context.handlers[action]
         if (!handler) return
 
         context.setLoadingAction(eventName)
@@ -383,7 +386,7 @@ function createFetchResponse(body: unknown, ok = true) {
     ok,
     status: ok ? 200 : 500,
     json: vi.fn().mockResolvedValue(body),
-  } as Response
+  } as unknown as Response
 }
 
 function createDeferred<T>() {
