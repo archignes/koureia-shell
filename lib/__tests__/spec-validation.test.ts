@@ -12,11 +12,12 @@ function assertEmitBindings(spec: Spec, componentType: string, expectedEvents: s
 
   for (const [elementId, element] of matchingElements) {
     for (const eventName of expectedEvents) {
+      const binding = element.on?.[eventName]
       expect(
-        element.on?.[eventName],
+        binding,
         `${componentType} element "${elementId}" is missing on.${eventName}`
       ).toBeDefined()
-      expect(element.on?.[eventName]?.action).toBe(eventName)
+      expect((Array.isArray(binding) ? binding[0] : binding)?.action).toBe(eventName)
     }
   }
 }
