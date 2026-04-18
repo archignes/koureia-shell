@@ -34,7 +34,7 @@ export async function fetchAvailability(opts: {
     params.set("serviceId", serviceId)
   }
   if (staffId) {
-    params.set("staff", staffId)
+    params.set("staffId", staffId)
   }
 
   try {
