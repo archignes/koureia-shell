@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { useBoundProp, useStateStore } from "@json-render/react"
+import { useStateBinding, useStateStore } from "@json-render/react"
 
 type PreferenceFormProps = {
   fields: string[]
@@ -22,9 +22,9 @@ const inputClassName = "w-full rounded-lg border border-[var(--shell-border-stro
 
 export function PreferenceForm({ fields, dateRangeLabel, dateRangePlaceholder, timeWindowLabel, notesLabel, notesPlaceholder }: PreferenceFormProps) {
   const { set } = useStateStore()
-  const [dateRange, setDateRange] = useBoundProp<string | undefined>(undefined, "dateRange")
-  const [flexibleDates, setFlexibleDates] = useBoundProp<string | undefined>(undefined, "flexibleDates")
-  const [timeWindow, setTimeWindow] = useBoundProp<string | undefined>(undefined, "timeWindow")
+  const [dateRange, setDateRange] = useStateBinding<string | undefined>("dateRange")
+  const [flexibleDates, setFlexibleDates] = useStateBinding<string | undefined>("flexibleDates")
+  const [timeWindow, setTimeWindow] = useStateBinding<string | undefined>("timeWindow")
   const [notes, setNotes] = React.useState("")
   const [phone, setPhone] = React.useState("")
   const [name, setName] = React.useState("")

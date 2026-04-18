@@ -33,6 +33,8 @@ export function RequestRenderer({
     (initialSpec.state as RequestState | undefined)?.selectedStaffId
   )
 
+  // Filter displayed services by selected staff.
+  // No staff selected → show all services.
   useEffect(() => {
     return store.subscribe(() => {
       const state = store.getSnapshot() as RequestState
@@ -40,6 +42,17 @@ export function RequestRenderer({
 
       if (staffId === lastStaffIdRef.current) return
       lastStaffIdRef.current = staffId
+
+      // Update URL to reflect staff selection (human-readable name)
+      const url = new URL(window.location.href)
+      if (staffId) {
+        const staffList = (initialSpec.elements["staff-pick"]?.props as { staff?: { id: string; name: string }[] })?.staff
+        const staffName = staffList?.find((s) => s.id === staffId)?.name
+        url.searchParams.set("staff", staffName?.toLowerCase() ?? staffId)
+      } else {
+        url.searchParams.delete("staff")
+      }
+      window.history.replaceState({}, "", url.toString())
 
       const allServices = state.allFormattedServices
       const staffMap = state.serviceStaffMap
@@ -67,10 +80,25 @@ export function RequestRenderer({
 
   async function handleSubmit() {
     setError(null)
+    store.set("submitError", undefined)
     const state = store.getSnapshot() as RequestState
 
     if (variant === "after-hours") {
       await handleAfterHoursSubmit(state)
+      return
+    }
+
+    // Waitlist validation — write to store so SubmitButton shows error inline
+    if (!state.selectedServiceId) {
+      store.set("submitError", "Please select a service.")
+      return
+    }
+    if (!state.flexibleDates?.trim()) {
+      store.set("submitError", "Please let us know when works for you.")
+      return
+    }
+    if (!state.name?.trim()) {
+      store.set("submitError", "Please enter your name.")
       return
     }
 
@@ -159,7 +187,7 @@ export function RequestRenderer({
     <div className="mx-auto w-full max-w-md snap-y snap-proximity px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
       {error ? (
         <div
-          className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="mb-4 rounded-lg border border-red-900/30 bg-red-950/40 px-4 py-3 text-sm text-red-300"
           role="alert"
         >
           {error}

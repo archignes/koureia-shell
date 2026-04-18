@@ -1,6 +1,6 @@
 "use client"
 
-import { useBoundProp } from "@json-render/react"
+import { useStateBinding } from "@json-render/react"
 import { cn } from "@/lib/utils"
 
 type Service = {
@@ -15,9 +15,8 @@ type ServicePickerProps = {
   preselectedId?: string
 }
 
-export function ServicePicker({ services, preselectedId }: ServicePickerProps) {
-  const [selectedServiceId, setSelectedServiceId] = useBoundProp(
-    preselectedId,
+export function ServicePicker({ services }: ServicePickerProps) {
+  const [selectedServiceId, setSelectedServiceId] = useStateBinding<string | undefined>(
     "selectedServiceId"
   )
 

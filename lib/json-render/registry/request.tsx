@@ -103,8 +103,19 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     />
   ),
 
-  SubmitButton: ({ props, emit, loading }) => (
+  SubmitButton: ({ props, emit, loading }) => {
+    const { state } = useStateStore()
+    const submitError = (state as Record<string, unknown>).submitError as string | undefined
+    return (
     <div className="mt-4">
+      {submitError ? (
+        <div
+          className="mb-3 rounded-lg border border-red-900/30 bg-red-950/40 px-4 py-3 text-[0.85rem] text-red-300"
+          role="alert"
+        >
+          {submitError}
+        </div>
+      ) : null}
       <p className="mb-2 text-[0.75rem] leading-[1.5] text-[var(--shell-text-subtle)] text-pretty">
         By submitting, you agree to receive appointment-related messages via
         text from this shop (powered by Koureia). Message &amp; data rates may
@@ -145,7 +156,8 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
         {loading ? props.submittingLabel ?? "Sending..." : props.label}
       </button>
     </div>
-  ),
+    )
+  },
 
   ConfirmationMessage: ({ props }) => (
     <div
