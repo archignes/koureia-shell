@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams
 
   const shop = params.get("shop")
-  const serviceId = params.get("serviceId")
   const date = params.get("date")
   if (!shop) {
     return NextResponse.json(
