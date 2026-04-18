@@ -62,19 +62,33 @@ export function RequestRenderer({
         ? allServices.filter((s) => staffMap[s.id]?.includes(staffId))
         : allServices
 
-      setSpec((prev) => ({
-        ...prev,
-        elements: {
-          ...prev.elements,
-          "service-pick": {
+      const effectiveServices = filtered.length > 0 ? filtered : allServices
+
+      setSpec((prev) => {
+        const updates: typeof prev.elements = {}
+
+        if (prev.elements["service-pick"]) {
+          updates["service-pick"] = {
             ...prev.elements["service-pick"],
             props: {
               ...prev.elements["service-pick"].props,
-              services: filtered.length > 0 ? filtered : allServices,
+              services: effectiveServices,
             },
-          },
-        },
-      }))
+          }
+        }
+
+        if (prev.elements["service-menu"]) {
+          updates["service-menu"] = {
+            ...prev.elements["service-menu"],
+            props: {
+              ...prev.elements["service-menu"].props,
+              primary: effectiveServices,
+            },
+          }
+        }
+
+        return { ...prev, elements: { ...prev.elements, ...updates } }
+      })
     })
   }, [store])
 
