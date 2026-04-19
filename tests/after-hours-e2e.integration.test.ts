@@ -85,7 +85,7 @@ describe("after-hours booking: shell proxy → koureia API", () => {
     expect(data.hold.mode).toBe("after_hours")
   })
 
-  it("hold without clientPhone still succeeds (SMS skipped)", async () => {
+  it("hold without clientPhone returns 400 (phone required for after-hours)", async () => {
     const date = futureWeekday(9)
     const slot = await findAvailableSlot(date)
     if (!slot) {
@@ -107,9 +107,9 @@ describe("after-hours booking: shell proxy → koureia API", () => {
       }),
     })
 
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(400)
     const data = await res.json()
-    expect(data.hold.status).toBe("pending")
+    expect(data.error).toContain("clientPhone")
   })
 
   it("duplicate hold on same slot returns 409", async () => {
