@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs"
 import type { NextConfig } from "next"
 
 const securityHeaders = [
@@ -27,4 +28,10 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+export default withSentryConfig(nextConfig, {
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  org: process.env.SENTRY_ORG || "hypandra-inc",
+  project: process.env.SENTRY_PROJECT || "koureia-shell",
+  silent: !process.env.CI,
+  tunnelRoute: "/monitoring",
+})
