@@ -18,6 +18,8 @@ export async function createBookingHold(opts: {
   date: string
   slotStart: string
   mode?: "regular" | "after_hours"
+  clientName?: string
+  clientPhone?: string
 }): Promise<HoldResult> {
   const startsAt = `${opts.date}T${opts.slotStart}:00`
 
@@ -31,6 +33,8 @@ export async function createBookingHold(opts: {
       startsAt,
       source: "public",
       mode: opts.mode,
+      clientName: opts.clientName,
+      clientPhone: opts.clientPhone,
     }),
   })
 

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { registry } from "@/lib/json-render/registry"
 import type { Spec } from "@json-render/core"
 import type { BookingRequestVariant } from "../request-page"
-import { buildRequestPayload, type RequestState } from "@/lib/booking-payload"
+import { buildRequestPayload, normalizePhoneForApi, type RequestState } from "@/lib/booking-payload"
 import { createBookingHold } from "@/lib/booking-api"
 import { formatTime } from "@/lib/utils"
 
@@ -160,6 +160,8 @@ export function RequestRenderer({
         date: state.preferredDate,
         slotStart: state.preferredSlotStart,
         mode: "after_hours",
+        clientName: state.name?.trim(),
+        clientPhone: normalizePhoneForApi(state.phone),
       })
 
       // Create booking request so staff is notified
