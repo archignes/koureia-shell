@@ -128,6 +128,7 @@ describe("after-hours booking: shell proxy → koureia API", () => {
       mode: "after_hours",
       source: "public",
       clientName: "Dupe Test",
+      clientPhone: "+15559990002",
     }
 
     const res1 = await fetch(`${KOUREIA_API}/api/booking/holds`, {
