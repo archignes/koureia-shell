@@ -302,6 +302,14 @@ function loadRequestRenderer(): LoadedRequestRenderer {
             source: state.source,
           },
         }),
+        normalizePhoneForApi: (value: string | undefined) => {
+          if (!value || !value.trim()) return undefined
+          const digits = value.replace(/\D/g, "")
+          if (digits.length === 10) return `+1${digits}`
+          if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`
+          if (value.startsWith("+")) return value
+          return `+${digits}`
+        },
       }
     }
     if (id === "@/lib/booking-api") {
@@ -570,6 +578,8 @@ describe("RequestRenderer after-hours submit flow", () => {
         date: "2026-05-01",
         slotStart: "14:00",
         mode: "after_hours",
+        clientName: "Test User",
+        clientPhone: "+15551234567",
       })
     })
 
