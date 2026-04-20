@@ -79,6 +79,15 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     const typedState = state as { selectedStaffId?: string; selectedServiceId?: string }
     const staffId = typedState.selectedStaffId ?? props.staffId
     const serviceId = typedState.selectedServiceId
+
+    if (!serviceId) {
+      return (
+        <p className="mt-4 px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
+          Select a service to see available times
+        </p>
+      )
+    }
+
     return (
       <AvailabilityPicker
         apiUrl={props.apiUrl}
