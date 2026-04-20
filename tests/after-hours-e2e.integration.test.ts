@@ -75,7 +75,6 @@ describe("after-hours booking: shell proxy → koureia API", () => {
         source: "public",
         clientName: "E2E Test Client",
         clientPhone: "+15559990001",
-        suppressNotifications: true,
       }),
     })
 
