@@ -42,6 +42,8 @@ export async function GET(request: NextRequest) {
     ? data.slotsByDate[date]
     : Object.values(data.slotsByDate ?? {})[0] ?? []
 
+  const shopTimezone: string = data.shop?.timezone ?? ""
+
   const slots = (rawSlots as Array<{
     time: string
     startsAt: string
@@ -49,14 +51,34 @@ export async function GET(request: NextRequest) {
     state: string
   }>).map((s) => ({
     start: s.time,
-    end: s.endsAt.slice(11, 16), // "2026-04-18T06:40:00" → "06:40"
+    end: utcToLocalTime(s.endsAt, shopTimezone),
+    startsAt: s.startsAt,
     available: s.state === "available",
   }))
 
   return NextResponse.json({
     date: date ?? "",
-    timezone: data.shop?.timezone ?? "",
+    timezone: shopTimezone,
     slots,
     surcharge_cents: data.surcharge_cents ?? null,
   })
+}
+
+/** Convert a UTC ISO string to "HH:mm" in the given timezone. */
+function utcToLocalTime(utcIso: string, timezone: string): string {
+  if (!timezone) return utcIso.slice(11, 16)
+  try {
+    const date = new Date(utcIso)
+    const parts = new Intl.DateTimeFormat("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: timezone,
+    }).formatToParts(date)
+    const h = parts.find((p) => p.type === "hour")?.value ?? ""
+    const m = parts.find((p) => p.type === "minute")?.value ?? ""
+    return `${h}:${m}`
+  } catch {
+    return utcIso.slice(11, 16)
+  }
 }
