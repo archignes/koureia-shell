@@ -75,6 +75,7 @@ describe("after-hours booking: shell proxy → koureia API", () => {
         source: "public",
         clientName: "E2E Test Client",
         clientPhone: "+15559990001",
+        suppressNotifications: true,
       }),
     })
 
@@ -129,6 +130,7 @@ describe("after-hours booking: shell proxy → koureia API", () => {
       source: "public",
       clientName: "Dupe Test",
       clientPhone: "+15559990002",
+      suppressNotifications: true,
     }
 
     const res1 = await fetch(`${KOUREIA_API}/api/booking/holds`, {
