@@ -153,6 +153,7 @@ export function RequestRenderer({
 
     try {
       // Create hold on the time slot
+      const selectedExtras = (state as Record<string, unknown>).selectedExtras as string[] | undefined
       await createBookingHold({
         shopSlug,
         serviceId: state.selectedServiceId,
@@ -163,6 +164,7 @@ export function RequestRenderer({
         mode: "after_hours",
         clientName: state.name?.trim(),
         clientPhone: normalizePhoneForApi(state.phone),
+        addonServiceIds: selectedExtras,
       })
 
       // Create booking request so staff is notified
