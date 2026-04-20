@@ -2,6 +2,8 @@ export type AvailabilitySlot = {
   start: string
   end: string
   available: boolean
+  /** Full UTC ISO startsAt from the API (e.g. "2026-04-22T01:00:00.000Z") */
+  startsAt?: string
 }
 
 export type AvailabilityResponse = {

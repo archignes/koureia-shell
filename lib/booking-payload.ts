@@ -22,6 +22,8 @@ export type RequestState = {
   preferredDate?: string
   preferredSlotStart?: string
   preferredSlotEnd?: string
+  /** Full UTC ISO startsAt for hold creation (bypasses date+time construction) */
+  preferredStartsAt?: string
   surchargeCents?: number
   notes?: string
   source?: RequestSource

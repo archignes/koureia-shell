@@ -159,6 +159,7 @@ export function RequestRenderer({
         staffId: state.selectedStaffId,
         date: state.preferredDate,
         slotStart: state.preferredSlotStart,
+        startsAt: state.preferredStartsAt,
         mode: "after_hours",
         clientName: state.name?.trim(),
         clientPhone: normalizePhoneForApi(state.phone),

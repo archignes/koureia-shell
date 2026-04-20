@@ -91,6 +91,7 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
           preferredDate: date,
           preferredSlotStart: slot.start,
           preferredSlotEnd: slot.end,
+          preferredStartsAt: slot.startsAt,
         })}
       />
     )
