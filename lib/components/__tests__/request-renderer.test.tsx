@@ -570,6 +570,8 @@ describe("RequestRenderer after-hours submit flow", () => {
         date: "2026-05-01",
         slotStart: "14:00",
         mode: "after_hours",
+        clientName: "Test User",
+        clientPhone: "+15551234567",
       })
     })
 
