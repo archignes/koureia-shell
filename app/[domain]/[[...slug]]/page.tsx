@@ -1,6 +1,6 @@
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
-import { resolveTenant, resolveSiteSpec } from "@/lib/tenant"
+import { resolveTenant, resolveSiteSpec, resolveSiteVariants, type SiteVariantSummary } from "@/lib/tenant"
 // import { SiteRenderer } from "@/components/site-renderer"
 import { SiteRendererJR } from "@/components/site-renderer-jr"
 import { BookingPage } from "@/components/site/booking-page"
@@ -9,10 +9,12 @@ import { buildSiteSpec, type SiteSpec as JsonRenderSiteSpec } from "@/lib/json-r
 
 type Props = {
   params: Promise<{ domain: string; slug?: string[] }>
+  searchParams?: Promise<{ siteVariant?: string }>
 }
 
-export default async function TenantPage({ params }: Props) {
+export default async function TenantPage({ params, searchParams }: Props) {
   const { domain, slug } = await params
+  const query = await searchParams
   const headersList = await headers()
 
   // The domain comes from the middleware rewrite path param,
@@ -39,7 +41,12 @@ export default async function TenantPage({ params }: Props) {
   }
 
   // Fetch the full site spec for rendering
-  const spec = await resolveSiteSpec(tenant.slug)
+  if (slug?.length === 1 && slug[0] === "variants") {
+    const variants = await resolveSiteVariants(tenant.slug)
+    return <VariantChooserPage tenant={tenant} variants={variants} />
+  }
+
+  const spec = await resolveSiteSpec(tenant.slug, query?.siteVariant)
 
   if (!spec) {
     // Spec not available yet — show minimal branded page
@@ -96,6 +103,52 @@ function DecommissionedPage({ name }: { name: string }) {
         <p className="text-stone-200">{name}</p>
         <p className="text-sm">This site is no longer available.</p>
       </div>
+    </div>
+  )
+}
+
+function VariantChooserPage({
+  tenant,
+  variants,
+}: {
+  tenant: { name: string }
+  variants: SiteVariantSummary[]
+}) {
+  return (
+    <div className="min-h-screen bg-[#1a1410] px-5 py-8 text-[#e8ddd0]">
+      <main className="mx-auto max-w-4xl">
+        <p className="text-xs uppercase tracking-[0.24em] text-[#c9a84c]">Site Directions</p>
+        <h1 className="mt-3 text-3xl font-semibold md:text-5xl">{tenant.name}</h1>
+        <p className="mt-4 max-w-2xl text-sm leading-6 text-stone-300">
+          Review each draft direction. Choosing a direction here is for discussion only; publishing still requires an explicit final approval step in Koureia.
+        </p>
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {variants.map((variant) => (
+            <article key={variant.id} className="border border-[#c9a84c]/20 bg-black/20 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-xl font-medium">{variant.name}</h2>
+                <span className="border border-stone-700 px-2 py-1 text-[11px] uppercase text-stone-400">
+                  {variant.status}
+                </span>
+              </div>
+              {variant.summary ? (
+                <p className="mt-3 text-sm leading-6 text-stone-300">{variant.summary}</p>
+              ) : null}
+              <a
+                className="mt-5 inline-flex border border-[#c9a84c]/40 px-4 py-2 text-sm text-[#c9a84c]"
+                href={variant.previewUrl}
+              >
+                Preview direction
+              </a>
+            </article>
+          ))}
+        </div>
+        {variants.length === 0 ? (
+          <p className="mt-8 border border-stone-800 p-5 text-sm text-stone-400">
+            No draft directions are available yet.
+          </p>
+        ) : null}
+      </main>
     </div>
   )
 }
