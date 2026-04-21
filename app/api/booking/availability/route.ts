@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
 
   const shop = params.get("shop")
   const date = params.get("date")
+  const days = params.get("days")
   if (!shop) {
     return NextResponse.json(
       { error: "shop is required" },
@@ -35,26 +36,31 @@ export async function GET(request: NextRequest) {
   }
 
   const data = await response.json()
+  const shopTimezone: string = data.shop?.timezone ?? ""
 
-  // Transform: API returns { slotsByDate, shop.timezone, surcharge_cents }
-  // Shell expects { date, timezone, slots: [{start, end, available}], surcharge_cents }
+  // Bulk mode: return all dates when `days` param is present
+  if (days) {
+    const dates: Record<string, { slots: TransformedSlot[]; availableCount: number }> = {}
+    for (const [dateKey, rawSlots] of Object.entries(data.slotsByDate ?? {})) {
+      const slots = transformSlots(rawSlots as RawSlot[], shopTimezone)
+      dates[dateKey] = {
+        slots,
+        availableCount: slots.filter((s) => s.available).length,
+      }
+    }
+    return NextResponse.json({
+      dates,
+      timezone: shopTimezone,
+      surcharge_cents: data.surcharge_cents ?? null,
+    })
+  }
+
+  // Single-date mode (backward compat)
   const rawSlots = date && data.slotsByDate?.[date]
     ? data.slotsByDate[date]
     : Object.values(data.slotsByDate ?? {})[0] ?? []
 
-  const shopTimezone: string = data.shop?.timezone ?? ""
-
-  const slots = (rawSlots as Array<{
-    time: string
-    startsAt: string
-    endsAt: string
-    state: string
-  }>).map((s) => ({
-    start: s.time,
-    end: utcToLocalTime(s.endsAt, shopTimezone),
-    startsAt: s.startsAt,
-    available: s.state === "available",
-  }))
+  const slots = transformSlots(rawSlots as RawSlot[], shopTimezone)
 
   return NextResponse.json({
     date: date ?? "",
@@ -62,6 +68,18 @@ export async function GET(request: NextRequest) {
     slots,
     surcharge_cents: data.surcharge_cents ?? null,
   })
+}
+
+type RawSlot = { time: string; startsAt: string; endsAt: string; state: string }
+type TransformedSlot = { start: string; end: string; startsAt: string; available: boolean }
+
+function transformSlots(raw: RawSlot[], timezone: string): TransformedSlot[] {
+  return raw.map((s) => ({
+    start: s.time,
+    end: utcToLocalTime(s.endsAt, timezone),
+    startsAt: s.startsAt,
+    available: s.state === "available",
+  }))
 }
 
 /** Convert a UTC ISO string to "HH:mm" in the given timezone. */

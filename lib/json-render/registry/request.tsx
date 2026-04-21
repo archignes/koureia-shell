@@ -57,16 +57,22 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     <StaffPickerComponent staff={props.staff} preselectedId={props.preselectedId} allowNoPreference={props.allowNoPreference} />
   ),
 
-  PreferenceForm: ({ props }) => (
-    <PreferenceFormComponent
-      fields={props.fields}
-      dateRangeLabel={props.dateRangeLabel}
-      dateRangePlaceholder={props.dateRangePlaceholder}
-      timeWindowLabel={props.timeWindowLabel}
-      notesLabel={props.notesLabel}
-      notesPlaceholder={props.notesPlaceholder}
-    />
-  ),
+  PreferenceForm: ({ props }) => {
+    const { state } = useStateStore()
+    const typedState = state as Record<string, unknown>
+    // In after-hours flow (has surchargeCents), gate behind slot selection
+    if (typedState.surchargeCents && !typedState.preferredSlotStart) return null
+    return (
+      <PreferenceFormComponent
+        fields={props.fields}
+        dateRangeLabel={props.dateRangeLabel}
+        dateRangePlaceholder={props.dateRangePlaceholder}
+        timeWindowLabel={props.timeWindowLabel}
+        notesLabel={props.notesLabel}
+        notesPlaceholder={props.notesPlaceholder}
+      />
+    )
+  },
 
   SurchargeBanner: ({ props }) => (
     <div className="mt-2 px-[0.85rem] py-[0.6rem] border-l-[3px] border-l-[var(--shell-accent)] bg-[rgba(199,164,106,0.1)] text-left text-[0.9rem] font-semibold text-[var(--shell-accent)]">
@@ -106,16 +112,23 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     )
   },
 
-  OrderSummary: ({ props }) => (
-    <OrderSummaryComponent
-      allServices={props.allServices}
-      surchargeCents={props.surchargeCents}
-    />
-  ),
+  OrderSummary: ({ props }) => {
+    const { state } = useStateStore()
+    if (!(state as Record<string, unknown>).preferredSlotStart) return null
+    return (
+      <OrderSummaryComponent
+        allServices={props.allServices}
+        surchargeCents={props.surchargeCents}
+      />
+    )
+  },
 
   SubmitButton: ({ props, emit, loading }) => {
     const { state } = useStateStore()
-    const submitError = (state as Record<string, unknown>).submitError as string | undefined
+    const typedState = state as Record<string, unknown>
+    // In after-hours flow, gate behind slot selection
+    if (typedState.surchargeCents && !typedState.preferredSlotStart) return null
+    const submitError = typedState.submitError as string | undefined
     return (
     <div className="mt-4">
       {submitError ? (
@@ -191,7 +204,9 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
 
   PolicyConfirm: ({ props }) => {
     const { state, set } = useStateStore()
-    const accepted = (state as Record<string, unknown>).policyAccepted as boolean | undefined
+    const typedState = state as Record<string, unknown>
+    if (!typedState.preferredSlotStart) return null
+    const accepted = typedState.policyAccepted as boolean | undefined
     return (
       <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--shell-border)] bg-[rgba(228,231,239,0.02)] px-3 py-3">
         <input
