@@ -6,6 +6,7 @@ import { SiteRendererJR } from "@/components/site-renderer-jr"
 import { BookingPage } from "@/components/site/booking-page"
 import { getTheme } from "@/components/site/theme"
 import { buildSiteSpec, type SiteSpec as JsonRenderSiteSpec } from "@/lib/json-render/load-spec"
+import { selectSiteVariantAction } from "../variants/actions"
 
 type Props = {
   params: Promise<{ domain: string; slug?: string[] }>
@@ -43,7 +44,7 @@ export default async function TenantPage({ params, searchParams }: Props) {
   // Fetch the full site spec for rendering
   if (slug?.length === 1 && slug[0] === "variants") {
     const variants = await resolveSiteVariants(tenant.slug)
-    return <VariantChooserPage tenant={tenant} variants={variants} />
+    return <VariantChooserPage shopSlug={tenant.slug} tenant={tenant} variants={variants} />
   }
 
   const spec = await resolveSiteSpec(tenant.slug, query?.siteVariant)
@@ -108,9 +109,11 @@ function DecommissionedPage({ name }: { name: string }) {
 }
 
 function VariantChooserPage({
+  shopSlug,
   tenant,
   variants,
 }: {
+  shopSlug: string
   tenant: { name: string }
   variants: SiteVariantSummary[]
 }) {
@@ -134,12 +137,24 @@ function VariantChooserPage({
               {variant.summary ? (
                 <p className="mt-3 text-sm leading-6 text-stone-300">{variant.summary}</p>
               ) : null}
-              <a
-                className="mt-5 inline-flex border border-[#c9a84c]/40 px-4 py-2 text-sm text-[#c9a84c]"
-                href={variant.previewUrl}
-              >
-                Preview direction
-              </a>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <a
+                  className="inline-flex border border-[#c9a84c]/40 px-4 py-2 text-sm text-[#c9a84c]"
+                  href={variant.previewUrl}
+                >
+                  Preview direction
+                </a>
+                <form action={selectVariantFormAction}>
+                  <input name="variantId" type="hidden" value={variant.id} />
+                  <input name="shopSlug" type="hidden" value={shopSlug} />
+                  <button
+                    className="inline-flex bg-[#c9a84c] px-4 py-2 text-sm text-[#1a1410]"
+                    type="submit"
+                  >
+                    Choose this direction
+                  </button>
+                </form>
+              </div>
             </article>
           ))}
         </div>
@@ -151,6 +166,14 @@ function VariantChooserPage({
       </main>
     </div>
   )
+}
+
+async function selectVariantFormAction(formData: FormData) {
+  "use server"
+
+  const shopSlug = String(formData.get("shopSlug") ?? "")
+  const variantId = String(formData.get("variantId") ?? "")
+  await selectSiteVariantAction(shopSlug, variantId, "demo-site reviewer")
 }
 
 // Generate metadata from tenant name
