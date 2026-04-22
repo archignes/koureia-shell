@@ -7,6 +7,17 @@ type BrandingJSON = {
   cancellation_policy?: string
 }
 
+type BrandingTheme = {
+  logoUrl?: string
+  primaryColor?: string
+  secondaryColor?: string
+  backgroundColor?: string
+  textColor?: string
+  accentColor?: string
+  displayFont?: string
+  bodyFont?: string
+}
+
 export interface SiteSpec {
   shop: {
     name: string
@@ -20,9 +31,7 @@ export interface SiteSpec {
     phone?: string | null
     timezone: string
   }
-  branding?: {
-    logoUrl?: string
-  }
+  branding?: BrandingTheme
   staff: Array<{
     name: string
     role: string | null
@@ -76,7 +85,9 @@ export function buildSiteSpec(siteSpec: SiteSpec): Spec {
 
   elements.container = {
     type: "Container",
-    props: {},
+    props: {
+      theme: buildThemeVars(siteSpec),
+    },
     children,
   }
 
@@ -165,6 +176,63 @@ function normalizeBranding(siteSpec: SiteSpec): BrandingJSON {
     tagline: legacy.tagline ?? siteSpec.shop.tagline,
     description: legacy.description ?? siteSpec.shop.description,
     cancellation_policy: legacy.cancellation_policy ?? siteSpec.shop.cancellationPolicy,
+  }
+}
+
+function buildThemeVars(siteSpec: SiteSpec) {
+  const branding = siteSpec.branding
+  const background = branding?.backgroundColor
+  const text = branding?.textColor
+  const accent = branding?.accentColor ?? branding?.primaryColor
+  const accentStrong = branding?.primaryColor ?? branding?.accentColor
+  const secondary = branding?.secondaryColor
+  const bodyFont = branding?.bodyFont
+
+  return stripEmpty({
+    "--shell-bg": background,
+    "--shell-bg-elevated": colorWithAlpha(text, 0.04) ?? secondary,
+    "--shell-bg-soft": colorWithAlpha(text, 0.03) ?? secondary,
+    "--shell-border": colorWithAlpha(text, 0.14),
+    "--shell-text": text,
+    "--shell-text-muted": colorWithAlpha(text, 0.72),
+    "--shell-text-subtle": colorWithAlpha(text, 0.54),
+    "--shell-accent": accent,
+    "--shell-accent-strong": accentStrong,
+    "--shell-accent-contrast": contrastText(accent),
+    backgroundColor: background,
+    color: text,
+    fontFamily: bodyFont,
+  })
+}
+
+function stripEmpty(values: Record<string, string | undefined>) {
+  return Object.fromEntries(
+    Object.entries(values).filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0),
+  )
+}
+
+function colorWithAlpha(value: string | undefined, alpha: number) {
+  const rgb = parseHexColor(value)
+  if (!rgb) return undefined
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
+}
+
+function contrastText(value: string | undefined) {
+  const rgb = parseHexColor(value)
+  if (!rgb) return undefined
+  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255
+  return luminance > 0.58 ? "#1a1410" : "#ffffff"
+}
+
+function parseHexColor(value: string | undefined) {
+  if (!value) return null
+  const normalized = value.trim().replace(/^#/, "")
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) return null
+  const number = Number.parseInt(normalized, 16)
+  return {
+    r: (number >> 16) & 255,
+    g: (number >> 8) & 255,
+    b: number & 255,
   }
 }
 

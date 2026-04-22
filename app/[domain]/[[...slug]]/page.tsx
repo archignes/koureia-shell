@@ -4,6 +4,7 @@ import { resolveTenant, resolveSiteSpec, resolveSiteVariants, type SiteVariantSu
 // import { SiteRenderer } from "@/components/site-renderer"
 import { SiteRendererJR } from "@/components/site-renderer-jr"
 import { BookingPage } from "@/components/site/booking-page"
+import { PreviewBanner } from "@/components/preview-banner"
 import { getTheme } from "@/components/site/theme"
 import { buildSiteSpec, type SiteSpec as JsonRenderSiteSpec } from "@/lib/json-render/load-spec"
 import { selectSiteVariantAction } from "../variants/actions"
@@ -72,14 +73,33 @@ export default async function TenantPage({ params, searchParams }: Props) {
     notFound()
   }
 
+  const previewVariantName = query?.siteVariant
+    ? await resolvePreviewVariantName(tenant.slug, query.siteVariant)
+    : null
+
   try {
     const siteSpec = buildSiteSpec(spec as unknown as JsonRenderSiteSpec)
-    return <SiteRendererJR spec={siteSpec} />
+    return (
+      <>
+        {previewVariantName ? <PreviewBanner variantName={previewVariantName} /> : null}
+        <SiteRendererJR spec={siteSpec} />
+      </>
+    )
   } catch (error) {
     console.error("[koureia-shell] buildSiteSpec failed, falling back to legacy renderer:", error)
     const { SiteRenderer } = await import("@/components/site-renderer")
-    return <SiteRenderer spec={spec} />
+    return (
+      <>
+        {previewVariantName ? <PreviewBanner variantName={previewVariantName} /> : null}
+        <SiteRenderer spec={spec} />
+      </>
+    )
   }
+}
+
+async function resolvePreviewVariantName(shopSlug: string, variantId: string) {
+  const variants = await resolveSiteVariants(shopSlug)
+  return variants.find((variant) => variant.id === variantId)?.name ?? "site"
 }
 
 // ── Fallback renders ─────────────────────────────────────────
