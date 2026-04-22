@@ -234,10 +234,21 @@ function aggregateHours(hours: SiteSpec["hours"]) {
     byDay.set(dayOfWeek, items)
   }
 
-  return DAY_ORDER.filter((day) => byDay.has(day)).map((dayOfWeek) => ({
-    dayOfWeek,
-    entries: (byDay.get(dayOfWeek) ?? []).sort(compareHours),
-  }))
+  return DAY_ORDER.filter((day) => byDay.has(day)).map((dayOfWeek) => {
+    const entries = (byDay.get(dayOfWeek) ?? []).sort(compareHours)
+    const earliest = entries[0]?.startTime
+    const latest = entries.reduce<string | null>((value, entry) => {
+      if (value === null || entry.endTime > value) return entry.endTime
+      return value
+    }, null)
+
+    return {
+      day: formatDayOfWeek(dayOfWeek),
+      open: earliest,
+      close: latest,
+      closed: !earliest || !latest,
+    }
+  })
 }
 
 function compareHours(
@@ -271,6 +282,12 @@ function formatDuration(durationMinutes: number) {
   return `${durationMinutes}min`
 }
 
+function formatDayOfWeek(dayOfWeek: number) {
+  return DAY_LABELS[dayOfWeek] ?? `Day ${dayOfWeek}`
+}
+
 function hasText(value: string | null | undefined): value is string {
   return typeof value === "string" && value.trim().length > 0
 }
+
+const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
