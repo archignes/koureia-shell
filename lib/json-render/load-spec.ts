@@ -241,12 +241,13 @@ function aggregateHours(hours: SiteSpec["hours"]) {
       if (value === null || entry.endTime > value) return entry.endTime
       return value
     }, null)
+    const closed = !earliest || !latest || (earliest === "00:00" && latest === "00:00")
 
     return {
       day: formatDayOfWeek(dayOfWeek),
-      open: earliest,
-      close: latest,
-      closed: !earliest || !latest,
+      open: earliest ? formatTimeLabel(earliest) : undefined,
+      close: latest ? formatTimeLabel(latest) : undefined,
+      closed,
     }
   })
 }
@@ -284,6 +285,17 @@ function formatDuration(durationMinutes: number) {
 
 function formatDayOfWeek(dayOfWeek: number) {
   return DAY_LABELS[dayOfWeek] ?? `Day ${dayOfWeek}`
+}
+
+function formatTimeLabel(value: string) {
+  const [hourPart, minutePart = "00"] = value.split(":")
+  const hour = Number(hourPart)
+  const minute = Number(minutePart)
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return value
+
+  const suffix = hour >= 12 ? "PM" : "AM"
+  const displayHour = hour % 12 || 12
+  return `${displayHour}:${minute.toString().padStart(2, "0")} ${suffix}`
 }
 
 function hasText(value: string | null | undefined): value is string {
