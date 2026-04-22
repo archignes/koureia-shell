@@ -11,31 +11,47 @@ export interface SiteSpec {
   shop: {
     name: string
     slug: string
-    branding_json: BrandingJSON | null
-    address: string | null
-    phone: string | null
+    domain?: string
+    tagline?: string
+    description?: string
+    cancellationPolicy?: string
+    branding_json?: BrandingJSON | null
+    address?: string | null
+    phone?: string | null
     timezone: string
+  }
+  branding?: {
+    logoUrl?: string
   }
   staff: Array<{
     name: string
     role: string | null
-    photo_url: string | null
+    photo_url?: string | null
+    imageUrl?: string | null
     bio: string | null
-    services: string[]
+    services: Array<string | NormalizedService>
   }>
-  services: Array<{
-    name: string
-    category: string | null
-    duration_minutes: number
-    price_cents: number
-    description: string | null
-  }>
+  services?: NormalizedService[]
   hours: Array<{
-    staff_name: string
-    day_of_week: number
-    start_time: string
-    end_time: string
+    staff_name?: string
+    staffName?: string
+    day_of_week?: number
+    dayOfWeek?: number
+    start_time?: string
+    startTime?: string
+    end_time?: string
+    endTime?: string
   }>
+}
+
+type NormalizedService = {
+  name: string
+  category?: string | null
+  duration_minutes?: number
+  durationMinutes?: number
+  price_cents?: number
+  priceCents?: number
+  description?: string | null
 }
 
 type ElementSpec = {
@@ -54,7 +70,9 @@ const DAY_ORDER = [0, 1, 2, 3, 4, 5, 6]
 export function buildSiteSpec(siteSpec: SiteSpec): Spec {
   const elements: Record<string, ElementSpec> = {}
   const children: string[] = []
-  const branding = siteSpec.shop.branding_json ?? {}
+  const branding = normalizeBranding(siteSpec)
+  const staff = normalizeStaff(siteSpec)
+  const services = normalizeServices(siteSpec)
 
   elements.container = {
     type: "Container",
@@ -75,19 +93,19 @@ export function buildSiteSpec(siteSpec: SiteSpec): Spec {
     })
   }
 
-  if (siteSpec.staff.length > 0) {
+  if (staff.length > 0) {
     pushElement(elements, children, "staff-grid", "StaffGrid", {
-      staff: siteSpec.staff.map((member) => ({
+      staff: staff.map((member) => ({
         name: member.name,
         role: member.role ?? "",
-        photoUrl: member.photo_url,
+        photoUrl: member.photoUrl,
         bio: member.bio,
         services: member.services,
       })),
     })
   }
 
-  const serviceCategories = groupServicesByCategory(siteSpec.services)
+  const serviceCategories = groupServicesByCategory(services)
   if (serviceCategories.length > 0) {
     pushElement(elements, children, "service-accordion", "ServiceAccordion", {
       categories: serviceCategories,
@@ -139,7 +157,43 @@ function pushElement(
   children.push(id)
 }
 
-function groupServicesByCategory(services: SiteSpec["services"]) {
+function normalizeBranding(siteSpec: SiteSpec): BrandingJSON {
+  const legacy = siteSpec.shop.branding_json ?? {}
+  return {
+    ...legacy,
+    logo_url: legacy.logo_url ?? siteSpec.branding?.logoUrl,
+    tagline: legacy.tagline ?? siteSpec.shop.tagline,
+    description: legacy.description ?? siteSpec.shop.description,
+    cancellation_policy: legacy.cancellation_policy ?? siteSpec.shop.cancellationPolicy,
+  }
+}
+
+function normalizeStaff(siteSpec: SiteSpec) {
+  return siteSpec.staff.map((member) => ({
+    name: member.name,
+    role: member.role,
+    photoUrl: member.photo_url ?? member.imageUrl ?? null,
+    bio: member.bio,
+    services: member.services.map((service) => typeof service === "string" ? service : service.name),
+  }))
+}
+
+function normalizeServices(siteSpec: SiteSpec) {
+  if (siteSpec.services && siteSpec.services.length > 0) {
+    return siteSpec.services
+  }
+
+  const services = new Map<string, NormalizedService>()
+  for (const member of siteSpec.staff) {
+    for (const service of member.services) {
+      if (typeof service === "string") continue
+      services.set(service.name, service)
+    }
+  }
+  return [...services.values()]
+}
+
+function groupServicesByCategory(services: NormalizedService[]) {
   const byCategory = new Map<string, Array<Record<string, string | null>>>()
 
   for (const service of services) {
@@ -148,9 +202,9 @@ function groupServicesByCategory(services: SiteSpec["services"]) {
 
     items.push({
       name: service.name,
-      description: service.description,
-      duration: formatDuration(service.duration_minutes),
-      price: formatPrice(service.price_cents),
+      description: service.description ?? null,
+      duration: formatDuration(service.duration_minutes ?? service.durationMinutes ?? 0),
+      price: formatPrice(service.price_cents ?? service.priceCents ?? 0),
     })
 
     byCategory.set(category, items)
@@ -166,13 +220,18 @@ function aggregateHours(hours: SiteSpec["hours"]) {
   const byDay = new Map<number, Array<{ staffName: string; startTime: string; endTime: string }>>()
 
   for (const entry of hours) {
-    const items = byDay.get(entry.day_of_week) ?? []
+    const dayOfWeek = entry.day_of_week ?? entry.dayOfWeek
+    const startTime = entry.start_time ?? entry.startTime
+    const endTime = entry.end_time ?? entry.endTime
+    if (dayOfWeek === undefined || !startTime || !endTime) continue
+
+    const items = byDay.get(dayOfWeek) ?? []
     items.push({
-      staffName: entry.staff_name,
-      startTime: entry.start_time,
-      endTime: entry.end_time,
+      staffName: entry.staff_name ?? entry.staffName ?? "",
+      startTime,
+      endTime,
     })
-    byDay.set(entry.day_of_week, items)
+    byDay.set(dayOfWeek, items)
   }
 
   return DAY_ORDER.filter((day) => byDay.has(day)).map((dayOfWeek) => ({

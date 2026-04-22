@@ -44,7 +44,14 @@ export default async function TenantPage({ params, searchParams }: Props) {
   // Fetch the full site spec for rendering
   if (slug?.length === 1 && slug[0] === "variants") {
     const variants = await resolveSiteVariants(tenant.slug)
-    return <VariantChooserPage shopSlug={tenant.slug} tenant={tenant} variants={variants} />
+    return (
+      <VariantChooserPage
+        previewBasePath={isLocalDev ? `/${domain}` : ""}
+        shopSlug={tenant.slug}
+        tenant={tenant}
+        variants={variants}
+      />
+    )
   }
 
   const spec = await resolveSiteSpec(tenant.slug, query?.siteVariant)
@@ -112,10 +119,12 @@ function VariantChooserPage({
   shopSlug,
   tenant,
   variants,
+  previewBasePath,
 }: {
   shopSlug: string
   tenant: { name: string }
   variants: SiteVariantSummary[]
+  previewBasePath: string
 }) {
   return (
     <div className="min-h-screen bg-[#1a1410] px-5 py-8 text-[#e8ddd0]">
@@ -140,7 +149,7 @@ function VariantChooserPage({
               <div className="mt-5 flex flex-wrap gap-3">
                 <a
                   className="inline-flex border border-[#c9a84c]/40 px-4 py-2 text-sm text-[#c9a84c]"
-                  href={variant.previewUrl}
+                  href={`${previewBasePath}${variant.previewUrl}`}
                 >
                   Preview direction
                 </a>
