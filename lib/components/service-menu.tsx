@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 type FormattedService = {
   id: string
   name: string
+  description?: string
   duration: string
   price: string
 }
@@ -115,6 +116,11 @@ export function ServiceMenu({ primary, extras, preselectedId, sectionLabel }: Se
                         </span>
                       )}
                     </span>
+                    {s.description ? (
+                      <span className="text-[0.78rem] text-[var(--shell-text-muted)] leading-snug">
+                        {s.description}
+                      </span>
+                    ) : null}
                     <span className="inline-flex items-center gap-2">
                       <span className={cn(
                         "text-[0.8rem] tabular-nums text-[var(--shell-text-subtle)]",
@@ -173,6 +179,11 @@ export function ServiceMenu({ primary, extras, preselectedId, sectionLabel }: Se
                     )}>
                       {label}
                     </span>
+                    {s.description ? (
+                      <span className="text-[0.78rem] text-[var(--shell-text-muted)] leading-snug">
+                        {s.description}
+                      </span>
+                    ) : null}
                     <span className="inline-flex items-center gap-2">
                       <span className={cn(
                         "text-[0.8rem] tabular-nums text-[var(--shell-text-subtle)]",

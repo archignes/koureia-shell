@@ -12,6 +12,7 @@ export type BookingContext = {
   services: Array<{
     id: string
     name: string
+    description?: string | null
     duration_minutes: number
     price_cents: number
     price_display: string | null

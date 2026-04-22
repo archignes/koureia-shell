@@ -41,6 +41,7 @@ export function buildRequestSpec({
   const fmt = (s: BookingContext["services"][number]) => ({
     id: s.id,
     name: s.name,
+    description: s.description ?? undefined,
     duration: formatDuration(s.duration_minutes),
     price: formatPrice(s.price_cents, s.price_display),
     priceCents: s.price_cents,
