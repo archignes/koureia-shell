@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pre-commit hook: lint staged files + type check.
+# Catches unused variables, type errors, and lint violations before they
+# accumulate across commits. Full test suite runs at pre-push.
+#
+# Invoked by global dispatcher at ~/.config/git/hooks/pre-commit
+# Skip (rare): git commit --no-verify
+
+GIT_DIR="$(git rev-parse --git-dir)"
+LOG_DIR="$GIT_DIR/hooks-logs"
+mkdir -p "$LOG_DIR"
+LOG="$LOG_DIR/pre-commit.log"
+
+FAILED=()
+
+echo "🔨 Pre-commit checks running... (verbose output → $LOG)" >&2
+exec 3>&1 4>&2
+exec > "$LOG" 2>&1
+
+# --- Type check ---
+echo "=== TypeScript ==="
+if ! bunx tsc --noEmit; then
+  FAILED+=("TypeScript")
+fi
+
+# --- Lint staged files ---
+echo "=== ESLint (staged files) ==="
+STAGED=$(git diff --cached --name-only --diff-filter=ACM -- '*.ts' '*.tsx' '*.mjs')
+if [ -n "$STAGED" ]; then
+  if ! echo "$STAGED" | xargs bunx eslint --no-warn-ignored; then
+    FAILED+=("ESLint")
+  fi
+else
+  echo "(no staged .ts/.tsx/.mjs files)"
+fi
+
+exec 1>&3 2>&4
+
+if [ ${#FAILED[@]} -gt 0 ]; then
+  echo "" >&2
+  echo "✗ Pre-commit checks failed:" >&2
+  for f in "${FAILED[@]}"; do
+    echo "  - $f" >&2
+  done
+  echo "" >&2
+  echo "See $LOG for details" >&2
+  exit 1
+fi
+
+echo "✓ Pre-commit checks passed" >&2
