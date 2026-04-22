@@ -22,6 +22,10 @@ Full architecture docs: `~/projects/cb/builds/koureia/docs/multi-tenant-provisio
 - No database connection — reads from Koureia internal API
 - No auth — public sites only
 
+## CI
+
+CI runs on every PR to main (`.github/workflows/ci.yml`): type check, lint, test (`validate` job), plus `require-issue-id` which checks that the PR title contains a Linear issue ID (e.g., `DEV-1234`). Both are required to merge.
+
 ## Commands
 
 ```bash
