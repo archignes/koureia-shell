@@ -9,6 +9,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  require-issue-id:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title for Linear issue ID
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          if ! echo "$TITLE" | grep -qE '(DEV|GOV|OUT|UX)-[0-9]+'; then
+            echo "::error::PR title must include a Linear issue ID (e.g., DEV-1234)"
+            echo ""
+            echo "  Title: $TITLE"
+            echo "  Fix: update the PR title to include the issue ID"
+            echo "  Example: feat(scope): description (DEV-1234)"
+            exit 1
+          fi
+
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
