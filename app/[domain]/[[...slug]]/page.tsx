@@ -135,37 +135,56 @@ function VariantChooserPage({
           Review each draft direction. Choosing a direction here is for discussion only; publishing still requires an explicit final approval step in Koureia.
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {variants.map((variant) => (
-            <article key={variant.id} className="border border-[#c9a84c]/20 bg-black/20 p-5">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-xl font-medium">{variant.name}</h2>
-                <span className="border border-stone-700 px-2 py-1 text-[11px] uppercase text-stone-400">
-                  {variant.status}
-                </span>
-              </div>
-              {variant.summary ? (
-                <p className="mt-3 text-sm leading-6 text-stone-300">{variant.summary}</p>
-              ) : null}
-              <div className="mt-5 flex flex-wrap gap-3">
+          {variants.map((variant) => {
+            const previewHref = `${previewBasePath}${variant.previewUrl}`
+            return (
+              <article key={variant.id} className="overflow-hidden border border-[#c9a84c]/20 bg-black/20">
                 <a
-                  className="inline-flex border border-[#c9a84c]/40 px-4 py-2 text-sm text-[#c9a84c]"
-                  href={`${previewBasePath}${variant.previewUrl}`}
+                  aria-label={`Preview ${variant.name}`}
+                  className="group relative block aspect-[16/10] overflow-hidden border-b border-[#c9a84c]/20 bg-black"
+                  href={previewHref}
                 >
-                  Preview direction
+                  <iframe
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-0 top-0 h-[900px] w-[1440px] origin-top-left scale-[0.31] border-0 opacity-90 transition-opacity group-hover:opacity-100"
+                    src={previewHref}
+                    tabIndex={-1}
+                    title={`${variant.name} homepage preview`}
+                  />
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 </a>
-                <form action={selectVariantFormAction}>
-                  <input name="variantId" type="hidden" value={variant.id} />
-                  <input name="shopSlug" type="hidden" value={shopSlug} />
-                  <button
-                    className="inline-flex bg-[#c9a84c] px-4 py-2 text-sm text-[#1a1410]"
-                    type="submit"
-                  >
-                    Choose this direction
-                  </button>
-                </form>
-              </div>
-            </article>
-          ))}
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="text-xl font-medium">{variant.name}</h2>
+                    <span className="border border-stone-700 px-2 py-1 text-[11px] uppercase text-stone-400">
+                      {variant.status}
+                    </span>
+                  </div>
+                  {variant.summary ? (
+                    <p className="mt-3 text-sm leading-6 text-stone-300">{variant.summary}</p>
+                  ) : null}
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <a
+                      className="inline-flex border border-[#c9a84c]/40 px-4 py-2 text-sm text-[#c9a84c]"
+                      href={previewHref}
+                    >
+                      Preview direction
+                    </a>
+                    <form action={selectVariantFormAction}>
+                      <input name="variantId" type="hidden" value={variant.id} />
+                      <input name="shopSlug" type="hidden" value={shopSlug} />
+                      <button
+                        className="inline-flex bg-[#c9a84c] px-4 py-2 text-sm text-[#1a1410]"
+                        type="submit"
+                      >
+                        Choose this direction
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
         </div>
         {variants.length === 0 ? (
           <p className="mt-8 border border-stone-800 p-5 text-sm text-stone-400">
