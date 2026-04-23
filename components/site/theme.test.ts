@@ -58,6 +58,7 @@ describe("getTheme", () => {
 })
 
 const baseShop: SiteSpec["shop"] = {
+  id: "shop-test",
   name: "Test Shop",
   slug: "test",
   domain: "test.koureia.com",

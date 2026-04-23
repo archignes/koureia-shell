@@ -1,0 +1,766 @@
+{
+  "generatedAt": "2026-04-23T12:34:41.659Z",
+  "model": "google/gemini-2.5-flash",
+  "source": "OpenRouter chat completions with Gemini vision over local Beauty and the Barber assets",
+  "assets": [
+    {
+      "file": "BandB-Salon-01-2026-03-15T21-09-54-b824373f.JPG",
+      "title": "Barber Shop Interior Wide Shot",
+      "description": "A wide shot of a modern barber shop interior with two barber chairs, large windows, and a television playing on the wall.",
+      "assetType": "interior",
+      "suggestedUses": [
+        "hero",
+        "background",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Good for showcasing the overall salon environment."
+    },
+    {
+      "file": "BandB-Salon-02-2026-03-15T21-10-01-92f80138.JPG",
+      "title": "Barber Shop Interior with Mirrors",
+      "description": "An interior view of a barber shop featuring two barber chairs, large mirrors, and windows looking out onto a street.",
+      "assetType": "interior",
+      "suggestedUses": [
+        "hero",
+        "background",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Highlights the spaciousness and natural light of the salon."
+    },
+    {
+      "file": "BandB-Salon-03-2026-03-15T21-10-02-ab73ca78.JPG",
+      "title": "Barber Shop Interior with Waiting Area",
+      "description": "A view of a barber shop interior showing two barber chairs, a waiting area with stools, and framed pictures on the wall.",
+      "assetType": "interior",
+      "suggestedUses": [
+        "hero",
+        "background",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Showcases the full salon setup including the waiting area."
+    },
+    {
+      "file": "BandB-Salon-04-2026-03-15T21-09-59-1cde51c5.JPG",
+      "title": "Hair Washing Station",
+      "description": "A well-lit hair washing station with a comfortable brown leather chair, white cabinets, and a modern light fixture.",
+      "assetType": "interior",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "background"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for showcasing salon amenities."
+    },
+    {
+      "file": "BandB-Salon-06-2026-03-15T21-09-56-33d79980.JPG",
+      "title": "Salon Reception and Retail Area",
+      "description": "A modern salon reception area featuring a desk with a laptop, retail shelving, a large illuminated mirror, and wood flooring.",
+      "assetType": "interior",
+      "suggestedUses": [
+        "hero",
+        "portfolio",
+        "background"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights the welcoming and organized space."
+    },
+    {
+      "file": "BandB-Salon-09-2026-03-15T21-09-53-e3452b3a.JPG",
+      "title": "Stylist at Reception",
+      "description": "A female stylist in black attire stands smiling with her arm raised behind a reception desk with a tablet, in a modern salon setting.",
+      "assetType": "staff",
+      "suggestedUses": [
+        "hero",
+        "staff card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Ideal for staff introductions and a friendly brand image."
+    },
+    {
+      "file": "BandB-Salon-10-2026-03-15T21-10-08-d46870b5.JPG",
+      "title": "Salon Product Display",
+      "description": "A well-lit, five-shelf display of various hair and beauty products in colorful packaging, set against a white wall with a light wood floor.",
+      "assetType": "interior",
+      "suggestedUses": [
+        "hero",
+        "background",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for showcasing product range and salon aesthetic."
+    },
+    {
+      "file": "Barber-Cut-09-2026-03-15T21-11-36-6ae49ba0.jpg",
+      "title": "Barber Cut Profile",
+      "description": "A man with a fresh, sharp fade haircut, viewed in profile, sitting in a barber chair with a classic barber shop background.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights the precision of a barber's work."
+    },
+    {
+      "file": "Barber-Cut-10-2026-03-15T21-11-42-43fe05ed.jpg",
+      "title": "Barber Cut Close-up",
+      "description": "A close-up of a man with a modern fade haircut, looking slightly to the side, with a classic barber shop interior in the background.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Focuses on the client's satisfaction and haircut detail."
+    },
+    {
+      "file": "Barber-Cut-11-2026-03-15T21-11-44-000656e3.JPG",
+      "title": "Barber Haircut in Progress",
+      "description": "A barber with a beard and black shirt is giving a client a haircut using clippers and a red comb, with the client's back to the camera.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Good for showing the barber's technique and focus."
+    },
+    {
+      "file": "Barber-Cut-12-2026-03-15T21-11-33-c27b264d.JPG",
+      "title": "Barber Combing Client's Hair",
+      "description": "A barber is combing a smiling client's hair with a black comb, with the client wearing a blue and black checkered cape.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights client interaction and the start of a cut."
+    },
+    {
+      "file": "Barber-Cut-13-2026-03-15T21-11-24-c8f2ae79.JPG",
+      "title": "Barber Trimming Hair with Scissors",
+      "description": "A barber is carefully trimming a client's hair with scissors, with the client looking down and wearing a blue and black checkered cape.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Showcases precision and attention to detail in a haircut."
+    },
+    {
+      "file": "Barber-Cut-15-2026-03-15T21-11-46-b7cea50a.JPG",
+      "title": "Barber Styling Hair",
+      "description": "A barber sprays a client's hair with product, preparing it for styling, with a neon barber pole sign visible in the background.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "hero",
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for showcasing barber services and salon atmosphere."
+    },
+    {
+      "file": "Barber-Cut-16-2026-03-15T21-11-49-a1b553a6.JPG",
+      "title": "Barber Cutting Hair",
+      "description": "A close-up, over-the-shoulder shot of a barber meticulously cutting a client's hair with scissors and a comb.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Focuses on the detail and precision of a haircut."
+    },
+    {
+      "file": "Barber-Cut-17-2026-03-15T21-11-50-83072008.JPG",
+      "title": "Barber Trimming Beard",
+      "description": "An over-the-shoulder view of a barber using an electric trimmer to meticulously shape a client's beard.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights beard trimming and grooming services."
+    },
+    {
+      "file": "Barber-Cut-19-2026-03-15T21-10-54-38bba181.JPG",
+      "title": "Neck Shave with Straight Razor",
+      "description": "A barber uses a straight razor to shave the back of a client's neck, with shaving cream visible.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Good for showcasing precision shaving services."
+    },
+    {
+      "file": "Barber-Cut-20-2026-03-15T21-10-57-eafbe6f7.JPG",
+      "title": "Client Mirror View",
+      "description": "A smiling barber holds a mirror for a client to view their fresh haircut, with both smiling in the reflection.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "staff card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights client satisfaction and barber interaction."
+    },
+    {
+      "file": "Barber-Cut-21-2026-03-15T21-11-00-a9924215.JPG",
+      "title": "Facial Shave with Straight Razor",
+      "description": "A barber carefully shaves a client's face with a straight razor, with a window view in the background.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Emphasizes traditional shaving services and attention to detail."
+    },
+    {
+      "file": "Barber-Cut-22-2026-03-15T21-11-05-492bc481.JPG",
+      "title": "Barber Shaving Client",
+      "description": "A barber in a brown leather apron shaves a client's face, who is covered by a blue and black checkered cape and black towel.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "hero",
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Good for showcasing shaving services and barber skill."
+    },
+    {
+      "file": "Barber-Cut-26-2026-03-15T21-11-20-43adacfd.jpg",
+      "title": "Client Before Haircut",
+      "description": "A young male client with medium-length brown hair and a light mustache sits in a barber chair, wearing a blue and black checkered cape, before a haircut.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Ideal for 'before' shot in a before-and-after series."
+    },
+    {
+      "file": "Barber-Cut-27-2026-03-15T21-11-22-53c7de9b.jpg",
+      "title": "Client After Haircut",
+      "description": "A young male client with a fresh, short haircut sits in a barber chair, wearing a blue and black checkered cape, after a haircut.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Ideal for 'after' shot in a before-and-after series."
+    },
+    {
+      "file": "Barber-Cut-28-2026-03-15T21-11-56-6142ef9b.jpg",
+      "title": "Man with Fade Haircut",
+      "description": "A man with a fresh fade haircut and gray hair, wearing a blue and black checkered barber cape, with his eyes closed and a soft smile.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Good for showcasing barbering skills, especially fades and men's cuts."
+    },
+    {
+      "file": "Barber-Cut-30-2026-03-15T21-11-17-d88cf4e4.jpg",
+      "title": "Smiling Man with Classic Haircut",
+      "description": "A smiling man with a classic, neatly trimmed haircut, wearing a barber cape, with a blurred barber shop interior in the background.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Highlights a clean, traditional men's haircut in a barber shop setting."
+    },
+    {
+      "file": "Cassie-Profile-2026-03-16T12-37-20-55f7039b.jpg",
+      "title": "Cassie, Stylist Profile",
+      "description": "A female stylist, Cassie, stands confidently next to a barber chair in a salon with a white brick wall background.",
+      "assetType": "staff",
+      "suggestedUses": [
+        "staff card",
+        "about us",
+        "hero",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Ideal for staff profiles or 'meet the team' sections, showcasing a professional yet approachable image."
+    },
+    {
+      "file": "Christina-Profile-2026-03-16T12-37-30-1c770d06.jpg",
+      "title": "Christina Profile",
+      "description": "A smiling woman in a black top holds up a pink lash brush under an arched light, with beauty tools on a table.",
+      "assetType": "staff",
+      "suggestedUses": [
+        "staff card",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for staff profiles or promoting lash services."
+    },
+    {
+      "file": "Color-Correction-Blonde-001-2026-03-15T21-10-11-400c10b6.jpg",
+      "title": "Blonde Color Correction Before and After",
+      "description": "A side-by-side comparison showing hair before (dark brown/red) and after (light blonde with waves) a color correction.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Excellent for showcasing color correction services."
+    },
+    {
+      "file": "Color-Treatment-Balayage-001-2026-03-15T21-10-13-c9b24907.jpg",
+      "title": "Balayage Hair Treatment",
+      "description": "A back view of a person with long, wavy blonde balayage hair against a light grey wooden wall.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social",
+        "background"
+      ],
+      "dominantBackground": "light",
+      "notes": "Ideal for showcasing balayage or hair styling services."
+    },
+    {
+      "file": "Color-Treatment-Balayage-002-2026-03-15T21-10-14-30357f0d.jpg",
+      "title": "Copper Balayage Waves",
+      "description": "A close-up, rear view of a woman's shoulder-length hair styled in loose waves with a rich copper balayage.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights hair color and texture."
+    },
+    {
+      "file": "Color-Treatment-Balayage-003-2026-03-15T21-10-15-48feff2a.jpg",
+      "title": "Long Golden Balayage",
+      "description": "A rear view of a woman's long, wavy hair featuring a beautiful golden balayage, cascading down her back.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Showcases long hair and balayage technique."
+    },
+    {
+      "file": "Color-Treatment-Balayage-004-2026-03-15T21-10-17-080bc0c9.jpg",
+      "title": "Ash Blonde Balayage Bob",
+      "description": "A rear view of a woman's medium-length wavy hair with a sophisticated ash blonde balayage.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Features a modern hair color and style."
+    },
+    {
+      "file": "Color-Treatment-Balayage-005-2026-03-15T21-10-18-4adb10a5.jpg",
+      "title": "Balayage Hair Color",
+      "description": "A young woman with long, wavy brown hair featuring golden balayage highlights, looking towards the camera with a slight smile.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for showcasing balayage technique."
+    },
+    {
+      "file": "Color-Treatment-Burgundy-001-2026-03-15T21-10-20-1c7918e9.jpg",
+      "title": "Burgundy Hair Color",
+      "description": "A woman with vibrant, curly burgundy hair and bangs, looking slightly to the side against a light brick wall.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights a bold color treatment."
+    },
+    {
+      "file": "Color-Treatment-Lavendar-001-2026-03-15T21-10-21-402578b4.jpg",
+      "title": "Lavender Hair Color",
+      "description": "The back view of a person with long, wavy lavender hair, showcasing the vibrant color and texture against a light brick wall.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Excellent for displaying creative color and length."
+    },
+    {
+      "file": "Color-Treatment-Lavendar-003-2026-03-15T21-10-22-fef45386.jpg",
+      "title": "Lavender Hair Color",
+      "description": "A young woman with long, wavy lavender hair looks directly at the camera against a white brick wall.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for showcasing modern hair color trends."
+    },
+    {
+      "file": "Color-Treatment-Mermaid-001-2026-03-15T21-10-26-7d5b7ad1.jpg",
+      "title": "Mermaid Hair Color",
+      "description": "A woman's long, wavy hair features vibrant shades of blue, teal, and purple, viewed from the back.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights creative and multi-tonal hair coloring."
+    },
+    {
+      "file": "Color-Treatment-Neon-Melt-001-2026-03-15T21-10-29-7b7bec9a.jpg",
+      "title": "Neon Melt Hair Color",
+      "description": "A woman's long, wavy hair showcases a vibrant neon pink and orange color melt, viewed from the back against a white brick wall.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Excellent for demonstrating bold and bright hair color services."
+    },
+    {
+      "file": "Color-Treatment-Pink-002-2026-03-15T21-10-31-c81f3e40.jpg",
+      "title": "Pink Hair Color Treatment",
+      "description": "A close-up shot of vibrant pink and peach-toned hair, showcasing a fresh color treatment.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Good for highlighting creative color services."
+    },
+    {
+      "file": "Color-Treatment-Platinum-001-2026-03-15T21-10-32-028ea8a4.jpg",
+      "title": "Platinum Blonde Bob",
+      "description": "A side profile of a person with a stylish, wavy platinum blonde bob haircut against a light blue background.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights modern blonde styles and cuts."
+    },
+    {
+      "file": "Color-Treatment-Platinum-002-2026-03-15T21-10-34-627b3bc7.jpg",
+      "title": "Platinum Blonde Before and After",
+      "description": "A split image showing a before and after of long hair, transforming from dull brown to bright platinum blonde.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "dark",
+      "notes": "Excellent for demonstrating dramatic hair transformation capabilities."
+    },
+    {
+      "file": "Color-Treatment-Purple-001-2026-03-15T21-10-35-6ad01e2d.jpg",
+      "title": "Vibrant Purple Hair",
+      "description": "A smiling woman with vibrant purple, wavy hair and bangs, wearing a black and gold embroidered jacket, against a white brick wall.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "hero",
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for showcasing bold color treatments."
+    },
+    {
+      "file": "Color-Treatment-Red-001-2026-03-15T21-10-39-485dbf13.jpg",
+      "title": "Smiling Redhead",
+      "description": "A smiling woman with shoulder-length, wavy red hair, wearing a cream-colored ribbed sweater, against a plain white background.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "hero",
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Ideal for showcasing natural-looking red hair color."
+    },
+    {
+      "file": "Color-Treatment-Red-Gold-Melt-001-2026-03-15T21-10-40-89d60052.jpg",
+      "title": "Red to Gold Ombre",
+      "description": "A woman with long, wavy hair transitioning from dark red at the roots to golden blonde at the ends, viewed from behind, standing outdoors.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Excellent for demonstrating ombre or balayage techniques."
+    },
+    {
+      "file": "Color-Treatment-Unicorn-001-2026-03-15T21-10-41-710586ac.jpg",
+      "title": "Unicorn Hair Color",
+      "description": "A vibrant and multi-colored hair treatment featuring shades of pink, purple, blue, and silver, styled with a half-up bun.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "High-impact image for showcasing creative color services."
+    },
+    {
+      "file": "Enzo-Profile-2026-03-16T12-37-25-c6bd43ff.jpg",
+      "title": "Enzo Barber Profile",
+      "description": "A male barber with a beard and apron sits in a barber chair, holding scissors and smiling at the camera in a well-lit salon.",
+      "assetType": "staff",
+      "suggestedUses": [
+        "staff card",
+        "about us",
+        "hero",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Good for staff introductions and showing the salon environment."
+    },
+    {
+      "file": "Fade-01-2026-03-15T21-11-27-07143960.jpg",
+      "title": "Classic Fade Haircut",
+      "description": "A close-up, rear-side view of a man with a clean, short fade haircut and a beard, wearing a blue and black barber cape.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Clear example of a fade haircut, suitable for barber service showcases."
+    },
+    {
+      "file": "Fade-02-2026-03-15T21-11-14-ff8291e3.jpg",
+      "title": "Clean Fade Haircut",
+      "description": "A close-up, side profile of a man with a fresh fade haircut and a well-groomed beard, wearing a blue and black checkered barber cape.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for showcasing barbering skills and fade techniques."
+    },
+    {
+      "file": "Hair-Extensions-001-2026-03-15T21-10-44-8462c12f.jpg",
+      "title": "Woman with Long Dark Hair",
+      "description": "A woman with long, dark hair and a casual t-shirt, holding a lollipop, with a decorative mirror and white table in the background.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "social",
+        "background"
+      ],
+      "dominantBackground": "light",
+      "notes": "Could be used to represent a client or a relaxed salon atmosphere."
+    },
+    {
+      "file": "Hair-Extensions-002-2026-03-15T21-10-46-e5112ccc.jpg",
+      "title": "Hair Extensions Before and After",
+      "description": "A split image showing a woman's blonde hair before (straight) and after (wavy) hair extensions, with her wearing a black face mask.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "dark",
+      "notes": "Excellent for demonstrating the transformation and quality of hair extension services."
+    },
+    {
+      "file": "Hair-Extensions-003-2026-03-15T21-10-47-5611ca7a.jpg",
+      "title": "Before and After Hair Extensions",
+      "description": "A split image showing a woman's hair before and after hair extensions, with the 'after' side featuring longer, wavy, highlighted hair.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "dark",
+      "notes": "Good for showcasing hair extension services."
+    },
+    {
+      "file": "Hair-Extensions-Balayage-001-2026-03-15T21-10-52-b016fd04.jpg",
+      "title": "Wavy Balayage Hair Extensions",
+      "description": "A back view of a woman with long, wavy brown hair featuring warm balayage highlights against a blue background.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "dark",
+      "notes": "Highlights balayage and extensions."
+    },
+    {
+      "file": "HairCut-Style-Curls-001-2026-03-15T21-10-43-d9f9a8cd.jpg",
+      "title": "Blonde Wavy Hairstyle",
+      "description": "A woman with long, wavy blonde hair and a bright pink top, looking down slightly against a blue background.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "dark",
+      "notes": "Showcases a blonde wavy style."
+    },
+    {
+      "file": "Head-Spa-2026-03-15T21-09-52-56afdd2f.webp",
+      "title": "Head Spa Treatment",
+      "description": "A woman with her eyes closed is receiving a head spa treatment with water flowing over her head from a golden ring.",
+      "assetType": "beauty_portfolio",
+      "suggestedUses": [
+        "hero",
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "dark",
+      "notes": "High-quality image suitable for showcasing luxury services."
+    },
+    {
+      "file": "New-Salon-001-2026-03-15T21-10-05-cb735e1f.jpg",
+      "title": "Salon Station with Green Wall",
+      "description": "An empty salon station features a green accent wall decorated with pampas grass and string lights, with a brown salon chair and wash basin.",
+      "assetType": "interior",
+      "suggestedUses": [
+        "background",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Good for showing salon ambiance and individual styling areas."
+    },
+    {
+      "file": "New-Salon-008-2026-03-15T21-10-04-9ea7624a.jpg",
+      "title": "Salon Reception Desk",
+      "description": "Two women, likely staff, are smiling and interacting at a modern reception desk with a tablet and a drink dispenser in a salon setting.",
+      "assetType": "staff",
+      "suggestedUses": [
+        "hero",
+        "staff card",
+        "social"
+      ],
+      "dominantBackground": "mixed",
+      "notes": "Ideal for 'about us' or 'meet the team' sections, conveying a welcoming atmosphere."
+    },
+    {
+      "file": "Taper-01-2026-03-15T21-11-29-477a251a.jpg",
+      "title": "Curly Taper Fade",
+      "description": "A close-up, side profile of a person with dark, curly hair featuring a clean taper fade.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Good for showcasing detailed barber work."
+    },
+    {
+      "file": "Taper-Fade-01-2026-03-15T21-11-30-120ef53e.jpg",
+      "title": "Textured Mullet Fade",
+      "description": "A side profile of a man with a beard and a textured mullet haircut featuring a high taper fade.",
+      "assetType": "barber_portfolio",
+      "suggestedUses": [
+        "portfolio",
+        "service card",
+        "social"
+      ],
+      "dominantBackground": "light",
+      "notes": "Highlights a modern, edgy barber style."
+    },
+    {
+      "file": "beautyandthebarber-logo-2026-03-15T21-09-51-2283c49d.jpg",
+      "title": "Beauty and the Barber Logo",
+      "description": "A black and white circular logo with 'Beauty and the Barber' text and intertwined 'B's in the center.",
+      "assetType": "brand",
+      "suggestedUses": [
+        "logo",
+        "hero",
+        "social",
+        "background"
+      ],
+      "dominantBackground": "transparent",
+      "notes": "Vector format ideal for scalability; can be overlaid on various backgrounds."
+    },
+    {
+      "file": "beautyandthebarber-logo-black-2026-03-15T21-09-49-d5274b81.png",
+      "title": "Beauty and the Barber Black Logo",
+      "description": "A black and white logo featuring a stylized 'B' with a barber pole design and a woman's silhouette, with the words 'Beauty & the Barber' below.",
+      "assetType": "brand",
+      "suggestedUses": [
+        "logo",
+        "social"
+      ],
+      "dominantBackground": "transparent",
+      "notes": "This logo is designed for use on light backgrounds."
+    }
+  ]
+}

@@ -2,13 +2,34 @@ import type { Spec } from "@json-render/core"
 
 type BrandingJSON = {
   logo_url?: string
+  hero_image_url?: string
   tagline?: string
+  sub_tagline?: string
   description?: string
   cancellation_policy?: string
 }
 
+type SplitDoorPanel = {
+  label: string
+  href: string
+  body?: string
+  imageUrl?: string
+}
+
+type SplitDoorConfig = {
+  address?: string
+  eyebrow?: string
+  left: SplitDoorPanel
+  logoUrl?: string
+  phone?: string
+  prompt?: string
+  right: SplitDoorPanel
+  tagline?: string
+}
+
 type BrandingTheme = {
   logoUrl?: string
+  heroImageUrl?: string
   primaryColor?: string
   secondaryColor?: string
   backgroundColor?: string
@@ -20,24 +41,46 @@ type BrandingTheme = {
 
 export interface SiteSpec {
   shop: {
+    id?: string
     name: string
     slug: string
     domain?: string
     tagline?: string
+    subTagline?: string
     description?: string
+    originStory?: string
+    brandPhilosophy?: string
     cancellationPolicy?: string
     branding_json?: BrandingJSON | null
     address?: string | null
     phone?: string | null
+    email?: string | null
     timezone: string
+    birthdayPromo?: string
+    giftCardUrl?: string
+    googleReviewsUrl?: string
+    mapCoordinates?: { lat: number; lng: number } | null
+    paymentMethods?: string[]
   }
   branding?: BrandingTheme
+  featuredService?: {
+    name: string
+    headline: string
+    description: string
+  }
+  landingMode?: string | null
+  portfolioImages?: string[]
+  splitDoor?: SplitDoorConfig | null
+  testimonials?: Array<{ name: string; text: string }>
   staff: Array<{
+    id?: string
     name: string
     role: string | null
     photo_url?: string | null
     imageUrl?: string | null
     bio: string | null
+    specialties?: string[]
+    colorHex?: string | null
     services: Array<string | NormalizedService>
   }>
   services?: NormalizedService[]
@@ -51,9 +94,12 @@ export interface SiteSpec {
     end_time?: string
     endTime?: string
   }>
+  social?: Array<{ platform: string; url: string }>
+  bookingUrl?: string
 }
 
 type NormalizedService = {
+  id?: string
   name: string
   category?: string | null
   duration_minutes?: number
@@ -69,6 +115,8 @@ type ElementSpec = {
   children?: string[]
 }
 
+type InfoGridItem = { label: string; body?: string; href?: string; linkText?: string }
+
 type SpecShape = {
   root: string
   elements: Record<string, ElementSpec>
@@ -82,6 +130,7 @@ export function buildSiteSpec(siteSpec: SiteSpec): Spec {
   const branding = normalizeBranding(siteSpec)
   const staff = normalizeStaff(siteSpec)
   const services = normalizeServices(siteSpec)
+  const bookingHref = siteSpec.bookingUrl ?? "/book"
 
   elements.container = {
     type: "Container",
@@ -94,52 +143,136 @@ export function buildSiteSpec(siteSpec: SiteSpec): Spec {
   pushElement(elements, children, "site-nav", "SiteNav", {
     shopName: siteSpec.shop.name,
     logoUrl: branding.logo_url,
-    links: [{ label: "Book", href: "/book" }],
+    links: [
+      { label: "About", href: "#about" },
+      { label: "Team", href: "#team" },
+      { label: "Services", href: "#services" },
+      { label: "Reviews", href: "#testimonials" },
+      { label: "Location", href: "#location" },
+      { label: "Book", href: bookingHref },
+    ],
   })
 
-  if (hasText(branding.tagline) || hasText(branding.description)) {
+  if (siteSpec.landingMode === "split_door" && siteSpec.splitDoor) {
+    pushElement(elements, children, "split-door-hero", "SplitDoorHero", {
+      address: siteSpec.splitDoor.address ?? siteSpec.shop.address,
+      eyebrow: siteSpec.splitDoor.eyebrow,
+      left: siteSpec.splitDoor.left,
+      logoUrl: siteSpec.splitDoor.logoUrl ?? branding.logo_url,
+      phone: siteSpec.splitDoor.phone ?? siteSpec.shop.phone,
+      prompt: siteSpec.splitDoor.prompt,
+      right: siteSpec.splitDoor.right,
+      tagline: siteSpec.splitDoor.tagline ?? branding.sub_tagline,
+    })
+  } else if (hasText(branding.tagline) || hasText(branding.description) || hasText(branding.sub_tagline)) {
     pushElement(elements, children, "hero", "Hero", {
-      headline: branding.tagline,
+      eyebrow: siteSpec.shop.name,
+      headline: branding.tagline || siteSpec.shop.name,
+      kicker: branding.sub_tagline,
       subtitle: branding.description,
+      coverImageUrl: branding.hero_image_url,
+      ctaLabel: "Book an Appointment",
+      ctaHref: bookingHref,
+    })
+  }
+
+  if (hasText(siteSpec.shop.brandPhilosophy)) {
+    pushElement(elements, children, "brand-philosophy", "TextFeature", {
+      id: "about",
+      eyebrow: "Brand Philosophy",
+      body: siteSpec.shop.brandPhilosophy,
+      align: "center",
     })
   }
 
   if (staff.length > 0) {
     pushElement(elements, children, "staff-grid", "StaffGrid", {
+      eyebrow: "Meet the Team",
+      intro: "Skilled artists, thoughtful service, and a point of view that shapes the whole experience.",
       staff: staff.map((member) => ({
         name: member.name,
         role: member.role ?? "",
         photoUrl: member.photoUrl,
         bio: member.bio,
+        specialties: member.specialties,
+        colorHex: member.colorHex,
         services: member.services,
       })),
     })
   }
 
+  if (siteSpec.featuredService) {
+    pushElement(elements, children, "featured-service", "FeaturedService", {
+      eyebrow: "Featured Service",
+      headline: siteSpec.featuredService.headline,
+      body: siteSpec.featuredService.description,
+      href: bookingHref,
+      label: "Learn More",
+    })
+  }
+
+  if ((siteSpec.portfolioImages?.length ?? 0) > 0) {
+    pushElement(elements, children, "portfolio-gallery", "PortfolioGallery", {
+      eyebrow: "Portfolio",
+      images: siteSpec.portfolioImages?.slice(0, 8).map((src, index) => ({
+        src,
+        alt: `${siteSpec.shop.name} portfolio image ${index + 1}`,
+      })) ?? [],
+    })
+  }
+
   const serviceCategories = groupServicesByCategory(services)
   if (serviceCategories.length > 0) {
-    pushElement(elements, children, "service-accordion", "ServiceAccordion", {
-      categories: serviceCategories,
+    pushElement(elements, children, "service-summary", "ServiceSummary", {
+      categories: serviceCategories.map((category) => category.name),
+      href: bookingHref,
+    })
+  }
+
+  if ((siteSpec.testimonials?.length ?? 0) > 0) {
+    pushElement(elements, children, "testimonials", "Testimonials", {
+      testimonials: siteSpec.testimonials?.slice(0, 4) ?? [],
+    })
+  }
+
+  if (hasText(siteSpec.shop.originStory)) {
+    pushElement(elements, children, "origin-story", "StorySection", {
+      eyebrow: "Our Story",
+      paragraphs: splitParagraphs(siteSpec.shop.originStory),
     })
   }
 
   const aggregatedHours = aggregateHours(siteSpec.hours)
-  if (aggregatedHours.length > 0) {
-    pushElement(elements, children, "hours-table", "HoursTable", {
+  if (aggregatedHours.length > 0 || hasContactInfo(siteSpec)) {
+    pushElement(elements, children, "location", "LocationSection", {
       hours: aggregatedHours,
+      address: siteSpec.shop.address ?? undefined,
+      phone: siteSpec.shop.phone ?? undefined,
+      email: siteSpec.shop.email ?? undefined,
+      mapsUrl: getMapsUrl(siteSpec),
+      mapCoordinates: siteSpec.shop.mapCoordinates ?? undefined,
+      social: siteSpec.social ?? [],
     })
   }
 
-  if (hasText(branding.cancellation_policy)) {
-    pushElement(elements, children, "policy-block", "PolicyBlock", {
-      title: "Cancellation Policy",
-      body: branding.cancellation_policy,
+  const infoItems = buildInfoItems(siteSpec, branding)
+  if (infoItems.length > 0) {
+    pushElement(elements, children, "info-grid", "InfoGrid", {
+      eyebrow: "Policies & Info",
+      items: infoItems,
+    })
+  }
+
+  if ((siteSpec.shop.paymentMethods?.length ?? 0) > 0) {
+    pushElement(elements, children, "payment-methods", "BadgeRow", {
+      eyebrow: "Payment Methods",
+      badges: siteSpec.shop.paymentMethods,
     })
   }
 
   pushElement(elements, children, "booking-cta", "BookingCTA", {
     label: "Book an Appointment",
-    href: "/book",
+    href: bookingHref,
     variant: "sticky",
   })
 
@@ -173,7 +306,9 @@ function normalizeBranding(siteSpec: SiteSpec): BrandingJSON {
   return {
     ...legacy,
     logo_url: legacy.logo_url ?? siteSpec.branding?.logoUrl,
+    hero_image_url: legacy.hero_image_url ?? siteSpec.branding?.heroImageUrl,
     tagline: legacy.tagline ?? siteSpec.shop.tagline,
+    sub_tagline: legacy.sub_tagline ?? siteSpec.shop.subTagline,
     description: legacy.description ?? siteSpec.shop.description,
     cancellation_policy: legacy.cancellation_policy ?? siteSpec.shop.cancellationPolicy,
   }
@@ -242,6 +377,8 @@ function normalizeStaff(siteSpec: SiteSpec) {
     role: member.role,
     photoUrl: member.photo_url ?? member.imageUrl ?? null,
     bio: member.bio,
+    specialties: member.specialties ?? [],
+    colorHex: member.colorHex ?? null,
     services: member.services.map((service) => typeof service === "string" ? service : service.name),
   }))
 }
@@ -368,6 +505,49 @@ function formatTimeLabel(value: string) {
 
 function hasText(value: string | null | undefined): value is string {
   return typeof value === "string" && value.trim().length > 0
+}
+
+function splitParagraphs(value: string) {
+  return value
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+}
+
+function hasContactInfo(siteSpec: SiteSpec) {
+  return Boolean(siteSpec.shop.address || siteSpec.shop.phone || siteSpec.shop.email || (siteSpec.social?.length ?? 0) > 0)
+}
+
+function getMapsUrl(siteSpec: SiteSpec) {
+  if (siteSpec.shop.mapCoordinates) {
+    const { lat, lng } = siteSpec.shop.mapCoordinates
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+  }
+
+  if (siteSpec.shop.address) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(siteSpec.shop.address)}`
+  }
+
+  return undefined
+}
+
+function buildInfoItems(siteSpec: SiteSpec, branding: BrandingJSON) {
+  const items: Array<InfoGridItem | null> = [
+    hasText(branding.cancellation_policy)
+      ? { label: "Cancellation policy", body: branding.cancellation_policy }
+      : null,
+    hasText(siteSpec.shop.birthdayPromo)
+      ? { label: "Birthday promotion", body: siteSpec.shop.birthdayPromo }
+      : null,
+    hasText(siteSpec.shop.giftCardUrl)
+      ? { label: "Gift cards", href: siteSpec.shop.giftCardUrl, linkText: "Purchase a Gift Card" }
+      : null,
+    hasText(siteSpec.shop.googleReviewsUrl)
+      ? { label: "Google reviews", href: siteSpec.shop.googleReviewsUrl, linkText: "Leave us a Review" }
+      : null,
+  ]
+
+  return items.filter((item): item is InfoGridItem => item !== null)
 }
 
 const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]

@@ -4,8 +4,24 @@ import { useState } from "react"
 import type { SiteSpec } from "@/lib/site-spec"
 import type { Theme } from "./theme"
 
-export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
-  const [selectedStaff, setSelectedStaff] = useState("")
+type BookingTrack = "barber" | "beauty"
+
+export function BookingPage({
+  initialTrack,
+  siteVariantId,
+  spec,
+  theme,
+}: {
+  initialTrack?: BookingTrack
+  siteVariantId?: string
+  spec: SiteSpec
+  theme: Theme
+}) {
+  const filteredStaff = initialTrack
+    ? spec.staff.filter((member) => member.services.some((service) => matchesTrack(service.category, initialTrack)))
+    : spec.staff
+
+  const [selectedStaffId, setSelectedStaffId] = useState(filteredStaff.length === 1 ? filteredStaff[0]?.id ?? "" : "")
   const [selectedService, setSelectedService] = useState("")
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
@@ -15,8 +31,10 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const staffMember = spec.staff.find((s) => s.name === selectedStaff)
-  const services = staffMember?.services ?? []
+  const staffMember = spec.staff.find((s) => s.id === selectedStaffId)
+  const services = (staffMember?.services ?? []).filter((service) => matchesTrack(service.category, initialTrack))
+  const bookingTitle = initialTrack ? `Book ${formatTrack(initialTrack)} Services` : "Book an Appointment"
+  const selectedServiceOption = services.find((service) => service.id === selectedService)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -24,18 +42,25 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
     setError(null)
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_KOUREIA_API_URL || "https://koureia.com"
-      const res = await fetch(`${apiBase}/api/booking/request`, {
+      const res = await fetch("/api/booking/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          shopSlug: spec.shop.slug,
-          name,
-          phone,
-          email: email || undefined,
-          staffName: selectedStaff || undefined,
-          serviceName: selectedService || undefined,
-          smsConsent,
+          shopId: spec.shop.id,
+          serviceId: selectedService || undefined,
+          staffId: selectedStaffId || undefined,
+          clientName: name,
+          clientPhone: normalizePhoneForApi(phone),
+          clientEmail: email || undefined,
+          source: siteVariantId ? "site-variant" : "waitlist",
+          notes: buildRequestNotes({
+            initialTrack,
+            selectedServiceName: selectedServiceOption?.name,
+            selectedStaffName: staffMember?.name,
+            siteVariantId,
+            smsConsent,
+          }),
+          siteVariantId,
         }),
       })
 
@@ -86,13 +111,12 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
     <div className="min-h-dvh" style={{ backgroundColor: theme.backgroundColor, color: theme.textColor, fontFamily: theme.bodyFont }}>
       {/* Header */}
       <header
-        className="border-b px-4 sm:px-6 py-4 flex items-center justify-between"
+        className="border-b px-4 sm:px-6 py-4"
         style={{ borderColor: `${theme.textColor}15` }}
       >
         <a href="/" className="text-xl font-bold" style={{ fontFamily: theme.displayFont, color: theme.primaryColor }}>
           {spec.shop.name}
         </a>
-        <span className="text-sm" style={{ opacity: 0.5 }}>Book an Appointment</span>
       </header>
 
       <main className="max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -100,8 +124,13 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
           className="text-2xl sm:text-3xl font-bold mb-8"
           style={{ fontFamily: theme.displayFont }}
         >
-          Book an Appointment
+          {bookingTitle}
         </h1>
+        {initialTrack ? (
+          <p className="mb-8 text-sm leading-6 text-pretty" style={{ opacity: 0.7 }}>
+            Showing {formatTrack(initialTrack).toLowerCase()} providers and services.
+          </p>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
@@ -117,9 +146,9 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
             </label>
             <select
               id="book-staff"
-              value={selectedStaff}
+              value={selectedStaffId}
               onChange={(e) => {
-                setSelectedStaff(e.target.value)
+                setSelectedStaffId(e.target.value)
                 setSelectedService("")
               }}
               required
@@ -127,8 +156,8 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
               style={inputStyle}
             >
               <option value="">Select a team member</option>
-              {spec.staff.map((s) => (
-                <option key={s.name} value={s.name}>
+              {filteredStaff.map((s) => (
+                <option key={s.id} value={s.id}>
                   {s.name} — {s.role}
                 </option>
               ))}
@@ -136,7 +165,7 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
           </div>
 
           {/* Service selection */}
-          {selectedStaff && (
+          {selectedStaffId && (
             <div className="space-y-2">
               <label htmlFor="book-service" className="block text-sm font-medium" style={{ opacity: 0.8 }}>
                 Service
@@ -151,7 +180,7 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
               >
                 <option value="">Select a service</option>
                 {services.map((svc) => (
-                  <option key={svc.name} value={svc.name}>
+                  <option key={svc.id} value={svc.id}>
                     {svc.name} — {svc.durationMinutes}min
                     {svc.priceDisplay ? ` — ${svc.priceDisplay}` : svc.priceCents > 0 ? ` — $${(svc.priceCents / 100).toFixed(0)}` : ""}
                   </option>
@@ -274,4 +303,49 @@ export function BookingPage({ spec, theme }: { spec: SiteSpec; theme: Theme }) {
       </main>
     </div>
   )
+}
+
+function formatTrack(track: BookingTrack) {
+  return track === "barber" ? "Barber" : "Beauty"
+}
+
+function matchesTrack(category: string | undefined, track: BookingTrack | undefined) {
+  if (!track) return true
+  const normalized = category?.toLowerCase() ?? ""
+  const isBarber = normalized.includes("barber")
+  return track === "barber" ? isBarber : !isBarber
+}
+
+function buildRequestNotes({
+  initialTrack,
+  selectedServiceName,
+  selectedStaffName,
+  siteVariantId,
+  smsConsent,
+}: {
+  initialTrack?: BookingTrack
+  selectedServiceName?: string
+  selectedStaffName?: string
+  siteVariantId?: string
+  smsConsent: boolean
+}) {
+  const lines = [
+    siteVariantId ? `Site variant: ${siteVariantId}` : null,
+    initialTrack ? `Entry track: ${initialTrack}` : null,
+    selectedStaffName ? `Requested staff: ${selectedStaffName}` : null,
+    selectedServiceName ? `Requested service: ${selectedServiceName}` : null,
+    smsConsent ? "Client gave SMS consent in the public site form." : null,
+  ].filter(Boolean)
+
+  return lines.length > 0 ? lines.join("\n") : undefined
+}
+
+function normalizePhoneForApi(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  if (/^\+[1-9]\d{1,14}$/.test(trimmed)) return trimmed
+  const digits = trimmed.replace(/\D/g, "")
+  if (digits.length === 10) return `+1${digits}`
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`
+  return trimmed
 }
