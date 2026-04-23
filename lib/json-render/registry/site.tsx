@@ -1,8 +1,9 @@
 "use client"
 
+import type { CSSProperties } from "react"
 import type { Components } from "@json-render/react"
 
-import { catalog } from "../catalog"
+import type { catalog } from "../catalog"
 
 type SiteComponentKeys =
   | "SiteNav"
@@ -19,7 +20,7 @@ export const siteComponents: Pick<Components<typeof catalog>, SiteComponentKeys>
   SiteNav: ({ props }) => (
     <nav
       aria-label="Site"
-      className="sticky top-0 z-20 flex items-center justify-between gap-4 py-4 border-b border-[var(--shell-border)] bg-[rgba(15,17,23,0.88)] backdrop-blur-[12px]"
+      className="sticky top-0 z-20 flex items-center justify-between gap-4 py-4 border-b border-[var(--shell-border)] bg-[var(--shell-bg)] backdrop-blur-[12px]"
     >
       <div className="inline-flex items-center gap-3.5 min-w-0 text-[var(--shell-text)] no-underline">
         {props.logoUrl && (
@@ -49,7 +50,7 @@ export const siteComponents: Pick<Components<typeof catalog>, SiteComponentKeys>
   ),
 
   Hero: ({ props }) => (
-    <header className="grid grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] gap-8 items-center py-16 pb-[4.5rem] border-b border-[rgba(228,231,239,0.08)] max-sm:grid-cols-1 max-sm:py-10 max-sm:pb-12">
+    <header className="grid grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] gap-8 items-center py-16 pb-[4.5rem] border-b border-[var(--shell-border)] max-sm:grid-cols-1 max-sm:py-10 max-sm:pb-12">
       <div className="max-w-[42rem]">
         <h1 className="m-0 text-[clamp(3rem,8vw,5.8rem)] leading-[0.97] text-[var(--shell-text)] text-balance">
           {props.headline}
@@ -82,7 +83,7 @@ export const siteComponents: Pick<Components<typeof catalog>, SiteComponentKeys>
         {props.staff.map((member) => (
           <article
             key={member.name}
-            className="grid grid-cols-[auto_minmax(0,1fr)] max-sm:grid-cols-[3.75rem_minmax(0,1fr)] gap-4 items-start p-[1.4rem] border border-[var(--shell-border)] rounded-[var(--shell-radius-lg)] bg-[rgba(228,231,239,0.04)]"
+            className="grid grid-cols-[auto_minmax(0,1fr)] max-sm:grid-cols-[3.75rem_minmax(0,1fr)] gap-4 items-start p-[1.4rem] border border-[var(--shell-border)] rounded-[var(--shell-radius-lg)] bg-[var(--shell-bg-elevated)]"
           >
             {member.photoUrl && (
               <img
@@ -117,16 +118,16 @@ export const siteComponents: Pick<Components<typeof catalog>, SiteComponentKeys>
       {props.categories.map((category) => (
         <div
           key={category.name}
-          className="border border-[var(--shell-border)] rounded-[var(--shell-radius-lg)] bg-[rgba(228,231,239,0.03)] overflow-hidden"
+          className="border border-[var(--shell-border)] rounded-[var(--shell-radius-lg)] bg-[var(--shell-bg-soft)] overflow-hidden"
         >
-          <h2 className="m-0 px-[1.4rem] py-[1.2rem] border-b border-[rgba(228,231,239,0.08)] text-[var(--shell-accent)] text-[1.1rem] leading-[1.2]">
+          <h2 className="m-0 px-[1.4rem] py-[1.2rem] border-b border-[var(--shell-border)] text-[var(--shell-accent)] text-[1.1rem] leading-[1.2]">
             {category.name}
           </h2>
           <div className="grid">
             {category.services.map((service) => (
               <article
                 key={`${category.name}-${service.name}`}
-                className="px-[1.4rem] py-4 pb-[1.1rem] [&+&]:border-t [&+&]:border-[rgba(228,231,239,0.08)]"
+                className="px-[1.4rem] py-4 pb-[1.1rem] [&+&]:border-t [&+&]:border-[var(--shell-border)]"
               >
                 <div className="flex items-baseline justify-between gap-4 max-sm:grid">
                   <h3 className="text-base font-semibold text-[var(--shell-text)]">
@@ -156,12 +157,12 @@ export const siteComponents: Pick<Components<typeof catalog>, SiteComponentKeys>
 
   HoursTable: ({ props }) => (
     <section className="py-12">
-      <table className="grid border border-[var(--shell-border)] rounded-[var(--shell-radius-lg)] bg-[rgba(228,231,239,0.03)] overflow-hidden">
+      <table className="grid border border-[var(--shell-border)] rounded-[var(--shell-radius-lg)] bg-[var(--shell-bg-soft)] overflow-hidden">
         <tbody>
           {props.hours.map((entry) => (
             <tr
               key={entry.day}
-              className="flex items-center justify-between gap-4 px-5 py-4 tabular-nums [&+&]:border-t [&+&]:border-[rgba(228,231,239,0.08)]"
+              className="flex items-center justify-between gap-4 px-5 py-4 tabular-nums [&+&]:border-t [&+&]:border-[var(--shell-border)]"
             >
               <th className="text-[var(--shell-text-muted)] font-normal" scope="row">
                 {entry.day}
@@ -177,7 +178,7 @@ export const siteComponents: Pick<Components<typeof catalog>, SiteComponentKeys>
   ),
 
   PolicyBlock: ({ props }) => (
-    <section className="px-5 py-[1.1rem] border border-[var(--shell-border)] rounded-[var(--shell-radius-md)] bg-[rgba(228,231,239,0.03)]">
+    <section className="px-5 py-[1.1rem] border border-[var(--shell-border)] rounded-[var(--shell-radius-md)] bg-[var(--shell-bg-soft)]">
       <h3 className="m-0 text-[var(--shell-accent)] text-[0.82rem] leading-[1.3] uppercase">
         {props.title}
       </h3>
@@ -189,7 +190,7 @@ export const siteComponents: Pick<Components<typeof catalog>, SiteComponentKeys>
 
   BookingCTA: ({ props }) =>
     props.variant === "sticky" ? (
-      <div className="fixed left-0 right-0 bottom-0 z-30 flex items-center justify-center px-4 py-3.5 pb-[calc(0.9rem+env(safe-area-inset-bottom))] bg-[rgba(15,17,23,0.96)] border-t border-[var(--shell-border)] backdrop-blur-[12px]">
+      <div className="fixed left-0 right-0 bottom-0 z-30 flex items-center justify-center px-4 py-3.5 pb-[calc(0.9rem+env(safe-area-inset-bottom))] bg-[var(--shell-bg)] border-t border-[var(--shell-border)] backdrop-blur-[12px]">
         <a
           className="inline-flex w-full max-w-[30rem] items-center justify-center min-h-14 px-6 py-4 rounded-full bg-[var(--shell-accent)] text-[var(--shell-accent-contrast)] text-[0.95rem] font-bold no-underline shadow-[0_16px_36px_rgba(199,164,106,0.2)] hover:bg-[var(--shell-accent-strong)] hover:-translate-y-px"
           href={props.href}
@@ -220,9 +221,14 @@ export const siteComponents: Pick<Components<typeof catalog>, SiteComponentKeys>
     </footer>
   ),
 
-  Container: ({ children }) => (
-    <div className="w-[min(calc(100%-2rem),var(--shell-content-width))] max-sm:w-[min(calc(100%-1.25rem),var(--shell-content-width))] mx-auto">
+  Container: ({ props, children }) => (
+    <div
+      className="min-h-screen bg-[var(--shell-bg)] text-[var(--shell-text)]"
+      style={props.theme as CSSProperties | undefined}
+    >
+      <div className="w-[min(calc(100%-2rem),var(--shell-content-width))] max-sm:w-[min(calc(100%-1.25rem),var(--shell-content-width))] mx-auto pb-28">
       {children}
+      </div>
     </div>
   ),
 }

@@ -6,6 +6,7 @@
 
 export type SiteSpec = {
   shop: {
+    id: string
     name: string
     slug: string
     domain: string
@@ -41,6 +42,18 @@ export type SiteSpec = {
     headline: string
     description: string
   }
+  landingMode?: string
+  portfolioImages?: string[]
+  splitDoor?: {
+    address?: string
+    eyebrow?: string
+    left: { body?: string; href: string; imageUrl?: string; label: string }
+    logoUrl?: string
+    phone?: string
+    prompt?: string
+    right: { body?: string; href: string; imageUrl?: string; label: string }
+    tagline?: string
+  }
   testimonials: { name: string; text: string }[]
   /** Staff members with their services and individual hours */
   staff: SiteStaffMember[]
@@ -51,6 +64,7 @@ export type SiteSpec = {
 }
 
 export type SiteService = {
+  id: string
   name: string
   description?: string
   category?: string
@@ -60,6 +74,7 @@ export type SiteService = {
 }
 
 export type SiteStaffMember = {
+  id: string
   name: string
   role: string
   bio?: string
