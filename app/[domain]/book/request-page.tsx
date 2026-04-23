@@ -38,11 +38,13 @@ export async function generateBookingRequestMetadata({
   if (!tenant) {
     return {
       title: formatBookingRequestTitle(variant),
+      description: formatBookingRequestDescription(variant, null),
     }
   }
 
   return {
     title: `${formatBookingRequestTitle(variant)} | ${tenant.name}`,
+    description: formatBookingRequestDescription(variant, tenant.name),
   }
 }
 
@@ -163,6 +165,17 @@ export async function BookingRequestPage({
 
 function formatBookingRequestTitle(variant: BookingRequestVariant) {
   return variant === "after-hours" ? "After-Hours Booking" : "Join Waitlist"
+}
+
+function formatBookingRequestDescription(variant: BookingRequestVariant, shopName: string | null) {
+  if (variant === "after-hours") {
+    return shopName
+      ? `Book an after-hours appointment at ${shopName}.`
+      : "Book an after-hours appointment."
+  }
+  return shopName
+    ? `Join the waitlist at ${shopName}.`
+    : "Join the waitlist."
 }
 
 function getSingleParam(value: string | string[] | undefined) {
