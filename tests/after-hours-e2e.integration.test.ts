@@ -129,6 +129,7 @@ describe("after-hours booking: shell proxy → koureia API", () => {
       source: "public",
       clientName: "Dupe Test",
       clientPhone: "+15559990002",
+      suppressNotifications: true,
     }
 
     const res1 = await fetch(`${KOUREIA_API}/api/booking/holds`, {
@@ -164,5 +165,26 @@ describe("after-hours availability from prod", () => {
       expect(hour).toBeLessThan(21)
     }
     expect(data.surcharge_cents).toBe(10000)
+  })
+
+  it("returns startsAt as UTC ISO strings (ends with Z)", async () => {
+    const date = futureWeekday(6)
+    const res = await fetch(
+      `${KOUREIA_API}/api/booking/availability?shop=${SHOP_SLUG}&serviceId=${serviceId}&staffId=${danStaffId}&dateFrom=${date}&days=1&mode=after_hours`
+    )
+    expect(res.status).toBe(200)
+    const data = await res.json()
+
+    const slots = data.slotsByDate[date] ?? []
+    expect(slots.length).toBeGreaterThan(0)
+
+    for (const slot of slots) {
+      // startsAt must be a full UTC ISO string ending in Z
+      expect(slot.startsAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+      // endsAt should also be UTC ISO
+      expect(slot.endsAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+      // time field should still be local HH:mm format
+      expect(slot.time).toMatch(/^\d{2}:\d{2}$/)
+    }
   })
 })

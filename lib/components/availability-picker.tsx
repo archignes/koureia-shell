@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react"
 import { DayPicker } from "react-day-picker"
-import { fetchAvailability, type AvailabilitySlot } from "@/lib/availability"
+import { fetchBulkAvailability, type AvailabilitySlot } from "@/lib/availability"
 import { cn, formatTime } from "@/lib/utils"
 
 type AvailabilityPickerProps = {
@@ -14,6 +14,8 @@ type AvailabilityPickerProps = {
   minAdvanceHours?: number
   shopTimezone?: string
 }
+
+type SlotCache = Map<string, AvailabilitySlot[]>
 
 function toDateString(date: Date) {
   return date.toISOString().slice(0, 10)
@@ -33,68 +35,116 @@ export function AvailabilityPicker({
   const [timezone, setTimezone] = useState<string>("")
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null)
   const [loading, setLoading] = useState(false)
+  const [prefetching, setPrefetching] = useState(false)
   const [error, setError] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  const slotCacheRef = useRef<SlotCache>(new Map())
+  // Track which serviceId+staffId combo the cache is for
+  const cacheKeyRef = useRef<string>("")
 
   const today = new Date()
   const minDate = new Date(today.getTime() + minAdvanceHours * 60 * 60 * 1000)
   const maxDate = new Date(today)
   maxDate.setDate(maxDate.getDate() + 30)
 
-  const handleDateSelect = useCallback(
-    async (date: Date | undefined) => {
-      if (!date) return
-      setSelectedDate(date)
-      setSelectedSlot(null)
-      setError(false)
-      setLoading(true)
+  // Dates that have zero available slots (for disabling in calendar)
+  const [unavailableDates, setUnavailableDates] = useState<Date[]>([])
+
+  const prefetchAvailability = useCallback(
+    async (svcId: string, stfId?: string) => {
+      const newCacheKey = `${svcId}:${stfId ?? ""}`
+      if (cacheKeyRef.current === newCacheKey) return
 
       abortRef.current?.abort()
       const controller = new AbortController()
       abortRef.current = controller
 
+      cacheKeyRef.current = newCacheKey
+      slotCacheRef.current = new Map()
+      setUnavailableDates([])
+      setPrefetching(true)
+      setError(false)
+
       try {
-        const response = await fetchAvailability({
+        const result = await fetchBulkAvailability({
           apiUrl,
           shopSlug,
-          serviceId,
-          staffId,
-          date: toDateString(date),
+          serviceId: svcId,
+          staffId: stfId,
+          dateFrom: toDateString(minDate),
+          days: 14,
           signal: controller.signal,
         })
-        if (response.error) {
-          setSlots([])
+
+        if (result.error) {
           setError(true)
-        } else {
-          setSlots(response.slots)
-          setTimezone(shopTimezone ?? response.timezone)
+          setPrefetching(false)
+          return
+        }
+
+        const cache: SlotCache = new Map()
+        const noSlotDates: Date[] = []
+
+        for (const [dateStr, info] of Object.entries(result.dates)) {
+          cache.set(dateStr, info.slots)
+          if (info.availableCount === 0) {
+            noSlotDates.push(new Date(dateStr + "T12:00:00"))
+          }
+        }
+
+        slotCacheRef.current = cache
+        setUnavailableDates(noSlotDates)
+        setTimezone(shopTimezone ?? result.timezone)
+
+        // If a date is already selected, show its cached slots
+        if (selectedDate) {
+          const dateStr = toDateString(selectedDate)
+          const cached = cache.get(dateStr)
+          if (cached) {
+            setSlots(cached)
+          }
         }
       } catch (e) {
         if ((e as Error).name === "AbortError") return
-        setSlots([])
         setError(true)
       } finally {
-        // Only clear loading if this is still the active request
         if (abortRef.current === controller) {
-          setLoading(false)
+          setPrefetching(false)
         }
       }
     },
-    [apiUrl, shopSlug, serviceId, staffId, shopTimezone]
+    [apiUrl, shopSlug, minDate, shopTimezone, selectedDate]
   )
 
-  // Refetch when staffId or serviceId changes and a date is already selected
-  const prevStaffIdRef = useRef(staffId)
-  const prevServiceIdRef = useRef(serviceId)
+  // Pre-fetch when serviceId + staffId are available
   useEffect(() => {
-    const staffChanged = prevStaffIdRef.current !== staffId
-    const serviceChanged = prevServiceIdRef.current !== serviceId
-    prevStaffIdRef.current = staffId
-    prevServiceIdRef.current = serviceId
-    if ((staffChanged || serviceChanged) && selectedDate) {
-      handleDateSelect(selectedDate)
+    if (serviceId) {
+      prefetchAvailability(serviceId, staffId)
     }
-  }, [staffId, serviceId, selectedDate, handleDateSelect])
+  }, [serviceId, staffId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDateSelect = useCallback(
+    (date: Date | undefined) => {
+      if (!date) return
+      setSelectedDate(date)
+      setSelectedSlot(null)
+      setError(false)
+
+      const dateStr = toDateString(date)
+      const cached = slotCacheRef.current.get(dateStr)
+
+      if (cached) {
+        // Instant — show cached slots, no loading
+        setSlots(cached)
+        setLoading(false)
+      } else {
+        // Date not in cache (outside prefetch window) — show empty
+        setSlots([])
+        setLoading(false)
+      }
+    },
+    []
+  )
 
   const handleSlotClick = useCallback(
     (slot: AvailabilitySlot) => {
@@ -112,7 +162,12 @@ export function AvailabilityPicker({
           mode="single"
           selected={selectedDate}
           onSelect={handleDateSelect}
-          disabled={[{ before: minDate }, { after: maxDate }, { dayOfWeek: [0] }]}
+          disabled={[
+            { before: minDate },
+            { after: maxDate },
+            { dayOfWeek: [0] },
+            ...unavailableDates,
+          ]}
           fromDate={minDate}
           toDate={maxDate}
           className="request-flow-day-picker mx-auto [--rdp-accent-background-color:rgba(199,164,106,0.14)] [--rdp-accent-color:var(--shell-accent)] [--rdp-day-height:2.5rem] [--rdp-day-width:2.5rem] [--rdp-selected-font:700_1rem/1_inherit]"
@@ -123,7 +178,13 @@ export function AvailabilityPicker({
       </div>
 
       <div className="mt-3">
-        {!selectedDate && (
+        {prefetching && (
+          <p className="px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
+            Loading availability…
+          </p>
+        )}
+
+        {!prefetching && !selectedDate && !error && (
           <p className="px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
             Select a date to see available times
           </p>
@@ -135,19 +196,19 @@ export function AvailabilityPicker({
           </p>
         )}
 
-        {selectedDate && !loading && error && (
+        {!prefetching && error && (
           <p className="px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
             Couldn't load availability. Please try another date.
           </p>
         )}
 
-        {selectedDate && !loading && !error && slots.length === 0 && (
+        {selectedDate && !loading && !prefetching && !error && slots.length === 0 && (
           <p className="px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
             No available times on this date.
           </p>
         )}
 
-        {selectedDate && !loading && !error && slots.length > 0 && (
+        {selectedDate && !loading && !prefetching && !error && slots.length > 0 && (
           <>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2 max-sm:grid-cols-1">
               {slots.map((slot) => (

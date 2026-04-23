@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 type Service = {
   id: string
   name: string
+  description?: string
   duration: string
   price: string
 }
@@ -45,16 +46,23 @@ export function ServicePicker({ services }: ServicePickerProps) {
                 type="radio"
                 onChange={() => setSelectedServiceId(service.id)}
               />
-              <span className="flex min-w-0 flex-1 items-baseline justify-between gap-4">
-                <span className="min-w-0 text-[0.95rem] font-semibold">{service.name}</span>
-                <span className="inline-flex shrink-0 items-center gap-[0.6rem] whitespace-nowrap">
-                  <span className="text-[0.85rem] tabular-nums text-[var(--shell-text-subtle)]">
-                    {service.duration}
-                  </span>
-                  <span className="text-[0.85rem] tabular-nums text-[var(--shell-accent)]">
-                    {service.price}
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="flex items-baseline justify-between gap-4">
+                  <span className="min-w-0 text-[0.95rem] font-semibold">{service.name}</span>
+                  <span className="inline-flex shrink-0 items-center gap-[0.6rem] whitespace-nowrap">
+                    <span className="text-[0.85rem] tabular-nums text-[var(--shell-text-subtle)]">
+                      {service.duration}
+                    </span>
+                    <span className="text-[0.85rem] tabular-nums text-[var(--shell-accent)]">
+                      {service.price}
+                    </span>
                   </span>
                 </span>
+                {service.description ? (
+                  <span className="text-[0.8rem] text-[var(--shell-text-muted)] leading-snug">
+                    {service.description}
+                  </span>
+                ) : null}
               </span>
             </label>
           )

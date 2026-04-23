@@ -17,11 +17,14 @@ export async function createBookingHold(opts: {
   staffId: string
   date: string
   slotStart: string
+  /** Full UTC ISO startsAt — used directly if provided, otherwise constructed from date+slotStart */
+  startsAt?: string
   mode?: "regular" | "after_hours"
   clientName?: string
   clientPhone?: string
+  addonServiceIds?: string[]
 }): Promise<HoldResult> {
-  const startsAt = `${opts.date}T${opts.slotStart}:00`
+  const startsAt = opts.startsAt ?? `${opts.date}T${opts.slotStart}:00`
 
   const response = await fetch("/api/booking/holds", {
     method: "POST",
@@ -35,6 +38,7 @@ export async function createBookingHold(opts: {
       mode: opts.mode,
       clientName: opts.clientName,
       clientPhone: opts.clientPhone,
+      addonServiceIds: opts.addonServiceIds?.length ? opts.addonServiceIds : undefined,
     }),
   })
 
