@@ -20,6 +20,8 @@ export function buildRequestSpec({
   shopTimezone,
   apiUrl,
   shopSlug,
+  siteHours,
+  waitlistHorizonDays,
 }: {
   shopName: string
   source: "after-hours" | "waitlist" | "sms-refinement"
@@ -37,6 +39,8 @@ export function buildRequestSpec({
   shopTimezone?: string
   apiUrl?: string
   shopSlug?: string
+  siteHours?: Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>
+  waitlistHorizonDays?: number
 }): Spec {
   const fmt = (s: BookingContext["services"][number]) => ({
     id: s.id,
@@ -62,7 +66,7 @@ export function buildRequestSpec({
        "service-menu", "availability-pick", "contact-fields", "order-summary",
        "policy-confirm", "submit"]
     : variant === "waitlist"
-      ? ["hero", "staff-pick", "service-pick", "prefs", "submit"]
+      ? ["hero", "staff-pick", "service-pick", "availability-pick", "prefs", "submit"]
       : ["hero", ...(hideStaffPicker ? [] : ["staff-pick"]),
          "service-pick", "prefs", "submit"]
 
@@ -155,12 +159,22 @@ export function buildRequestSpec({
       },
     } : {}),
     ...(!isAfterHours ? {
+      ...(variant === "waitlist"
+        ? {
+            "availability-pick": {
+              type: "WaitlistAvailabilityPicker",
+              props: {
+                hours: siteHours ?? [],
+                horizonDays: waitlistHorizonDays ?? 7,
+                timezone: shopTimezone,
+              },
+            },
+          }
+        : {}),
       prefs: {
         type: "PreferenceForm",
         props: variant === "waitlist" ? {
-          fields: ["flexibleDates", "notes", "name", "email", "phone"],
-          dateRangeLabel: "When works for you?",
-          dateRangePlaceholder: "e.g., Weekday evenings, any Saturday, flexible on timing...",
+          fields: ["notes", "name", "email", "phone"],
           notesLabel: "What are you looking for?",
           notesPlaceholder: "e.g., Color correction, balayage touch-up, first-time consultation...",
         } : {
@@ -192,6 +206,7 @@ export function buildRequestSpec({
       source,
       serviceStaffMap,
       allFormattedServices,
+      ...(variant === "waitlist" ? { availabilityBlocks: [] } : {}),
       ...(isAfterHours
         ? { surchargeCents: afterHours.surcharge_cents }
         : {}),

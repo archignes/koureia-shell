@@ -26,6 +26,9 @@ export type SiteSpec = {
     mapCoordinates?: { lat: number; lng: number }
     paymentMethods: string[]
   }
+  waitlist: {
+    horizonDays: number
+  }
   branding: {
     primaryColor: string
     secondaryColor: string

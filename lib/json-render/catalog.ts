@@ -177,6 +177,21 @@ export const catalog = defineCatalog(schema, {
       }),
       description: "Calendar date picker with time slot selection for after-hours booking",
     },
+    WaitlistAvailabilityPicker: {
+      props: z.object({
+        hours: z.array(
+          z.object({
+            dayOfWeek: z.number(),
+            startTime: z.string(),
+            endTime: z.string(),
+            isClosed: z.boolean(),
+          })
+        ),
+        horizonDays: z.number().optional(),
+        timezone: z.string().optional(),
+      }),
+      description: "When2meet-style availability grid for public waitlist signups",
+    },
     OrderSummary: {
       props: z.object({
         allServices: z.array(

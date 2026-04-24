@@ -2,6 +2,11 @@ import type { BookingRequestVariant } from "@/app/[domain]/book/request-page"
 
 type RequestSource = "after-hours" | "waitlist" | "sms-refinement"
 type TimeWindow = "morning" | "afternoon" | "evening" | "anytime"
+type AvailabilityBlock = {
+  date: string
+  start_time: string
+  end_time: string
+}
 
 type FormattedService = {
   id: string
@@ -30,6 +35,7 @@ export type RequestState = {
   serviceStaffMap?: Record<string, string[]>
   allFormattedServices?: FormattedService[]
   policyAccepted?: boolean
+  availabilityBlocks?: AvailabilityBlock[]
 }
 
 export function buildRequestPayload(opts: {
@@ -52,6 +58,7 @@ export function buildRequestPayload(opts: {
         serviceId: toNonEmptyString(state.selectedServiceId),
         staffId: toNullableString(state.selectedStaffId),
         flexibleDates: toNonEmptyString(state.flexibleDates),
+        availability_blocks: state.availabilityBlocks,
         notes: toNonEmptyString(state.notes),
         source: isRequestSource(state.source) ? state.source : "public",
         waitlistId,

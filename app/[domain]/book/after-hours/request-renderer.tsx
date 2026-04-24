@@ -107,8 +107,8 @@ export function RequestRenderer({
       store.set("submitError", "Please select a service.")
       return
     }
-    if (!state.flexibleDates?.trim()) {
-      store.set("submitError", "Please let us know when works for you.")
+    if (!state.availabilityBlocks || state.availabilityBlocks.length === 0) {
+      store.set("submitError", "Please select at least one time block.")
       return
     }
     if (!state.name?.trim()) {

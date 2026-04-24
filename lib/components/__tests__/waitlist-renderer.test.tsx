@@ -244,6 +244,20 @@ function loadRequestComponents() {
       "@/lib/components/staff-picker": { StaffPicker },
       "@/lib/components/order-summary": { OrderSummary: () => null },
       "@/lib/components/preference-form": { PreferenceForm },
+      "@/lib/components/waitlist-availability-picker": {
+        WaitlistAvailabilityPicker: ({ onChange }: { onChange: (blocks: Array<Record<string, string>>) => void }) =>
+          React.createElement(
+            "button",
+            {
+              type: "button",
+              onClick: () =>
+                onChange([
+                  { date: "2026-04-24", start_time: "09:00", end_time: "10:00" },
+                ]),
+            },
+            "Pick availability"
+          ),
+      },
       "../catalog": { catalog: {} },
     }
   )
@@ -262,6 +276,7 @@ function buildTestRegistry() {
       StaffPicker: requestComponents.StaffPicker,
       ServicePicker: requestComponents.ServicePicker,
       PreferenceForm: requestComponents.PreferenceForm,
+      WaitlistAvailabilityPicker: requestComponents.WaitlistAvailabilityPicker,
       SubmitButton: requestComponents.SubmitButton,
       ConfirmationMessage: requestComponents.ConfirmationMessage,
     },
@@ -305,7 +320,7 @@ function loadRequestRenderer(): LoadedRequestRenderer {
             clientName: state.name,
             clientEmail: state.email,
             clientPhone: state.phone,
-            flexibleDates: state.flexibleDates,
+            availability_blocks: state.availabilityBlocks,
             notes: state.notes,
             source: state.source,
           },
@@ -550,10 +565,7 @@ describe("RequestRenderer waitlist flow", () => {
 
     await userEvent.click(screen.getByLabelText(/Enzo/i))
     await userEvent.click(screen.getByLabelText(/Signature Cut/i))
-    await userEvent.type(
-      screen.getByLabelText(/When works for you\?/i),
-      "Weekday evenings are ideal"
-    )
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
 
     await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
     await userEvent.tab()
@@ -577,7 +589,7 @@ describe("RequestRenderer waitlist flow", () => {
     ).toBeInTheDocument()
   })
 
-  it("shows the required flexibleDates validation error before submitting", async () => {
+  it("shows the required availability validation error before submitting", async () => {
     renderRequestRenderer(buildWaitlistSpec())
 
     await userEvent.click(screen.getByLabelText(/Signature Cut/i))
@@ -587,7 +599,7 @@ describe("RequestRenderer waitlist flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
 
     expect(
-      await screen.findByText("Please let us know when works for you.")
+      await screen.findByText("Please select at least one time block.")
     ).toBeInTheDocument()
     expect(fetchMock).not.toHaveBeenCalled()
   })
@@ -599,10 +611,7 @@ describe("RequestRenderer waitlist flow", () => {
     renderRequestRenderer(buildWaitlistSpec())
 
     await userEvent.click(screen.getByLabelText(/Signature Cut/i))
-    await userEvent.type(
-      screen.getByLabelText(/When works for you\?/i),
-      "Any weekday this month"
-    )
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
     await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
     await userEvent.tab()
 

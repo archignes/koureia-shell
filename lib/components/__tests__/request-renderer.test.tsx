@@ -145,6 +145,9 @@ function loadRequestComponents() {
     if (id === "@/lib/components/preference-form") {
       return { PreferenceForm: () => null }
     }
+    if (id === "@/lib/components/waitlist-availability-picker") {
+      return { WaitlistAvailabilityPicker: () => null }
+    }
     if (id === "../catalog") {
       return { catalog: {} }
     }

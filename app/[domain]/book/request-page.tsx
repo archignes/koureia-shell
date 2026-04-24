@@ -149,6 +149,8 @@ export async function BookingRequestPage({
     shopTimezone: bookingContext.shop.timezone,
     apiUrl,
     shopSlug: tenant.slug,
+    siteHours: siteSpec.hours,
+    waitlistHorizonDays: siteSpec.waitlist.horizonDays,
   })
 
   return (

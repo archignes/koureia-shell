@@ -7,6 +7,7 @@ import { ServiceMenu as ServiceMenuComponent } from "@/lib/components/service-me
 import { StaffPicker as StaffPickerComponent } from "@/lib/components/staff-picker"
 import { OrderSummary as OrderSummaryComponent } from "@/lib/components/order-summary"
 import { PreferenceForm as PreferenceFormComponent } from "@/lib/components/preference-form"
+import { WaitlistAvailabilityPicker as WaitlistAvailabilityPickerComponent } from "@/lib/components/waitlist-availability-picker"
 
 import { catalog } from "../catalog"
 
@@ -17,6 +18,7 @@ type RequestComponentKeys =
   | "StaffPicker"
   | "SurchargeBanner"
   | "AvailabilityPicker"
+  | "WaitlistAvailabilityPicker"
   | "OrderSummary"
   | "PreferenceForm"
   | "SubmitButton"
@@ -108,6 +110,18 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
           preferredSlotEnd: slot.end,
           preferredStartsAt: slot.startsAt,
         })}
+      />
+    )
+  },
+
+  WaitlistAvailabilityPicker: ({ props }) => {
+    const { update } = useStateStore()
+    return (
+      <WaitlistAvailabilityPickerComponent
+        hours={props.hours}
+        horizonDays={props.horizonDays}
+        timezone={props.timezone}
+        onChange={(availabilityBlocks) => update({ availabilityBlocks })}
       />
     )
   },
