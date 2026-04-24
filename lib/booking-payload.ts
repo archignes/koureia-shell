@@ -29,6 +29,7 @@ export type RequestState = {
   preferredSlotEnd?: string
   /** Full UTC ISO startsAt for hold creation (bypasses date+time construction) */
   preferredStartsAt?: string
+  preferredSlots?: Array<{ starts_at: string; ends_at: string }>
   surchargeCents?: number
   notes?: string
   source?: RequestSource
@@ -36,6 +37,15 @@ export type RequestState = {
   allFormattedServices?: FormattedService[]
   policyAccepted?: boolean
   availabilityBlocks?: AvailabilityBlock[]
+  packageBaseServiceId?: string
+  afterHoursBookingMode?: "individual" | "package"
+  afterHoursPackage?: {
+    name: string
+    priceCents: number
+    priceDisplay: string
+    logoUrl?: string | null
+    addons: Array<{ name: string; gratis: boolean }>
+  } | null
 }
 
 export function buildRequestPayload(opts: {
@@ -70,16 +80,21 @@ export function buildRequestPayload(opts: {
     path: "/api/booking/request",
     body: {
       shopId,
-      serviceId: toNonEmptyString(state.selectedServiceId),
+      serviceId:
+        state.afterHoursBookingMode === "package"
+          ? toNonEmptyString(state.packageBaseServiceId) ?? toNonEmptyString(state.selectedServiceId)
+          : toNonEmptyString(state.selectedServiceId),
       staffId: toNonEmptyString(state.selectedStaffId),
       clientName: toNonEmptyString(state.name),
       clientPhone: normalizePhoneForApi(state.phone),
       preferredDate:
-        toNonEmptyString(state.preferredDate) ?? toNonEmptyString(state.dateRange),
+        state.afterHoursBookingMode === "package"
+          ? state.preferredSlots?.[0]?.starts_at.slice(0, 10) ?? toNonEmptyString(state.preferredDate)
+          : toNonEmptyString(state.preferredDate) ?? toNonEmptyString(state.dateRange),
       preferredSlotStart: toNonEmptyString(state.preferredSlotStart),
       preferredSlotEnd: toNonEmptyString(state.preferredSlotEnd),
       timeWindow: isTimeWindow(state.timeWindow) ? state.timeWindow : undefined,
-      notes: toNonEmptyString(state.notes),
+      notes: buildRequestNotes(state),
       source: isRequestSource(state.source) ? state.source : "waitlist",
       waitlistId,
     },
@@ -117,4 +132,15 @@ function isTimeWindow(value: string | undefined): value is TimeWindow {
     value === "evening" ||
     value === "anytime"
   )
+}
+
+function buildRequestNotes(state: RequestState) {
+  const parts: string[] = []
+  if (toNonEmptyString(state.notes)) {
+    parts.push(state.notes!.trim())
+  }
+  if (state.afterHoursBookingMode === "package" && state.preferredSlots?.length) {
+    parts.push(`Preferred slots: ${state.preferredSlots.map((slot) => slot.starts_at).join(", ")}`)
+  }
+  return parts.length > 0 ? parts.join("\n\n") : undefined
 }

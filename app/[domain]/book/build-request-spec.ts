@@ -38,6 +38,12 @@ export function buildRequestSpec({
     surcharge_cents: number
     surcharge_display: string
     min_advance_hours: number
+    booking_mode: "individual" | "package"
+    package_name: string | null
+    package_price_cents: number | null
+    package_price_display: string | null
+    package_addons: Array<{ name: string; gratis: boolean }>
+    logo_url: string | null
   }
   shopTimezone?: string
   apiUrl?: string
@@ -62,6 +68,7 @@ export function buildRequestSpec({
   }
 
   const isAfterHours = variant === "after-hours" && afterHours
+  const isPackageMode = isAfterHours && afterHours.booking_mode === "package"
   const hideStaffPicker = isAfterHours && preselectedStaffId
 
   // Extract booking-mode services (After Hours, Home Service) from regular list
@@ -99,12 +106,15 @@ export function buildRequestSpec({
         subtitle:
           variant === "waitlist"
             ? "Tell us what you're looking for and when works for you. We'll reach out when a slot opens."
+            : isPackageMode
+              ? "Choose a few evening options and we’ll confirm one by text."
             : staffName
               ? `Choose a service and preferred time. ${staffName} will confirm by text.`
               : "Pick your preferences and we'll confirm your time.",
         shopName,
         shopLogoUrl,
         staffName: variant === "waitlist" ? undefined : staffName,
+        logoUrl: isAfterHours ? afterHours.logo_url : undefined,
       },
     },
     "staff-pick": {
@@ -251,7 +261,20 @@ export function buildRequestSpec({
       allFormattedServices,
       ...(variant === "waitlist" ? { availabilityBlocks: [] } : {}),
       ...(isAfterHours
-        ? { surchargeCents: afterHours.surcharge_cents }
+        ? {
+            surchargeCents: afterHours.surcharge_cents,
+            afterHoursBookingMode: afterHours.booking_mode,
+            packageBaseServiceId: preselectedServiceId,
+            afterHoursPackage: isPackageMode
+              ? {
+                  name: afterHours.package_name ?? "After-Hours Package",
+                  priceCents: afterHours.package_price_cents ?? 0,
+                  priceDisplay: afterHours.package_price_display ?? "$0",
+                  logoUrl: afterHours.logo_url,
+                  addons: afterHours.package_addons,
+                }
+              : null,
+          }
         : {}),
     },
   }

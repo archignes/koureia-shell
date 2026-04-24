@@ -24,6 +24,12 @@ export type BookingContext = {
     surcharge_display: string
     min_advance_hours: number
     staff_ids: string[]
+    booking_mode: "individual" | "package"
+    package_name: string | null
+    package_price_cents: number | null
+    package_price_display: string | null
+    package_addons: Array<{ name: string; gratis: boolean }>
+    logo_url: string | null
   } | null
 }
 

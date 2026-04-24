@@ -99,7 +99,14 @@ export async function BookingRequestPage({
     surcharge_display: "+$100 after-hours fee added to the service total",
     min_advance_hours: 24,
     staff_ids: mockAfterHoursStaffIds(bookingContext.staff),
+    booking_mode: "individual" as const,
+    package_name: null,
+    package_price_cents: null,
+    package_price_display: null,
+    package_addons: [],
+    logo_url: null,
   } : null)
+  const isPackageMode = variant === "after-hours" && afterHours?.booking_mode === "package"
 
   // Auto-select staff from after-hours policy if single staff member
   const effectiveStaffId =
@@ -130,6 +137,7 @@ export async function BookingRequestPage({
       : bookingContext.services
 
   const services = filterAfterHoursService(baseServices)
+  const packageBaseService = isPackageMode ? services[0] : selectedService
 
   // Filter staff to after-hours eligible members when policy exists
   const staff = variant === "after-hours" && afterHours
@@ -143,7 +151,7 @@ export async function BookingRequestPage({
     variant,
     services,
     staff,
-    preselectedServiceId: selectedService?.id,
+    preselectedServiceId: packageBaseService?.id ?? selectedService?.id,
     preselectedStaffId: selectedStaff?.id,
     staffName: selectedStaff?.name?.split(" ")[0],
     afterHours: variant === "after-hours" && afterHours ? afterHours : undefined,

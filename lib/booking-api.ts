@@ -23,6 +23,8 @@ export async function createBookingHold(opts: {
   clientName?: string
   clientPhone?: string
   addonServiceIds?: string[]
+  packageAddonNames?: string[]
+  preferredSlots?: Array<{ starts_at: string; ends_at?: string }>
 }): Promise<HoldResult> {
   const startsAt = opts.startsAt ?? `${opts.date}T${opts.slotStart}:00`
 
@@ -39,6 +41,8 @@ export async function createBookingHold(opts: {
       clientName: opts.clientName,
       clientPhone: opts.clientPhone,
       addonServiceIds: opts.addonServiceIds?.length ? opts.addonServiceIds : undefined,
+      packageAddonNames: opts.packageAddonNames?.length ? opts.packageAddonNames : undefined,
+      preferredSlots: opts.preferredSlots?.length ? opts.preferredSlots : undefined,
     }),
   })
 

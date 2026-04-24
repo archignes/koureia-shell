@@ -59,6 +59,12 @@ function buildAfterHoursSpec(overrides: Record<string, unknown> = {}) {
       surcharge_cents: 10000,
       surcharge_display: "+$100 after-hours fee",
       min_advance_hours: 24,
+      booking_mode: "individual",
+      package_name: null,
+      package_price_cents: null,
+      package_price_display: null,
+      package_addons: [],
+      logo_url: null,
     },
     ...overrides,
   })

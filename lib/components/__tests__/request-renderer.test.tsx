@@ -35,6 +35,12 @@ type BuildRequestSpec = (opts: {
     surcharge_cents: number
     surcharge_display: string
     min_advance_hours: number
+    booking_mode: "individual" | "package"
+    package_name: string | null
+    package_price_cents: number | null
+    package_price_display: string | null
+    package_addons: Array<{ name: string; gratis: boolean }>
+    logo_url: string | null
   }
   shopTimezone?: string
   apiUrl?: string
@@ -321,8 +327,20 @@ function loadRequestRenderer(): LoadedRequestRenderer {
     if (id === "@/lib/booking-api") {
       return bookingApi
     }
+    if (id === "@/lib/availability") {
+      return {
+        fetchBulkAvailability: vi.fn(),
+      }
+    }
+    if (id === "react-day-picker") {
+      return {
+        DayPicker: () => null,
+      }
+    }
     if (id === "@/lib/utils") {
       return {
+        cn: (...values: Array<string | false | null | undefined>) =>
+          values.filter(Boolean).join(" "),
         formatTime: (time: string) => {
           const [hours, minutes] = time.split(":").map(Number)
           const suffix = hours >= 12 ? "PM" : "AM"
@@ -522,6 +540,12 @@ describe("RequestRenderer after-hours submit flow", () => {
         surcharge_cents: 10000,
         surcharge_display: "+$100 after-hours fee added to the service total",
         min_advance_hours: 24,
+        booking_mode: "individual",
+        package_name: null,
+        package_price_cents: null,
+        package_price_display: null,
+        package_addons: [],
+        logo_url: null,
       },
       shopTimezone: "America/Los_Angeles",
       apiUrl: "https://api.example.com",
