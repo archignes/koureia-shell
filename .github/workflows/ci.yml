@@ -3,6 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, reopened, synchronize, edited]
 
 concurrency:
   group: ci-${{ github.head_ref }}
@@ -36,9 +37,10 @@ jobs:
           fi
 
           # Body claims visual proof — check for actual proof artifacts
-          HAS_CDN=$(echo "$PR_BODY" | grep -c "https://hypandra.b-cdn.net/" || true)
-          if [ "$HAS_CDN" -gt 0 ]; then
-            echo "Visual proof claim found with CDN URL — OK."
+          # Require markdown image embed with CDN URL, not just a bare URL
+          HAS_PROOF=$(echo "$PR_BODY" | grep -cE '!\[.*\]\(https://hypandra\.b-cdn\.net/.*\.(png|jpg|jpeg|gif|webp)' || true)
+          if [ "$HAS_PROOF" -gt 0 ]; then
+            echo "Visual proof claim found with embedded CDN screenshot — OK."
             exit 0
           fi
 
