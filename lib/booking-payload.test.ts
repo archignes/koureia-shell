@@ -9,7 +9,13 @@ function makeState(overrides: Partial<RequestState> = {}): RequestState {
     name: "Daniel Griffin",
     email: "daniel@test.com",
     phone: "4255551234",
-    flexibleDates: "Tomorrow afternoon",
+    availabilityBlocks: [
+      {
+        date: "2026-04-24",
+        start_time: "09:00",
+        end_time: "10:00",
+      },
+    ],
     source: "waitlist",
     ...overrides,
   }
@@ -38,7 +44,13 @@ describe("buildRequestPayload — waitlist variant", () => {
     expect(result.body.clientEmail).toBe("daniel@test.com")
     expect(result.body.clientPhone).toBe("+14255551234")
     expect(result.body.serviceId).toBe("svc-1")
-    expect(result.body.flexibleDates).toBe("Tomorrow afternoon")
+    expect(result.body.availability_blocks).toEqual([
+      {
+        date: "2026-04-24",
+        start_time: "09:00",
+        end_time: "10:00",
+      },
+    ])
   })
 
   it("sends staffId as null when no staff selected", () => {
@@ -65,11 +77,10 @@ describe("buildRequestPayload — waitlist variant", () => {
     const result = buildRequestPayload({
       shopId: "shop-1",
       shopSlug: "test-shop",
-      state: makeState({ name: "   ", flexibleDates: "  " }),
+      state: makeState({ name: "   " }),
       variant: "waitlist",
     })
     expect(result.body.clientName).toBeUndefined()
-    expect(result.body.flexibleDates).toBeUndefined()
   })
 
   it("passes waitlistId when present", () => {

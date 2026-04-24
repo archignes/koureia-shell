@@ -7,6 +7,7 @@ import { ServiceMenu as ServiceMenuComponent } from "@/lib/components/service-me
 import { StaffPicker as StaffPickerComponent } from "@/lib/components/staff-picker"
 import { OrderSummary as OrderSummaryComponent } from "@/lib/components/order-summary"
 import { PreferenceForm as PreferenceFormComponent } from "@/lib/components/preference-form"
+import { WaitlistAvailabilityPicker as WaitlistAvailabilityPickerComponent } from "@/lib/components/waitlist-availability-picker"
 
 import { catalog } from "../catalog"
 
@@ -17,6 +18,7 @@ type RequestComponentKeys =
   | "StaffPicker"
   | "SurchargeBanner"
   | "AvailabilityPicker"
+  | "WaitlistAvailabilityPicker"
   | "OrderSummary"
   | "PreferenceForm"
   | "SubmitButton"
@@ -112,6 +114,24 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     )
   },
 
+  WaitlistAvailabilityPicker: ({ props }) => {
+    const { update, state } = useStateStore()
+    const typedState = state as { selectedStaffId?: string }
+    const hours =
+      typedState.selectedStaffId && props.staffHoursById?.[typedState.selectedStaffId]
+        ? props.staffHoursById[typedState.selectedStaffId]
+        : props.shopHours
+
+    return (
+      <WaitlistAvailabilityPickerComponent
+        hours={hours ?? []}
+        horizonDays={props.horizonDays}
+        timezone={props.timezone}
+        onChange={(availabilityBlocks) => update({ availabilityBlocks })}
+      />
+    )
+  },
+
   OrderSummary: ({ props }) => {
     const { state } = useStateStore()
     if (!(state as Record<string, unknown>).preferredSlotStart) return null
@@ -171,13 +191,24 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
         </a>
       </div>
       <button
-        className="mb-2 inline-flex min-h-11 w-full items-center justify-center rounded-full border-0 bg-[var(--shell-accent)] px-5 py-[0.65rem] text-[0.9rem] font-bold text-[var(--shell-accent-contrast)] shadow-[0_12px_28px_rgba(199,164,106,0.15)] hover:-translate-y-px hover:bg-[var(--shell-accent-strong)] disabled:cursor-wait disabled:opacity-72"
+        className="mb-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-0 bg-[var(--shell-accent)] px-5 py-[0.65rem] text-[0.9rem] font-bold text-[var(--shell-accent-contrast)] shadow-[0_12px_28px_rgba(199,164,106,0.15)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-[var(--shell-accent-strong)] disabled:cursor-wait disabled:bg-[var(--shell-accent-strong)] disabled:opacity-100"
         disabled={loading}
         type="button"
         onClick={() => emit("submit")}
       >
+        {loading ? (
+          <span
+            aria-hidden="true"
+            className="inline-block size-4 animate-spin rounded-full border-2 border-[rgba(17,18,24,0.25)] border-t-[var(--shell-accent-contrast)]"
+          />
+        ) : null}
         {loading ? props.submittingLabel ?? "Sending..." : props.label}
       </button>
+      {loading && props.submittingHint ? (
+        <p className="mb-2 text-center text-[0.78rem] font-medium text-[var(--shell-accent)]">
+          {props.submittingHint}
+        </p>
+      ) : null}
     </div>
     )
   },

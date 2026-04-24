@@ -70,11 +70,12 @@ export function PreferenceForm({ fields, dateRangeLabel, dateRangePlaceholder, t
     ),
     email: () => (
       <label className={fieldClassName} htmlFor="preference-email">
-        <span className={labelClassName}>Email</span>
+        <span className={labelClassName}>Email <span className="font-semibold text-[var(--shell-accent)]">*</span></span>
         <input
           autoComplete="email"
           className={inputClassName}
           id="preference-email"
+          required
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}

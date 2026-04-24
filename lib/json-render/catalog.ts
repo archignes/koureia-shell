@@ -177,6 +177,32 @@ export const catalog = defineCatalog(schema, {
       }),
       description: "Calendar date picker with time slot selection for after-hours booking",
     },
+    WaitlistAvailabilityPicker: {
+      props: z.object({
+        shopHours: z.array(
+          z.object({
+            dayOfWeek: z.number(),
+            startTime: z.string(),
+            endTime: z.string(),
+            isClosed: z.boolean(),
+          })
+        ),
+        staffHoursById: z.record(
+          z.string(),
+          z.array(
+            z.object({
+              dayOfWeek: z.number(),
+              startTime: z.string(),
+              endTime: z.string(),
+              isClosed: z.boolean(),
+            }),
+          ),
+        ),
+        horizonDays: z.number().optional(),
+        timezone: z.string().optional(),
+      }),
+      description: "When2meet-style availability grid for public waitlist signups",
+    },
     OrderSummary: {
       props: z.object({
         allServices: z.array(
@@ -196,6 +222,7 @@ export const catalog = defineCatalog(schema, {
       props: z.object({
         label: z.string(),
         submittingLabel: z.string().optional(),
+        submittingHint: z.string().optional(),
       }),
       description: "Form submit button with loading state",
     },
