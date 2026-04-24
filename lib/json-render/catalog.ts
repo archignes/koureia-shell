@@ -160,6 +160,20 @@ export const catalog = defineCatalog(schema, {
       }),
       description: "Service menu with primary single-select and extras multi-select",
     },
+    BookingModeButtons: {
+      props: z.object({
+        modes: z.array(
+          z.object({
+            mode: z.enum(["after-hours", "home-service"]),
+            label: z.string(),
+            description: z.string(),
+            price: z.string(),
+            serviceId: z.string(),
+          })
+        ),
+      }),
+      description: "Special booking mode buttons (after-hours, home service) shown on waitlist",
+    },
     SurchargeBanner: {
       props: z.object({
         message: z.string(),

@@ -100,10 +100,10 @@ describe("buildRequestSpec — staff names", () => {
 })
 
 describe("buildRequestSpec — waitlist structure", () => {
-  it("includes staff-pick, service-pick, prefs, submit in waitlist children", () => {
+  it("includes staff-pick, service-menu, availability-pick, prefs, submit in waitlist children", () => {
     const spec = buildWaitlistSpec()
     const container = spec.elements.container
-    expect(container.children).toEqual(["hero", "staff-pick", "service-pick", "availability-pick", "prefs", "submit"])
+    expect(container.children).toEqual(["hero", "staff-pick", "service-menu", "availability-pick", "prefs", "submit"])
   })
 
   it("allows no-preference for waitlist staff picker", () => {

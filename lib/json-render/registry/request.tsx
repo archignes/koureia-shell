@@ -4,6 +4,7 @@ import { useStateStore, type Components } from "@json-render/react"
 import { AvailabilityPicker } from "@/lib/components/availability-picker"
 import { ServicePicker as ServicePickerComponent } from "@/lib/components/service-picker"
 import { ServiceMenu as ServiceMenuComponent } from "@/lib/components/service-menu"
+import { BookingModeButtons as BookingModeButtonsComponent } from "@/lib/components/booking-mode-buttons"
 import { StaffPicker as StaffPickerComponent } from "@/lib/components/staff-picker"
 import { OrderSummary as OrderSummaryComponent } from "@/lib/components/order-summary"
 import { PreferenceForm as PreferenceFormComponent } from "@/lib/components/preference-form"
@@ -15,6 +16,7 @@ type RequestComponentKeys =
   | "RequestHero"
   | "ServicePicker"
   | "ServiceMenu"
+  | "BookingModeButtons"
   | "StaffPicker"
   | "SurchargeBanner"
   | "AvailabilityPicker"
@@ -53,6 +55,10 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
       preselectedId={props.preselectedId}
       sectionLabel={props.sectionLabel}
     />
+  ),
+
+  BookingModeButtons: ({ props }) => (
+    <BookingModeButtonsComponent modes={props.modes} />
   ),
 
   StaffPicker: ({ props }) => (

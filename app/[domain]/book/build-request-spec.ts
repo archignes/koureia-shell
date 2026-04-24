@@ -4,7 +4,7 @@ import {
   splitServices,
   type BookingContext,
 } from "@/lib/booking-context"
-import { staffToFirstNames } from "@/lib/booking-filters"
+import { staffToFirstNames, extractBookingModes } from "@/lib/booking-filters"
 import type { BookingRequestVariant } from "./request-page"
 
 export function buildRequestSpec({
@@ -61,14 +61,21 @@ export function buildRequestSpec({
 
   const isAfterHours = variant === "after-hours" && afterHours
   const hideStaffPicker = isAfterHours && preselectedStaffId
-  const { primary, extras } = splitServices(services)
+
+  // Extract booking-mode services (After Hours, Home Service) from regular list
+  const { regular: regularServices, modes: bookingModes } = extractBookingModes(services)
+  const { primary, extras } = splitServices(regularServices)
+
+  const hasBookingModes = variant === "waitlist" && bookingModes.length > 0
 
   const children = isAfterHours
     ? ["hero", "surcharge-banner", ...(hideStaffPicker ? [] : ["staff-pick"]),
        "service-menu", "availability-pick", "contact-fields", "order-summary",
        "policy-confirm", "submit"]
     : variant === "waitlist"
-      ? ["hero", "staff-pick", "service-pick", "availability-pick", "prefs", "submit"]
+      ? ["hero", "staff-pick", "service-menu",
+         ...(hasBookingModes ? ["booking-modes"] : []),
+         "availability-pick", "prefs", "submit"]
       : ["hero", ...(hideStaffPicker ? [] : ["staff-pick"]),
          "service-pick", "prefs", "submit"]
 
@@ -112,6 +119,31 @@ export function buildRequestSpec({
         preselectedId: preselectedServiceId,
       },
     },
+    ...(variant === "waitlist" ? {
+      "service-menu": {
+        type: "ServiceMenu",
+        props: {
+          primary: primary.map(fmt),
+          extras: extras.map(fmt),
+          preselectedId: preselectedServiceId,
+          sectionLabel: "Services",
+        },
+      },
+      ...(hasBookingModes ? {
+        "booking-modes": {
+          type: "BookingModeButtons",
+          props: {
+            modes: bookingModes.map((m) => ({
+              mode: m.mode,
+              label: m.label,
+              description: m.description,
+              price: m.price,
+              serviceId: m.serviceId,
+            })),
+          },
+        },
+      } : {}),
+    } : {}),
     ...(isAfterHours ? {
       "service-menu": {
         type: "ServiceMenu",
