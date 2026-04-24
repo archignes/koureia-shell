@@ -81,6 +81,7 @@ function makeAfterHoursState(overrides: Partial<RequestState> = {}): RequestStat
     preferredSlotStart: "18:00",
     preferredSlotEnd: "19:00",
     name: "Taylor Client",
+    email: "taylor@example.com",
     phone: "425-555-0101",
     notes: "Please text to confirm",
     source: "after-hours",
@@ -119,6 +120,7 @@ describe("after-hours booking flow integration", () => {
         preferredDate: "2026-05-02",
         preferredSlotStart: "18:00",
         preferredSlotEnd: "19:00",
+        source: "after-hours",
       })
     )
   })

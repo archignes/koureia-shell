@@ -41,6 +41,7 @@ export type RequestState = {
   afterHoursBookingMode?: "individual" | "package"
   afterHoursPackage?: {
     name: string
+    description?: string | null
     priceCents: number
     priceDisplay: string
     logoUrl?: string | null

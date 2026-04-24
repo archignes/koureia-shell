@@ -30,6 +30,28 @@ function readInputValue(id: string) {
   return value || undefined
 }
 
+type PackageAvailabilitySlot = {
+  start: string
+  end: string
+  startsAt?: string
+  endsAt?: string
+  available: boolean
+}
+
+function dedupePackageSlots(slots: PackageAvailabilitySlot[]) {
+  const seen = new Set<string>()
+  const deduped: PackageAvailabilitySlot[] = []
+
+  for (const slot of slots) {
+    const key = slot.startsAt ?? `${slot.start}-${slot.end}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    deduped.push(slot)
+  }
+
+  return deduped
+}
+
 export function RequestRenderer({
   spec: initialSpec,
   shopId,
@@ -45,6 +67,7 @@ export function RequestRenderer({
   const [error, setError] = useState<string | null>(null)
   const [packageSuccess, setPackageSuccess] = useState<null | {
     name: string
+    description?: string | null
     priceDisplay: string
     logoUrl?: string | null
     slots: Array<{ starts_at: string; ends_at: string }>
@@ -201,8 +224,8 @@ export function RequestRenderer({
       setError("Please select a service, staff member, date, and time.")
       return
     }
-    if (!state.name?.trim() || !state.phone?.trim()) {
-      setError("Please enter your name and phone number.")
+    if (!state.name?.trim() || !state.email?.trim() || !state.phone?.trim()) {
+      setError("Please enter your name, email, and phone number.")
       return
     }
 
@@ -364,12 +387,14 @@ type PackageModeFormProps = {
   setError: (value: string | null) => void
   success: {
     name: string
+    description?: string | null
     priceDisplay: string
     logoUrl?: string | null
     slots: Array<{ starts_at: string; ends_at: string }>
   } | null
   onSuccess: (value: {
     name: string
+    description?: string | null
     priceDisplay: string
     logoUrl?: string | null
     slots: Array<{ starts_at: string; ends_at: string }>
@@ -391,12 +416,13 @@ function PackageModeForm({
   onSuccess,
 }: PackageModeFormProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
-  const [slotMap, setSlotMap] = useState<Record<string, Array<{ start: string; end: string; startsAt?: string; endsAt?: string; available: boolean }>>>({})
+  const [slotMap, setSlotMap] = useState<Record<string, PackageAvailabilitySlot[]>>({})
   const [unavailableDates, setUnavailableDates] = useState<Date[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedSlots, setSelectedSlots] = useState<Array<{ starts_at: string; ends_at: string }>>([])
   const [selectedAddons, setSelectedAddons] = useState<string[]>([])
   const [name, setName] = useState(state.name ?? "")
+  const [email, setEmail] = useState(state.email ?? "")
   const [phone, setPhone] = useState(state.phone ?? "")
   const [notes, setNotes] = useState(state.notes ?? "")
   const [policyAccepted, setPolicyAccepted] = useState(false)
@@ -424,10 +450,10 @@ function PackageModeForm({
       })
       if (cancelled) return
 
-      const nextMap: Record<string, Array<{ start: string; end: string; startsAt?: string; endsAt?: string; available: boolean }>> = {}
+      const nextMap: Record<string, PackageAvailabilitySlot[]> = {}
       const disabled: Date[] = []
       for (const [date, info] of Object.entries(result.dates ?? {})) {
-        nextMap[date] = info.slots.filter((slot) => slot.available)
+        nextMap[date] = dedupePackageSlots(info.slots.filter((slot) => slot.available))
         if ((nextMap[date] ?? []).length === 0) {
           disabled.push(new Date(`${date}T12:00:00`))
         }
@@ -465,6 +491,11 @@ function PackageModeForm({
           <p className="mt-3 text-[0.95rem] font-medium text-[var(--shell-text)]">
             {success.name} · {success.priceDisplay}
           </p>
+          {success.description ? (
+            <p className="mx-auto mt-3 max-w-[28rem] text-[0.85rem] leading-[1.6] text-[var(--shell-text-muted)] text-pretty">
+              {success.description}
+            </p>
+          ) : null}
           <div className="mt-4 rounded-xl border border-[rgba(199,164,106,0.15)] bg-[rgba(199,164,106,0.04)] px-4 py-3 text-left">
             <p className="text-[0.8rem] uppercase tracking-[0.06em] text-[var(--shell-text-muted)]">
               Preferred times
@@ -499,8 +530,8 @@ function PackageModeForm({
       setError("Please choose at least one preferred time slot.")
       return
     }
-    if (!name.trim() || !phone.trim()) {
-      setError("Please enter your name and phone number.")
+    if (!name.trim() || !email.trim() || !phone.trim()) {
+      setError("Please enter your name, email, and phone number.")
       return
     }
     if (!policyAccepted) {
@@ -532,6 +563,7 @@ function PackageModeForm({
         state: {
           ...state,
           name,
+          email,
           phone,
           notes,
           preferredSlots: selectedSlots,
@@ -547,6 +579,7 @@ function PackageModeForm({
 
       onSuccess({
         name: packageConfig.name,
+        description: packageConfig.description,
         priceDisplay: packageConfig.priceDisplay,
         logoUrl: packageConfig.logoUrl,
         slots: selectedSlots,
@@ -576,6 +609,11 @@ function PackageModeForm({
         <p className="text-[0.75rem] uppercase tracking-[0.08em] text-[var(--shell-text-muted)]">Package</p>
         <p className="mt-1 text-[1.1rem] font-semibold text-[var(--shell-text)]">{packageConfig.name}</p>
         <p className="mt-1 text-[1.4rem] font-bold text-[var(--shell-accent)]">{packageConfig.priceDisplay}</p>
+        {packageConfig.description ? (
+          <p className="mt-3 text-[0.9rem] leading-[1.6] text-[var(--shell-text-muted)] text-pretty">
+            {packageConfig.description}
+          </p>
+        ) : null}
       </div>
 
       {packageConfig.addons.length > 0 ? (
@@ -672,6 +710,13 @@ function PackageModeForm({
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="Your name"
+          className="w-full rounded-lg border border-[var(--shell-border)] bg-transparent px-3 py-2 text-[var(--shell-text)]"
+        />
+        <input
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="Email address"
+          type="email"
           className="w-full rounded-lg border border-[var(--shell-border)] bg-transparent px-3 py-2 text-[var(--shell-text)]"
         />
         <input

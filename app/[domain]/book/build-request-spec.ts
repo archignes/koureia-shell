@@ -7,6 +7,31 @@ import {
 import { staffToFirstNames, extractBookingModes, hasSharedServices } from "@/lib/booking-filters"
 import type { BookingRequestVariant } from "./request-page"
 
+function pickAfterHoursPackageDescription({
+  services,
+  preselectedServiceId,
+  preselectedStaffId,
+}: {
+  services: BookingContext["services"]
+  preselectedServiceId?: string
+  preselectedStaffId?: string
+}) {
+  const relevantServices = preselectedStaffId
+    ? services.filter((service) => service.staff_ids.includes(preselectedStaffId))
+    : services
+
+  const fullService = relevantServices.find((service) =>
+    service.name.toLowerCase().includes("full service")
+  )
+
+  if (fullService?.description?.trim()) {
+    return fullService.description.trim()
+  }
+
+  const preselectedService = services.find((service) => service.id === preselectedServiceId)
+  return preselectedService?.description?.trim() || null
+}
+
 export function buildRequestSpec({
   shopName,
   shopLogoUrl,
@@ -76,6 +101,9 @@ export function buildRequestSpec({
   const { primary, extras } = splitServices(regularServices)
 
   const hasBookingModes = variant === "waitlist" && bookingModes.length > 0
+  const packageDescription = isPackageMode
+    ? pickAfterHoursPackageDescription({ services, preselectedServiceId, preselectedStaffId })
+    : null
 
   const children = isAfterHours
     ? ["hero", "surcharge-banner", ...(hideStaffPicker ? [] : ["staff-pick"]),
@@ -187,7 +215,7 @@ export function buildRequestSpec({
       "contact-fields": {
         type: "PreferenceForm",
         props: {
-          fields: ["name", "phone", "notes"],
+          fields: ["name", "email", "phone", "notes"],
           notesPlaceholder: "Special requests or notes",
         },
       },
@@ -268,6 +296,7 @@ export function buildRequestSpec({
             afterHoursPackage: isPackageMode
               ? {
                   name: afterHours.package_name ?? "After-Hours Package",
+                  description: packageDescription,
                   priceCents: afterHours.package_price_cents ?? 0,
                   priceDisplay: afterHours.package_price_display ?? "$0",
                   logoUrl: afterHours.logo_url,
