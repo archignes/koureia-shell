@@ -179,13 +179,24 @@ export const catalog = defineCatalog(schema, {
     },
     WaitlistAvailabilityPicker: {
       props: z.object({
-        hours: z.array(
+        shopHours: z.array(
           z.object({
             dayOfWeek: z.number(),
             startTime: z.string(),
             endTime: z.string(),
             isClosed: z.boolean(),
           })
+        ),
+        staffHoursById: z.record(
+          z.string(),
+          z.array(
+            z.object({
+              dayOfWeek: z.number(),
+              startTime: z.string(),
+              endTime: z.string(),
+              isClosed: z.boolean(),
+            }),
+          ),
         ),
         horizonDays: z.number().optional(),
         timezone: z.string().optional(),
@@ -211,6 +222,7 @@ export const catalog = defineCatalog(schema, {
       props: z.object({
         label: z.string(),
         submittingLabel: z.string().optional(),
+        submittingHint: z.string().optional(),
       }),
       description: "Form submit button with loading state",
     },

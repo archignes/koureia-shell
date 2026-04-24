@@ -18,6 +18,16 @@ type RequestRendererProps = {
   waitlistId?: string
 }
 
+function readInputValue(id: string) {
+  if (typeof document === "undefined") return undefined
+  const element = document.getElementById(id)
+  if (!(element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)) {
+    return undefined
+  }
+  const value = element.value.trim()
+  return value || undefined
+}
+
 export function RequestRenderer({
   spec: initialSpec,
   shopId,
@@ -96,27 +106,43 @@ export function RequestRenderer({
     setError(null)
     store.set("submitError", undefined)
     const state = store.getSnapshot() as RequestState
+    const hydratedState: RequestState = {
+      ...state,
+      name: readInputValue("preference-name") ?? state.name,
+      email: readInputValue("preference-email") ?? state.email,
+      phone: readInputValue("preference-phone") ?? state.phone,
+      notes: readInputValue("preference-notes") ?? state.notes,
+    }
+
+    if (hydratedState.name !== state.name) store.set("name", hydratedState.name)
+    if (hydratedState.email !== state.email) store.set("email", hydratedState.email)
+    if (hydratedState.phone !== state.phone) store.set("phone", hydratedState.phone)
+    if (hydratedState.notes !== state.notes) store.set("notes", hydratedState.notes)
 
     if (variant === "after-hours") {
-      await handleAfterHoursSubmit(state)
+      await handleAfterHoursSubmit(hydratedState)
       return
     }
 
     // Waitlist validation — write to store so SubmitButton shows error inline
-    if (!state.selectedServiceId) {
+    if (!hydratedState.selectedServiceId) {
       store.set("submitError", "Please select a service.")
       return
     }
-    if (!state.availabilityBlocks || state.availabilityBlocks.length === 0) {
+    if (!hydratedState.availabilityBlocks || hydratedState.availabilityBlocks.length === 0) {
       store.set("submitError", "Please select at least one time block.")
       return
     }
-    if (!state.name?.trim()) {
+    if (!hydratedState.name?.trim()) {
       store.set("submitError", "Please enter your name.")
       return
     }
+    if (!hydratedState.email?.trim()) {
+      store.set("submitError", "Please enter your email.")
+      return
+    }
 
-    const request = buildRequestPayload({ shopId, shopSlug, state, variant, waitlistId })
+    const request = buildRequestPayload({ shopId, shopSlug, state: hydratedState, variant, waitlistId })
     try {
       const response = await fetch(request.path, {
         method: "POST",
@@ -211,7 +237,7 @@ export function RequestRenderer({
   }, [error])
 
   return (
-    <div className="mx-auto w-full max-w-md snap-y snap-proximity px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+    <div className="w-full snap-y snap-proximity pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:mx-auto sm:max-w-md sm:px-4">
       <JSONUIProvider handlers={{ submit: handleSubmit }} registry={registry} store={store}>
         <Renderer registry={registry} spec={spec} />
       </JSONUIProvider>

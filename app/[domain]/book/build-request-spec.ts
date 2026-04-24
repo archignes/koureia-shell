@@ -21,6 +21,7 @@ export function buildRequestSpec({
   apiUrl,
   shopSlug,
   siteHours,
+  staffHoursById,
   waitlistHorizonDays,
 }: {
   shopName: string
@@ -40,6 +41,7 @@ export function buildRequestSpec({
   apiUrl?: string
   shopSlug?: string
   siteHours?: Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>
+  staffHoursById?: Record<string, Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>>
   waitlistHorizonDays?: number
 }): Spec {
   const fmt = (s: BookingContext["services"][number]) => ({
@@ -164,7 +166,8 @@ export function buildRequestSpec({
             "availability-pick": {
               type: "WaitlistAvailabilityPicker",
               props: {
-                hours: siteHours ?? [],
+                shopHours: siteHours ?? [],
+                staffHoursById: staffHoursById ?? {},
                 horizonDays: waitlistHorizonDays ?? 7,
                 timezone: shopTimezone,
               },
@@ -191,7 +194,12 @@ export function buildRequestSpec({
           : variant === "waitlist"
             ? "Join Waitlist"
             : "Send Request",
-        submittingLabel: isAfterHours ? "Booking..." : "Sending...",
+        submittingLabel: isAfterHours
+          ? "Booking..."
+          : variant === "waitlist"
+            ? "Joining Waitlist..."
+            : "Sending...",
+        submittingHint: variant === "waitlist" ? "Saving your spot..." : undefined,
       },
       on: { submit: { action: "submit" } },
     },

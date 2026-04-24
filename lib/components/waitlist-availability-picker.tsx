@@ -48,6 +48,7 @@ function minutesToTime(minutes: number) {
 }
 
 function formatSlotLabel(minutes: number) {
+  if (minutes % 60 !== 0) return ""
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
   const suffix = hours >= 12 ? "PM" : "AM"
@@ -80,7 +81,7 @@ function isSelectable(day: GridDay, minutes: number) {
   if (!day.hours || day.hours.isClosed) return false
   const start = timeToMinutes(day.hours.startTime)
   const end = timeToMinutes(day.hours.endTime)
-  return minutes >= start && minutes + 30 <= end
+  return minutes >= start && minutes + 60 <= end
 }
 
 function toggleAllForDay(selected: Set<string>, day: GridDay, rows: number[]) {
@@ -120,7 +121,7 @@ function buildBlocks(selected: Set<string>) {
 
       for (let index = 1; index <= sorted.length; index += 1) {
         const current = sorted[index]
-        if (current === previous + 30) {
+        if (current === previous + 60) {
           previous = current
           continue
         }
@@ -128,7 +129,7 @@ function buildBlocks(selected: Set<string>) {
         blocks.push({
           date,
           start_time: minutesToTime(start),
-          end_time: minutesToTime(previous + 30),
+          end_time: minutesToTime(previous + 60),
         })
 
         start = current
@@ -145,8 +146,11 @@ export function WaitlistAvailabilityPicker({
   timezone,
   onChange,
 }: WaitlistAvailabilityPickerProps) {
+  const sectionRef = useRef<HTMLElement | null>(null)
+  const footerRef = useRef<HTMLDivElement | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const onChangeRef = useRef(onChange)
+  const [isFooterVisible, setIsFooterVisible] = useState(false)
   const [dragState, setDragState] = useState<{
     anchorDay: number
     anchorRow: number
@@ -164,7 +168,7 @@ export function WaitlistAvailabilityPicker({
   }, [hours])
   const rows = useMemo(() => {
     const values: number[] = []
-    for (let minutes = earliest; minutes < latest; minutes += 30) values.push(minutes)
+    for (let minutes = earliest; minutes < latest; minutes += 60) values.push(minutes)
     return values
   }, [earliest, latest])
 
@@ -177,13 +181,46 @@ export function WaitlistAvailabilityPicker({
   }, [selected])
 
   useEffect(() => {
+    const footer = footerRef.current
+    if (!footer) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsFooterVisible(entry?.isIntersecting ?? false),
+      { threshold: 0.25 },
+    )
+
+    observer.observe(footer)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
     function handlePointerUp() {
       setDragState(null)
     }
 
+    function handlePointerMove(event: PointerEvent) {
+      if (!dragState) return
+
+      const target = document.elementFromPoint(event.clientX, event.clientY)
+      const cell = target instanceof Element
+        ? target.closest<HTMLElement>("[data-grid-cell='true']")
+        : null
+      if (!cell) return
+
+      const dayIndex = Number(cell.dataset.dayIndex)
+      const rowIndex = Number(cell.dataset.rowIndex)
+      if (Number.isNaN(dayIndex) || Number.isNaN(rowIndex)) return
+
+      applyDrag(dayIndex, rowIndex)
+    }
+
+    window.addEventListener("pointermove", handlePointerMove)
     window.addEventListener("pointerup", handlePointerUp)
-    return () => window.removeEventListener("pointerup", handlePointerUp)
-  }, [])
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove)
+      window.removeEventListener("pointerup", handlePointerUp)
+    }
+  }, [dragState, days, rows])
 
   function applyDrag(targetDay: number, targetRow: number) {
     if (!dragState) return
@@ -209,23 +246,36 @@ export function WaitlistAvailabilityPicker({
     })
   }
 
+  function scrollToNextSection() {
+    const nextSection = sectionRef.current?.nextElementSibling
+    if (!(nextSection instanceof HTMLElement)) return
+    nextSection.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  const selectionText =
+    selected.size === 0 ? "Select at least one slot" : `${selected.size} slots selected`
+  const timezoneText = timezone ? `Times shown in ${timezone.replace(/_/g, " ")}` : null
+
   return (
-    <section className="mt-4 snap-start scroll-mt-2 rounded-xl border border-[var(--shell-border)] bg-[rgba(228,231,239,0.02)] p-3">
+    <section
+      ref={sectionRef}
+      className="mt-4 -mx-4 snap-start scroll-mt-2 border-y border-[var(--shell-border)] bg-[rgba(228,231,239,0.02)] px-4 py-3 sm:mx-0 sm:rounded-xl sm:border sm:p-3"
+    >
       <div className="mb-3">
         <p className="text-[0.82rem] font-semibold text-[var(--shell-text)]">
           When are you free?
         </p>
         <p className="mt-1 text-[0.75rem] leading-[1.5] text-[var(--shell-text-muted)]">
-          Tap or drag 30-minute blocks. Day headers toggle the full day.
+          Tap or drag 1-hour blocks. Day headers toggle the full day.
         </p>
       </div>
 
       <div className="overflow-x-auto">
         <div
-          className="grid min-w-[31rem] gap-1"
-          style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(3.5rem, 1fr))` }}
+          className="grid min-w-[24.5rem] gap-1 sm:min-w-[31rem]"
+          style={{ gridTemplateColumns: `3rem repeat(${days.length}, minmax(3rem, 1fr))` }}
         >
-          <div />
+          <div className="sticky left-0 z-20 bg-[rgba(15,17,23,0.96)]" />
           {days.map((day) => {
             const selectableCount = rows.filter((minutes) => isSelectable(day, minutes)).length
             const selectedCount = rows.filter((minutes) => selected.has(`${day.date}|${minutes}`)).length
@@ -235,7 +285,7 @@ export function WaitlistAvailabilityPicker({
                 key={day.date}
                 type="button"
                 className={cn(
-                  "min-h-11 rounded-lg border px-2 py-2 text-center text-[0.72rem] transition-colors",
+                  "min-h-9 rounded-md border px-1.5 py-1.5 text-center text-[0.68rem] transition-colors sm:min-h-11 sm:rounded-lg sm:px-2 sm:py-2 sm:text-[0.72rem]",
                   active
                     ? "border-[var(--shell-accent)] bg-[var(--shell-accent)] text-[var(--shell-accent-contrast)]"
                     : "border-[var(--shell-border-strong)] bg-[var(--shell-bg-elevated)] text-[var(--shell-text)]",
@@ -253,7 +303,7 @@ export function WaitlistAvailabilityPicker({
           {rows.flatMap((minutes, rowIndex) => [
             <div
               key={`label-${minutes}`}
-              className="flex min-h-11 items-center justify-end pr-1 text-[0.68rem] text-[var(--shell-text-subtle)]"
+              className="sticky left-0 z-10 flex min-h-9 items-center justify-end bg-[rgba(15,17,23,0.96)] pr-1 text-[0.62rem] text-[var(--shell-text-subtle)] sm:min-h-11 sm:text-[0.68rem]"
             >
               {formatSlotLabel(minutes)}
             </div>,
@@ -265,8 +315,11 @@ export function WaitlistAvailabilityPicker({
                 <button
                   key={key}
                   type="button"
+                  data-grid-cell="true"
+                  data-day-index={dayIndex}
+                  data-row-index={rowIndex}
                   className={cn(
-                    "min-h-11 rounded-md border transition-colors",
+                    "min-h-9 rounded-[0.55rem] border transition-colors sm:min-h-11 sm:rounded-md",
                     selectable
                       ? "touch-none border-[var(--shell-border-strong)] bg-[rgba(228,231,239,0.02)] hover:border-[var(--shell-accent)] hover:bg-[rgba(199,164,106,0.08)]"
                       : "cursor-default border-[rgba(228,231,239,0.04)] bg-[rgba(228,231,239,0.015)] opacity-45",
@@ -276,6 +329,7 @@ export function WaitlistAvailabilityPicker({
                   onPointerDown={(event) => {
                     if (!selectable) return
                     event.preventDefault()
+                    event.currentTarget.setPointerCapture?.(event.pointerId)
                     const nextValue = !active
                     setDragState({ anchorDay: dayIndex, anchorRow: rowIndex, value: nextValue })
                     setSelected((current) => {
@@ -293,10 +347,32 @@ export function WaitlistAvailabilityPicker({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 text-[0.72rem] text-[var(--shell-text-subtle)]">
-        <span>{selected.size === 0 ? "Select at least one slot" : `${selected.size} slots selected`}</span>
-        {timezone ? <span>Times shown in {timezone.replace(/_/g, " ")}</span> : null}
+      <div
+        ref={footerRef}
+        className="mt-3 flex items-center justify-between gap-3 text-[0.72rem] text-[var(--shell-text-subtle)]"
+      >
+        <span>{selectionText}</span>
+        {timezoneText ? <span>{timezoneText}</span> : null}
       </div>
+
+      {!isFooterVisible ? (
+        <div className="pointer-events-none sticky bottom-3 z-30 mt-4 sm:hidden">
+          <div className="pointer-events-auto rounded-2xl border border-[var(--shell-border-strong)] bg-[rgba(15,17,23,0.94)] px-4 py-3 shadow-[0_16px_36px_rgba(0,0,0,0.32)] backdrop-blur-md">
+            <div className="flex items-center justify-between gap-3 text-[0.72rem] text-[var(--shell-text-subtle)]">
+              <span>{selectionText}</span>
+              {timezoneText ? <span>{timezoneText}</span> : null}
+            </div>
+            <button
+              type="button"
+              onClick={scrollToNextSection}
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--shell-border-strong)] bg-[rgba(228,231,239,0.04)] px-4 py-2 text-[0.82rem] font-semibold text-[var(--shell-text)]"
+            >
+              <span>Next</span>
+              <span aria-hidden="true">↓</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }

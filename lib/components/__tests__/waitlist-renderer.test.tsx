@@ -589,6 +589,64 @@ describe("RequestRenderer waitlist flow", () => {
     ).toBeInTheDocument()
   })
 
+  it("submits waitlist data even when fields have not blurred", async () => {
+    fetchMock.mockResolvedValueOnce(createFetchResponse({ ok: true }, true, 201))
+
+    renderRequestRenderer(buildWaitlistSpec())
+
+    await userEvent.click(screen.getByLabelText(/Signature Cut/i))
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
+
+    await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
+    await userEvent.type(screen.getByLabelText(/^Email/i), "taylor@example.com")
+    await userEvent.type(screen.getByLabelText(/^Phone/i), "4255550101")
+
+    await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/booking/waitlist",
+        expect.objectContaining({
+          method: "POST",
+        })
+      )
+    })
+    expect(
+      await screen.findByRole("heading", { name: "You're on the waitlist!" })
+    ).toBeInTheDocument()
+  })
+
+  it("submits waitlist data when contact fields are browser-filled without React change events", async () => {
+    fetchMock.mockResolvedValueOnce(createFetchResponse({ ok: true }, true, 201))
+
+    renderRequestRenderer(buildWaitlistSpec())
+
+    await userEvent.click(screen.getByLabelText(/Signature Cut/i))
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
+
+    const nameInput = screen.getByLabelText(/^Name/i) as HTMLInputElement
+    const emailInput = screen.getByLabelText(/^Email/i) as HTMLInputElement
+    const phoneInput = screen.getByLabelText(/^Phone/i) as HTMLInputElement
+
+    nameInput.value = "Daniel Griffin"
+    emailInput.value = "danielsgriffin@gmail.com"
+    phoneInput.value = "4253083312"
+
+    await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/booking/waitlist",
+        expect.objectContaining({
+          method: "POST",
+        })
+      )
+    })
+    expect(
+      await screen.findByRole("heading", { name: "You're on the waitlist!" })
+    ).toBeInTheDocument()
+  })
+
   it("shows the required availability validation error before submitting", async () => {
     renderRequestRenderer(buildWaitlistSpec())
 
@@ -604,6 +662,22 @@ describe("RequestRenderer waitlist flow", () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it("shows the required email validation error before submitting", async () => {
+    renderRequestRenderer(buildWaitlistSpec())
+
+    await userEvent.click(screen.getByLabelText(/Signature Cut/i))
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
+    await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
+    await userEvent.tab()
+
+    await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
+
+    expect(
+      await screen.findByText("Please enter your email.")
+    ).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it("shows the loading state while the waitlist submission is pending", async () => {
     const response = createDeferred<Response>()
     fetchMock.mockReturnValueOnce(response.promise)
@@ -614,12 +688,15 @@ describe("RequestRenderer waitlist flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
     await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
     await userEvent.tab()
+    await userEvent.type(screen.getByLabelText(/^Email/i), "taylor@example.com")
+    await userEvent.tab()
 
     await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Sending..." })).toBeDisabled()
+      expect(screen.getByRole("button", { name: "Joining Waitlist..." })).toBeDisabled()
     })
+    expect(screen.getByText("Saving your spot...")).toBeInTheDocument()
 
     response.resolve(createFetchResponse({ ok: true }, true, 201))
 
