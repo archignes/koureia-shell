@@ -384,6 +384,8 @@ function loadBuildRequestSpec() {
           ),
           modes: [],
         }),
+        hasSharedServices: (services: Array<{ staff_ids: string[] }>) =>
+          services.some((s) => s.staff_ids.length > 1),
       }
     }
     if (id === "./request-page") {

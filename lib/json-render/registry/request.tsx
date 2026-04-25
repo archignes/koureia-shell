@@ -48,18 +48,40 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     <ServicePickerComponent services={props.services} preselectedId={props.preselectedId} />
   ),
 
-  ServiceMenu: ({ props }) => (
-    <ServiceMenuComponent
-      primary={props.primary}
-      extras={props.extras}
-      preselectedId={props.preselectedId}
-      sectionLabel={props.sectionLabel}
-    />
-  ),
+  ServiceMenu: ({ props }) => {
+    const { state } = useStateStore()
+    const typedState = state as Record<string, unknown>
+    // In waitlist mode (no surchargeCents), gate behind staff selection
+    if (!typedState.surchargeCents && !typedState.selectedStaffId) {
+      return (
+        <p className="mt-4 px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
+          Select a team member to see their services
+        </p>
+      )
+    }
+    return (
+      <ServiceMenuComponent
+        primary={props.primary}
+        extras={props.extras}
+        preselectedId={props.preselectedId}
+        sectionLabel={props.sectionLabel}
+      />
+    )
+  },
 
-  BookingModeButtons: ({ props }) => (
-    <BookingModeButtonsComponent modes={props.modes} />
-  ),
+  BookingModeButtons: ({ props }) => {
+    const { state } = useStateStore()
+    const typedState = state as Record<string, unknown>
+    if (!typedState.selectedStaffId) return null
+    // Filter modes to only those offered by the selected staff
+    const staffMap = typedState.serviceStaffMap as Record<string, string[]> | undefined
+    const staffId = typedState.selectedStaffId as string
+    const filteredModes = staffMap && staffId !== "any"
+      ? props.modes.filter((m) => staffMap[m.serviceId]?.includes(staffId))
+      : props.modes
+    if (filteredModes.length === 0) return null
+    return <BookingModeButtonsComponent modes={filteredModes} />
+  },
 
   StaffPicker: ({ props }) => (
     <StaffPickerComponent staff={props.staff} preselectedId={props.preselectedId} allowNoPreference={props.allowNoPreference} />

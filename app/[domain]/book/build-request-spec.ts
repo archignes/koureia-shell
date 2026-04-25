@@ -4,7 +4,7 @@ import {
   splitServices,
   type BookingContext,
 } from "@/lib/booking-context"
-import { staffToFirstNames, extractBookingModes } from "@/lib/booking-filters"
+import { staffToFirstNames, extractBookingModes, hasSharedServices } from "@/lib/booking-filters"
 import type { BookingRequestVariant } from "./request-page"
 
 export function buildRequestSpec({
@@ -108,7 +108,7 @@ export function buildRequestSpec({
       type: "StaffPicker",
       props: {
         staff: staffToFirstNames(staff),
-        allowNoPreference: variant === "waitlist",
+        allowNoPreference: variant === "waitlist" && hasSharedServices(services),
         preselectedId: variant === "waitlist" ? undefined : preselectedStaffId,
       },
     },

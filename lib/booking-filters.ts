@@ -30,6 +30,11 @@ export function filterAfterHoursService(services: Service[]): Service[] {
   return services.filter((s) => !s.name.toUpperCase().includes("AFTER HOURS"))
 }
 
+/** True if any service is offered by more than one staff member */
+export function hasSharedServices(services: Service[]): boolean {
+  return services.some((s) => s.staff_ids.length > 1)
+}
+
 /** Well-known booking mode service names (case-insensitive match) */
 const BOOKING_MODE_PATTERNS = [
   { pattern: "AFTER HOURS", mode: "after-hours" as const, label: "After-Hours Booking", description: "Book an evening or weekend appointment" },

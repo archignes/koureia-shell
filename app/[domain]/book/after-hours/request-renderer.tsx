@@ -55,7 +55,7 @@ export function RequestRenderer({
 
       // Update URL to reflect staff selection (human-readable name)
       const url = new URL(window.location.href)
-      if (staffId) {
+      if (staffId && staffId !== "any") {
         const staffList = (initialSpec.elements["staff-pick"]?.props as { staff?: { id: string; name: string }[] })?.staff
         const staffName = staffList?.find((s) => s.id === staffId)?.name
         url.searchParams.set("staff", staffName?.toLowerCase() ?? staffId)
@@ -68,7 +68,7 @@ export function RequestRenderer({
       const staffMap = state.serviceStaffMap
       if (!allServices || !staffMap) return
 
-      const filtered = staffId
+      const filtered = staffId && staffId !== "any"
         ? allServices.filter((s) => staffMap[s.id]?.includes(staffId))
         : allServices
 

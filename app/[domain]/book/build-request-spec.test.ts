@@ -106,8 +106,17 @@ describe("buildRequestSpec — waitlist structure", () => {
     expect(container.children).toEqual(["hero", "staff-pick", "service-menu", "availability-pick", "prefs", "submit"])
   })
 
-  it("allows no-preference for waitlist staff picker", () => {
+  it("disables no-preference when no services are shared across staff", () => {
     const spec = buildWaitlistSpec()
+    const staffProps = spec.elements["staff-pick"].props as { allowNoPreference: boolean }
+    expect(staffProps.allowNoPreference).toBe(false)
+  })
+
+  it("enables no-preference when services are shared across staff", () => {
+    const sharedServices = [
+      makeService({ id: "svc-cut", name: "Men's Cut", staff_ids: ["staff-enzo", "staff-cassie"] }),
+    ]
+    const spec = buildWaitlistSpec({ services: sharedServices })
     const staffProps = spec.elements["staff-pick"].props as { allowNoPreference: boolean }
     expect(staffProps.allowNoPreference).toBe(true)
   })
