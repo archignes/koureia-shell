@@ -92,6 +92,8 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     const typedState = state as Record<string, unknown>
     // In after-hours flow (has surchargeCents), gate behind slot selection
     if (typedState.surchargeCents && !typedState.preferredSlotStart) return null
+    // In waitlist flow, gate behind service selection
+    if (!typedState.surchargeCents && !typedState.selectedServiceId) return null
     return (
       <PreferenceFormComponent
         fields={props.fields}
@@ -144,7 +146,9 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
 
   WaitlistAvailabilityPicker: ({ props }) => {
     const { update, state } = useStateStore()
-    const typedState = state as { selectedStaffId?: string }
+    const typedState = state as { selectedStaffId?: string; selectedServiceId?: string }
+    // Gate behind service selection
+    if (!typedState.selectedServiceId) return null
     const hours =
       typedState.selectedStaffId && props.staffHoursById?.[typedState.selectedStaffId]
         ? props.staffHoursById[typedState.selectedStaffId]
