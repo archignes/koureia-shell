@@ -74,6 +74,12 @@ export function RequestRenderer({
 
       const effectiveServices = filtered.length > 0 ? filtered : allServices
 
+      // Separate booking-mode services from regular services for the service-menu
+      const MODE_PATTERNS = ["AFTER HOURS", "LOCAL AT HOME SERVICE"]
+      const regularServices = effectiveServices.filter(
+        (s) => !MODE_PATTERNS.some((p) => s.name.toUpperCase().includes(p))
+      )
+
       setSpec((prev) => {
         const updates: typeof prev.elements = {}
 
@@ -92,7 +98,7 @@ export function RequestRenderer({
             ...prev.elements["service-menu"],
             props: {
               ...prev.elements["service-menu"].props,
-              primary: effectiveServices,
+              primary: regularServices,
             },
           }
         }
