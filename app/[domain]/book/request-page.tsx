@@ -138,6 +138,7 @@ export async function BookingRequestPage({
 
   const spec = buildRequestSpec({
     shopName: siteSpec.shop.name,
+    shopLogoUrl: siteSpec.branding?.logoUrl,
     source,
     variant,
     services,

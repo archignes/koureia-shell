@@ -31,10 +31,18 @@ type RequestComponentKeys =
 export const requestComponents: Pick<Components<typeof catalog>, RequestComponentKeys> = {
   RequestHero: ({ props }) => (
     <header className="m-0 px-0 pb-2">
-      <p className="m-0 mb-[0.15rem] text-base font-normal text-[var(--shell-accent)]">
-        {props.shopName}
-        {props.staffName ? <> &middot; {props.staffName}</> : null}
-      </p>
+      {props.shopLogoUrl ? (
+        <img
+          src={props.shopLogoUrl}
+          alt={props.shopName}
+          className="mb-2 h-10 w-auto object-contain"
+        />
+      ) : (
+        <p className="m-0 mb-[0.15rem] font-[var(--shell-font-display,inherit)] text-lg font-semibold text-[var(--shell-accent)]">
+          {props.shopName}
+          {props.staffName ? <> &middot; {props.staffName}</> : null}
+        </p>
+      )}
       <h1 className="m-0 text-[1.35rem] leading-[1.15] font-semibold text-[var(--shell-text)] text-balance">
         {props.headline}
       </h1>
@@ -181,6 +189,13 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     // In after-hours flow, gate behind slot selection
     if (typedState.surchargeCents && !typedState.preferredSlotStart) return null
     const submitError = typedState.submitError as string | undefined
+    // In waitlist flow, disable until service + availability selected
+    const isWaitlist = typedState.source === "waitlist" || typedState.source === "sms-refinement"
+    const availabilityBlocks = typedState.availabilityBlocks as unknown[] | undefined
+    const waitlistReady = isWaitlist
+      ? !!(typedState.selectedServiceId && availabilityBlocks && availabilityBlocks.length > 0)
+      : true // after-hours has its own gating via hidden submit
+    const isDisabled = loading || !waitlistReady
     return (
     <div className="mt-4">
       {submitError ? (
@@ -223,8 +238,12 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
         </a>
       </div>
       <button
-        className="mb-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-0 bg-[var(--shell-accent)] px-5 py-[0.65rem] text-[0.9rem] font-bold text-[var(--shell-accent-contrast)] shadow-[0_12px_28px_rgba(199,164,106,0.15)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-[var(--shell-accent-strong)] disabled:cursor-wait disabled:bg-[var(--shell-accent-strong)] disabled:opacity-100"
-        disabled={loading}
+        className={`mb-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-0 px-5 py-[0.65rem] text-[0.9rem] font-bold transition-[transform,background-color,box-shadow,opacity] ${
+          isDisabled && !loading
+            ? "cursor-default bg-[rgba(199,164,106,0.3)] text-[var(--shell-accent-contrast)] opacity-50"
+            : "bg-[var(--shell-accent)] text-[var(--shell-accent-contrast)] shadow-[0_12px_28px_rgba(199,164,106,0.15)] hover:-translate-y-px hover:bg-[var(--shell-accent-strong)] disabled:cursor-wait disabled:bg-[var(--shell-accent-strong)] disabled:opacity-100"
+        }`}
+        disabled={isDisabled}
         type="button"
         onClick={() => emit("submit")}
       >

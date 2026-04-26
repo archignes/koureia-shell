@@ -9,6 +9,7 @@ import type { BookingRequestVariant } from "./request-page"
 
 export function buildRequestSpec({
   shopName,
+  shopLogoUrl,
   source,
   variant,
   services,
@@ -25,6 +26,7 @@ export function buildRequestSpec({
   waitlistHorizonDays,
 }: {
   shopName: string
+  shopLogoUrl?: string
   source: "after-hours" | "waitlist" | "sms-refinement"
   variant: BookingRequestVariant
   services: BookingContext["services"]
@@ -101,6 +103,7 @@ export function buildRequestSpec({
               ? `Choose a service and preferred time. ${staffName} will confirm by text.`
               : "Pick your preferences and we'll confirm your time.",
         shopName,
+        shopLogoUrl,
         staffName: variant === "waitlist" ? undefined : staffName,
       },
     },

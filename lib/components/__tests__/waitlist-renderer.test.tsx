@@ -691,20 +691,22 @@ describe("RequestRenderer waitlist flow", () => {
     ).toBeInTheDocument()
   })
 
-  it("shows the required availability validation error before submitting", async () => {
+  it("disables submit button until availability is selected", async () => {
     renderRequestRenderer(buildWaitlistSpec())
 
     await userEvent.click(screen.getByLabelText(/Enzo/i))
     await userEvent.click(screen.getByRole("radio", { name: /Signature Cut/i }))
-    await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
-    await userEvent.tab()
 
-    await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
+    // Button should be disabled before availability is picked
+    expect(screen.getByRole("button", { name: "Join Waitlist" })).toBeDisabled()
 
-    expect(
-      await screen.findByText("Please select at least one time block.")
-    ).toBeInTheDocument()
-    expect(fetchMock).not.toHaveBeenCalled()
+    // Pick availability
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
+
+    // Button should now be enabled
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Join Waitlist" })).toBeEnabled()
+    })
   })
 
   it("shows the required email validation error before submitting", async () => {
