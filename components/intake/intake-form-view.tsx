@@ -43,7 +43,7 @@ export function SuccessState({
           You&apos;re all set
         </h1>
         <p className="text-sm leading-6 text-[var(--shell-text-muted)]">
-          We&apos;ve received your {formTitle.toLowerCase()}. Your stylist will review it before your appointment.
+          We&apos;ve received your {formTitle}. Your stylist will review it before your appointment.
         </p>
         {photoCount > 0 ? (
           <p className="text-xs text-[var(--shell-text-subtle)]">
@@ -205,7 +205,7 @@ export function IntakePageView({
                     onClick={() => scrollTo(index + 1)}
                     type="button"
                   >
-                    Next --&gt;
+                    Next →
                   </button>
                 </div>
               ) : null}
