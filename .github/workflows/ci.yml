@@ -3,12 +3,64 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, reopened, synchronize, edited]
 
 concurrency:
   group: ci-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
+  visual-proof-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body for visual proof claims without actual proof
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Skip if body is empty
+          if [ -z "$PR_BODY" ]; then
+            echo "No PR body — skipping visual proof check."
+            exit 0
+          fi
+
+          # Skip if body contains explicit opt-out
+          if echo "$PR_BODY" | grep -qi "no visual proof needed"; then
+            echo "Visual proof explicitly skipped — OK."
+            exit 0
+          fi
+
+          # Check if body mentions visual proof in prose
+          CLAIM=$(echo "$PR_BODY" | grep -iE "visual proof|screenshot captured|visual verification|captured the .* against .* dev server" || true)
+          if [ -z "$CLAIM" ]; then
+            echo "No visual proof claim found — nothing to check."
+            exit 0
+          fi
+
+          # Body claims visual proof — check for actual proof artifacts
+          # Require markdown image embed with CDN URL, not just a bare URL
+          HAS_PROOF=$(echo "$PR_BODY" | grep -cE '!\[.*\]\(https://hypandra\.b-cdn\.net/.*\.(png|jpg|jpeg|gif|webp)' || true)
+          if [ "$HAS_PROOF" -gt 0 ]; then
+            echo "Visual proof claim found with embedded CDN screenshot — OK."
+            exit 0
+          fi
+
+          # Fail: prose claim without proof
+          echo "::error::PR body claims visual proof but contains no proof artifacts."
+          echo ""
+          echo "  Found: $CLAIM"
+          echo ""
+          echo "  Visual proof requires Bunny CDN URLs (https://hypandra.b-cdn.net/...)."
+          echo "  Prose descriptions are not proof."
+          echo ""
+          echo "  To fix:"
+          echo "    1. Run /validate visual to capture screenshots"
+          echo "    2. Upload with: bunny-upload ~/projects/screenshots/<file>.png delivery"
+          echo "    3. Embed the CDN URL in the PR body as ![description](url)"
+          echo ""
+          echo "  To skip (non-UI changes):"
+          echo "    Add 'No visual proof needed' to the PR body."
+          exit 1
+
   require-issue-id:
     runs-on: ubuntu-latest
     steps:
