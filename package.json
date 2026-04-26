@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@hypandra/voice": "0.1.0",
     "@json-render/core": "^0.16.0",
     "@json-render/react": "^0.16.0",
     "@sentry/nextjs": "^10.49.0",
