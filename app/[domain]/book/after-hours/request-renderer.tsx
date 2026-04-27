@@ -80,6 +80,17 @@ export function RequestRenderer({
         (s) => !MODE_PATTERNS.some((p) => s.name.toUpperCase().includes(p))
       )
 
+      // Split into primary/extras using the same heuristic as splitServices
+      const EXTRA_PATTERNS = ["+", "waxing", "add-on", "therapy"]
+      const isExtra = (s: { name: string; duration?: string; priceCents?: number }) => {
+        const lower = s.name.toLowerCase()
+        return s.name.startsWith("+") ||
+          EXTRA_PATTERNS.some((p) => lower.includes(p)) ||
+          false // duration/price heuristic requires raw values not available here
+      }
+      const primaryFiltered = regularServices.filter((s) => !isExtra(s))
+      const extrasFiltered = regularServices.filter((s) => isExtra(s))
+
       setSpec((prev) => {
         const updates: typeof prev.elements = {}
 
@@ -98,7 +109,8 @@ export function RequestRenderer({
             ...prev.elements["service-menu"],
             props: {
               ...prev.elements["service-menu"].props,
-              primary: regularServices,
+              primary: primaryFiltered,
+              extras: extrasFiltered,
             },
           }
         }
