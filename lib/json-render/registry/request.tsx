@@ -32,23 +32,36 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
   RequestHero: ({ props }) => (
     <header className="m-0 px-0 pb-2">
       {props.shopLogoUrl ? (
-        <img
-          src={props.shopLogoUrl}
-          alt={props.shopName}
-          className="mb-2 h-10 w-auto object-contain"
-        />
+        <div className="grid grid-cols-[80px_1fr] items-center gap-x-3 gap-y-0">
+          <img
+            src={props.shopLogoUrl}
+            alt={props.shopName}
+            className="row-span-3 size-[80px] rounded object-contain"
+          />
+          <p className="m-0 text-[0.8rem] font-medium text-[var(--shell-accent)]">
+            {props.shopName}
+          </p>
+          <h1 className="m-0 text-[1.35rem] leading-[1.15] font-semibold text-[var(--shell-text)] text-balance">
+            {props.headline}
+          </h1>
+          <p className="m-0 mt-[0.15rem] text-[0.85rem] leading-[1.5] text-[var(--shell-text-muted)] text-pretty">
+            {props.subtitle}
+          </p>
+        </div>
       ) : (
-        <p className="m-0 mb-[0.15rem] font-[var(--shell-font-display,inherit)] text-lg font-semibold text-[var(--shell-accent)]">
-          {props.shopName}
-          {props.staffName ? <> &middot; {props.staffName}</> : null}
-        </p>
+        <>
+          <p className="m-0 mb-[0.15rem] font-[var(--shell-font-display,inherit)] text-lg font-semibold text-[var(--shell-accent)]">
+            {props.shopName}
+            {props.staffName ? <> &middot; {props.staffName}</> : null}
+          </p>
+          <h1 className="m-0 text-[1.35rem] leading-[1.15] font-semibold text-[var(--shell-text)] text-balance">
+            {props.headline}
+          </h1>
+          <p className="mt-1 mr-0 mb-0 ml-0 text-[0.85rem] leading-[1.5] text-[var(--shell-text-muted)] text-pretty">
+            {props.subtitle}
+          </p>
+        </>
       )}
-      <h1 className="m-0 text-[1.35rem] leading-[1.15] font-semibold text-[var(--shell-text)] text-balance">
-        {props.headline}
-      </h1>
-      <p className="mt-1 mr-0 mb-0 ml-0 text-[0.85rem] leading-[1.5] text-[var(--shell-text-muted)] text-pretty">
-        {props.subtitle}
-      </p>
     </header>
   ),
 
@@ -63,7 +76,7 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     if (!typedState.surchargeCents && !typedState.selectedStaffId) {
       return (
         <p className="mt-4 px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
-          Select a team member to see their services
+          Select a staff member to see their services
         </p>
       )
     }

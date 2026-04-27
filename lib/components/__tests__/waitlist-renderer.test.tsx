@@ -536,13 +536,13 @@ describe("RequestRenderer waitlist flow", () => {
   it("hides services until a staff member is selected", async () => {
     renderRequestRenderer(buildWaitlistSpec())
 
-    expect(screen.getByText("Select a team member to see their services")).toBeInTheDocument()
+    expect(screen.getByText("Select a staff member to see their services")).toBeInTheDocument()
     expect(screen.queryByText("Services")).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByLabelText(/Enzo/i))
 
     await waitFor(() => {
-      expect(screen.queryByText("Select a team member to see their services")).not.toBeInTheDocument()
+      expect(screen.queryByText("Select a staff member to see their services")).not.toBeInTheDocument()
     })
     expect(screen.getByText("Services")).toBeInTheDocument()
   })
