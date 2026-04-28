@@ -56,6 +56,12 @@ function buildAfterHoursSpec(
       surcharge_cents: 10000,
       surcharge_display: "+$100 after-hours fee",
       min_advance_hours: 24,
+      booking_mode: "individual",
+      package_name: null,
+      package_price_cents: null,
+      package_price_display: null,
+      package_addons: [],
+      logo_url: null,
     },
     shopTimezone: "America/Los_Angeles",
     shopSlug: "test-shop",
@@ -75,6 +81,7 @@ function makeAfterHoursState(overrides: Partial<RequestState> = {}): RequestStat
     preferredSlotStart: "18:00",
     preferredSlotEnd: "19:00",
     name: "Taylor Client",
+    email: "taylor@example.com",
     phone: "425-555-0101",
     notes: "Please text to confirm",
     source: "after-hours",
@@ -113,6 +120,7 @@ describe("after-hours booking flow integration", () => {
         preferredDate: "2026-05-02",
         preferredSlotStart: "18:00",
         preferredSlotEnd: "19:00",
+        source: "after-hours",
       })
     )
   })

@@ -93,6 +93,7 @@ export const catalog = defineCatalog(schema, {
         shopName: z.string(),
         shopLogoUrl: z.string().optional(),
         staffName: z.string().optional(),
+        logoUrl: z.string().optional(),
       }),
       description: "Hero section for booking request pages with shop/staff context",
     },

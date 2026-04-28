@@ -340,8 +340,20 @@ function loadRequestRenderer(): LoadedRequestRenderer {
         createBookingHold: vi.fn(),
       }
     }
+    if (id === "@/lib/availability") {
+      return {
+        fetchBulkAvailability: vi.fn(),
+      }
+    }
+    if (id === "react-day-picker") {
+      return {
+        DayPicker: () => null,
+      }
+    }
     if (id === "@/lib/utils") {
       return {
+        cn: (...values: Array<string | false | null | undefined>) =>
+          values.filter(Boolean).join(" "),
         formatTime: (time: string) => time,
       }
     }

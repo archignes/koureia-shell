@@ -35,13 +35,22 @@ type BuildRequestSpec = (opts: {
     surcharge_cents: number
     surcharge_display: string
     min_advance_hours: number
+    booking_mode: "individual" | "package"
+    package_name: string | null
+    package_price_cents: number | null
+    package_price_display: string | null
+    package_addons: Array<{ name: string; gratis: boolean }>
+    logo_url: string | null
   }
   shopTimezone?: string
   apiUrl?: string
   shopSlug?: string
 }) => Spec
 
-type LoadedRequestRenderer = typeof import("@/app/[domain]/book/after-hours/request-renderer").RequestRenderer
+type LoadedRequestRendererModule = {
+  RequestRenderer: typeof import("@/app/[domain]/book/after-hours/request-renderer").RequestRenderer
+  dedupePackageSlots: (slots: Array<{ start: string; end: string; startsAt?: string; endsAt?: string; available: boolean }>) => Array<{ start: string; end: string; startsAt?: string; endsAt?: string; available: boolean }>
+}
 
 type Store = {
   getSnapshot: () => Record<string, unknown>
@@ -59,6 +68,16 @@ const jsonRenderContext = React.createContext<{
   loadingAction: string | null
   store: Store
 } | null>(null)
+
+let mockBulkAvailabilityResult: {
+  dates: Record<string, { slots: Array<{ start: string; end: string; startsAt?: string; endsAt?: string; available: boolean }>; availableCount: number }>
+  timezone: string
+  surcharge_cents: number | null
+} = {
+  dates: {},
+  timezone: "America/Los_Angeles",
+  surcharge_cents: null,
+}
 
 function createTestStateStore(initialState: Record<string, unknown>): Store {
   let state = { ...initialState }
@@ -266,11 +285,14 @@ function createJsonRenderTestModule() {
   }
 }
 
-function loadRequestRenderer(): LoadedRequestRenderer {
+function loadRequestRenderer(): LoadedRequestRendererModule {
   const sourcePath = resolve(process.cwd(), "app/[domain]/book/after-hours/request-renderer.tsx")
   const source = readFileSync(sourcePath, "utf8")
   const transpiled = ts.transpileModule(
-    `${source}\nexports.__test_RequestRenderer = RequestRenderer;\n`,
+    `${source}
+exports.__test_RequestRenderer = RequestRenderer;
+exports.__test_dedupePackageSlots = dedupePackageSlots;
+`,
     {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
@@ -301,6 +323,7 @@ function loadRequestRenderer(): LoadedRequestRenderer {
             serviceId: state.selectedServiceId,
             staffId: state.selectedStaffId,
             clientName: state.name,
+            clientEmail: state.email,
             clientPhone: state.phone,
             preferredDate: state.preferredDate,
             preferredSlotStart: state.preferredSlotStart,
@@ -321,8 +344,20 @@ function loadRequestRenderer(): LoadedRequestRenderer {
     if (id === "@/lib/booking-api") {
       return bookingApi
     }
+    if (id === "@/lib/availability") {
+      return {
+        fetchBulkAvailability: vi.fn().mockImplementation(async () => mockBulkAvailabilityResult),
+      }
+    }
+    if (id === "react-day-picker") {
+      return {
+        DayPicker: () => null,
+      }
+    }
     if (id === "@/lib/utils") {
       return {
+        cn: (...values: Array<string | false | null | undefined>) =>
+          values.filter(Boolean).join(" "),
         formatTime: (time: string) => {
           const [hours, minutes] = time.split(":").map(Number)
           const suffix = hours >= 12 ? "PM" : "AM"
@@ -343,7 +378,10 @@ function loadRequestRenderer(): LoadedRequestRenderer {
     module.exports
   )
 
-  return module.exports.__test_RequestRenderer as LoadedRequestRenderer
+  return {
+    RequestRenderer: module.exports.__test_RequestRenderer as LoadedRequestRendererModule["RequestRenderer"],
+    dedupePackageSlots: module.exports.__test_dedupePackageSlots as LoadedRequestRendererModule["dedupePackageSlots"],
+  }
 }
 
 function loadBuildRequestSpec() {
@@ -446,6 +484,7 @@ function buildAfterHoursSpec(stateOverrides: Partial<Record<string, unknown>> = 
       preferredDate: "2026-05-01",
       preferredSlotStart: "14:00",
       name: "Test User",
+      email: "test@example.com",
       phone: "5551234567",
       policyAccepted: true,
       source: "after-hours",
@@ -464,9 +503,9 @@ function buildAfterHoursSpec(stateOverrides: Partial<Record<string, unknown>> = 
 }
 
 function renderRequestRenderer(spec: Spec) {
-  const LoadedRequestRenderer = loadRequestRenderer()
+  const { RequestRenderer } = loadRequestRenderer()
   return render(
-    React.createElement(LoadedRequestRenderer, {
+    React.createElement(RequestRenderer, {
       spec,
       shopId: "shop-1",
       shopSlug: "example-shop",
@@ -474,6 +513,46 @@ function renderRequestRenderer(spec: Spec) {
       variant: "after-hours",
     })
   )
+}
+
+function buildAfterHoursPackageSpec(): Spec {
+  return {
+    root: "container",
+    elements: {
+      container: {
+        type: "Container",
+        props: {},
+        children: [],
+      },
+    },
+    state: {
+      selectedStaffId: "staff-1",
+      selectedServiceId: "svc-after-hours",
+      packageBaseServiceId: "svc-after-hours",
+      afterHoursBookingMode: "package",
+      afterHoursPackage: {
+        name: "After-Hours Package",
+        description: "Includes haircut, taper or fade, beard service, and a hot towel finish.",
+        priceCents: 15000,
+        priceDisplay: "$150",
+        logoUrl: "https://example.com/logo.jpg",
+        addons: [
+          { name: "Razor prep", gratis: true },
+          { name: "Wax", gratis: true },
+        ],
+      },
+      allFormattedServices: [
+        {
+          id: "svc-after-hours",
+          name: "AFTER HOURS",
+          duration: "70 min",
+          price: "$150",
+          priceCents: 15000,
+        },
+      ],
+      source: "after-hours",
+    },
+  }
 }
 
 describe("RequestRenderer after-hours submit flow", () => {
@@ -485,6 +564,11 @@ describe("RequestRenderer after-hours submit flow", () => {
     fetchMock = vi.fn()
     global.fetch = fetchMock as typeof fetch
     createBookingHoldSpy = vi.spyOn(bookingApi, "createBookingHold")
+    mockBulkAvailabilityResult = {
+      dates: {},
+      timezone: "America/Los_Angeles",
+      surcharge_cents: null,
+    }
   })
 
   afterEach(() => {
@@ -522,6 +606,12 @@ describe("RequestRenderer after-hours submit flow", () => {
         surcharge_cents: 10000,
         surcharge_display: "+$100 after-hours fee added to the service total",
         min_advance_hours: 24,
+        booking_mode: "individual",
+        package_name: null,
+        package_price_cents: null,
+        package_price_display: null,
+        package_addons: [],
+        logo_url: null,
       },
       shopTimezone: "America/Los_Angeles",
       apiUrl: "https://api.example.com",
@@ -545,12 +635,12 @@ describe("RequestRenderer after-hours submit flow", () => {
   })
 
   it("validates required name and phone fields", async () => {
-    renderRequestRenderer(buildAfterHoursSpec({ name: "", phone: "" }))
+    renderRequestRenderer(buildAfterHoursSpec({ name: "", email: "", phone: "" }))
 
     await userEvent.click(screen.getByRole("button", { name: "Confirm Booking" }))
 
     expect(
-      await screen.findByText("Please enter your name and phone number.")
+      await screen.findByText("Please enter your name, email, and phone number.")
     ).toBeInTheDocument()
     expect(global.fetch).not.toHaveBeenCalled()
   })
@@ -601,6 +691,7 @@ describe("RequestRenderer after-hours submit flow", () => {
       "/api/booking/request",
       expect.objectContaining({
         method: "POST",
+        body: expect.stringContaining("\"clientEmail\":\"test@example.com\""),
       })
     )
     expect(
@@ -636,5 +727,35 @@ describe("RequestRenderer after-hours submit flow", () => {
     })
 
     expect(await screen.findByRole("heading", { name: "Your time is being held" })).toBeInTheDocument()
+  })
+
+  it("renders package description and both complimentary add-ons in package mode", async () => {
+    renderRequestRenderer(buildAfterHoursPackageSpec())
+
+    expect(await screen.findByRole("heading", { name: "After-Hours Package" })).toBeInTheDocument()
+    expect(
+      screen.getByText("Includes haircut, taper or fade, beard service, and a hot towel finish.")
+    ).toBeInTheDocument()
+    expect(screen.getByText("Razor prep")).toBeInTheDocument()
+    expect(screen.getByText("Wax")).toBeInTheDocument()
+  })
+
+  it("dedupes duplicate package slots with the same startsAt", async () => {
+    const { dedupePackageSlots } = loadRequestRenderer()
+    const deduped = dedupePackageSlots([
+      { start: "17:00", end: "18:10", startsAt: "2026-04-26T00:00:00.000Z", endsAt: "2026-04-26T01:10:00.000Z", available: true },
+      { start: "17:30", end: "18:40", startsAt: "2026-04-26T00:30:00.000Z", endsAt: "2026-04-26T01:40:00.000Z", available: true },
+      { start: "18:00", end: "19:10", startsAt: "2026-04-26T01:00:00.000Z", endsAt: "2026-04-26T02:10:00.000Z", available: true },
+      { start: "18:30", end: "19:40", startsAt: "2026-04-26T01:30:00.000Z", endsAt: "2026-04-26T02:40:00.000Z", available: true },
+      { start: "17:30", end: "18:40", startsAt: "2026-04-26T00:30:00.000Z", endsAt: "2026-04-26T01:40:00.000Z", available: true },
+      { start: "18:00", end: "19:10", startsAt: "2026-04-26T01:00:00.000Z", endsAt: "2026-04-26T02:10:00.000Z", available: true },
+    ])
+
+    expect(deduped.map((slot) => slot.startsAt)).toEqual([
+      "2026-04-26T00:00:00.000Z",
+      "2026-04-26T00:30:00.000Z",
+      "2026-04-26T01:00:00.000Z",
+      "2026-04-26T01:30:00.000Z",
+    ])
   })
 })

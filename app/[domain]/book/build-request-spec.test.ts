@@ -10,6 +10,7 @@ function makeService(overrides: Partial<Service> = {}): Service {
   return {
     id: overrides.id ?? "svc-1",
     name: overrides.name ?? "Men's Cut",
+    description: overrides.description ?? null,
     duration_minutes: overrides.duration_minutes ?? 40,
     price_cents: overrides.price_cents ?? 7000,
     price_display: overrides.price_display ?? null,
@@ -59,6 +60,12 @@ function buildAfterHoursSpec(overrides: Record<string, unknown> = {}) {
       surcharge_cents: 10000,
       surcharge_display: "+$100 after-hours fee",
       min_advance_hours: 24,
+      booking_mode: "individual",
+      package_name: null,
+      package_price_cents: null,
+      package_price_display: null,
+      package_addons: [],
+      logo_url: null,
     },
     ...overrides,
   })
@@ -164,6 +171,51 @@ describe("buildRequestSpec — after-hours structure", () => {
   it("stores surcharge cents for after-hours", () => {
     const spec = buildAfterHoursSpec()
     expect(spec.state?.surchargeCents).toBe(10000)
+  })
+
+  it("includes email in after-hours contact fields", () => {
+    const spec = buildAfterHoursSpec()
+    const props = spec.elements["contact-fields"].props as { fields: string[] }
+    expect(props.fields).toEqual(["name", "email", "phone", "notes"])
+  })
+
+  it("derives the package description from the staff's full-service description", () => {
+    const spec = buildAfterHoursSpec({
+      services: [
+        makeService({
+          id: "svc-after-hours",
+          name: "AFTER HOURS",
+          description: "After-hours barber services by request.",
+          staff_ids: ["staff-enzo"],
+        }),
+        makeService({
+          id: "svc-full-service",
+          name: "Men's Full Service",
+          description: "Includes haircut, taper or fade, beard service, and a hot towel finish.",
+          staff_ids: ["staff-enzo"],
+        }),
+      ],
+      preselectedServiceId: "svc-after-hours",
+      afterHours: {
+        surcharge_cents: 10000,
+        surcharge_display: "+$100 after-hours fee",
+        min_advance_hours: 24,
+        booking_mode: "package",
+        package_name: "After-Hours Package",
+        package_price_cents: 15000,
+        package_price_display: "$150",
+        package_addons: [{ name: "Razor prep", gratis: true }, { name: "Wax", gratis: true }],
+        logo_url: "https://example.com/logo.jpg",
+      },
+    })
+
+    const state = spec.state as {
+      afterHoursPackage: { description: string | null; addons: Array<{ name: string }> }
+    }
+    expect(state.afterHoursPackage.description).toBe(
+      "Includes haircut, taper or fade, beard service, and a hot towel finish."
+    )
+    expect(state.afterHoursPackage.addons.map((addon) => addon.name)).toEqual(["Razor prep", "Wax"])
   })
 })
 

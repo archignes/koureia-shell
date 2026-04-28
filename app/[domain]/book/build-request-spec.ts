@@ -7,6 +7,31 @@ import {
 import { staffToFirstNames, extractBookingModes, hasSharedServices } from "@/lib/booking-filters"
 import type { BookingRequestVariant } from "./request-page"
 
+function pickAfterHoursPackageDescription({
+  services,
+  preselectedServiceId,
+  preselectedStaffId,
+}: {
+  services: BookingContext["services"]
+  preselectedServiceId?: string
+  preselectedStaffId?: string
+}) {
+  const relevantServices = preselectedStaffId
+    ? services.filter((service) => service.staff_ids.includes(preselectedStaffId))
+    : services
+
+  const fullService = relevantServices.find((service) =>
+    service.name.toLowerCase().includes("full service")
+  )
+
+  if (fullService?.description?.trim()) {
+    return fullService.description.trim()
+  }
+
+  const preselectedService = services.find((service) => service.id === preselectedServiceId)
+  return preselectedService?.description?.trim() || null
+}
+
 export function buildRequestSpec({
   shopName,
   shopLogoUrl,
@@ -38,6 +63,12 @@ export function buildRequestSpec({
     surcharge_cents: number
     surcharge_display: string
     min_advance_hours: number
+    booking_mode: "individual" | "package"
+    package_name: string | null
+    package_price_cents: number | null
+    package_price_display: string | null
+    package_addons: Array<{ name: string; gratis: boolean }>
+    logo_url: string | null
   }
   shopTimezone?: string
   apiUrl?: string
@@ -62,6 +93,7 @@ export function buildRequestSpec({
   }
 
   const isAfterHours = variant === "after-hours" && afterHours
+  const isPackageMode = isAfterHours && afterHours.booking_mode === "package"
   const hideStaffPicker = isAfterHours && preselectedStaffId
 
   // Extract booking-mode services (After Hours, Home Service) from regular list
@@ -69,6 +101,9 @@ export function buildRequestSpec({
   const { primary, extras } = splitServices(regularServices)
 
   const hasBookingModes = variant === "waitlist" && bookingModes.length > 0
+  const packageDescription = isPackageMode
+    ? pickAfterHoursPackageDescription({ services, preselectedServiceId, preselectedStaffId })
+    : null
 
   const children = isAfterHours
     ? ["hero", "surcharge-banner", ...(hideStaffPicker ? [] : ["staff-pick"]),
@@ -99,12 +134,15 @@ export function buildRequestSpec({
         subtitle:
           variant === "waitlist"
             ? "Tell us what you're looking for and when works for you. We'll reach out when a slot opens."
+            : isPackageMode
+              ? "Choose a few evening options and we’ll confirm one by text."
             : staffName
               ? `Choose a service and preferred time. ${staffName} will confirm by text.`
               : "Pick your preferences and we'll confirm your time.",
         shopName,
         shopLogoUrl,
         staffName: variant === "waitlist" ? undefined : staffName,
+        logoUrl: isAfterHours ? afterHours.logo_url : undefined,
       },
     },
     "staff-pick": {
@@ -177,7 +215,7 @@ export function buildRequestSpec({
       "contact-fields": {
         type: "PreferenceForm",
         props: {
-          fields: ["name", "phone", "notes"],
+          fields: ["name", "email", "phone", "notes"],
           notesPlaceholder: "Special requests or notes",
         },
       },
@@ -251,7 +289,21 @@ export function buildRequestSpec({
       allFormattedServices,
       ...(variant === "waitlist" ? { availabilityBlocks: [] } : {}),
       ...(isAfterHours
-        ? { surchargeCents: afterHours.surcharge_cents }
+        ? {
+            surchargeCents: afterHours.surcharge_cents,
+            afterHoursBookingMode: afterHours.booking_mode,
+            packageBaseServiceId: preselectedServiceId,
+            afterHoursPackage: isPackageMode
+              ? {
+                  name: afterHours.package_name ?? "After-Hours Package",
+                  description: packageDescription,
+                  priceCents: afterHours.package_price_cents ?? 0,
+                  priceDisplay: afterHours.package_price_display ?? "$0",
+                  logoUrl: afterHours.logo_url,
+                  addons: afterHours.package_addons,
+                }
+              : null,
+          }
         : {}),
     },
   }

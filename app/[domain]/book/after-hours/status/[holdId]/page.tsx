@@ -5,6 +5,15 @@ type HoldDetails = {
   staff_name: string
   service_name: string
   starts_at: string
+  preferred_slots?: Array<{ starts_at: string; ends_at: string }>
+  confirmed_slot?: { starts_at: string; ends_at: string } | null
+  package_snapshot?: {
+    name: string
+    price_cents: number
+    price_display: string | null
+    addons: Array<{ name: string; gratis: boolean; selected: boolean }>
+  } | null
+  logo_url?: string | null
   status: "pending" | "confirmed" | "declined" | "expired"
   shop_timezone: string
 }
@@ -83,6 +92,13 @@ export default async function HoldStatusPage({ params }: Props) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col px-4 py-8">
       <div className="flex-1">
+        {hold.logo_url ? (
+          <img
+            src={hold.logo_url}
+            alt="Shop logo"
+            className="mb-5 h-14 w-auto object-contain"
+          />
+        ) : null}
         <h1 className="text-[1.4rem] font-bold text-[var(--shell-text)]">
           Booking Status
         </h1>
@@ -97,13 +113,35 @@ export default async function HoldStatusPage({ params }: Props) {
         </div>
 
         <div className="mt-6 space-y-3">
-          <DetailRow label="Service" value={hold.service_name} />
+          <DetailRow label={hold.package_snapshot ? "Package" : "Service"} value={hold.package_snapshot?.name ?? hold.service_name} />
           <DetailRow label="With" value={hold.staff_name} />
-          <DetailRow
-            label="When"
-            value={formatDateTime(hold.starts_at, hold.shop_timezone)}
-          />
+          {hold.status === "confirmed" && hold.confirmed_slot ? (
+            <DetailRow
+              label="Confirmed"
+              value={formatDateTime(hold.confirmed_slot.starts_at, hold.shop_timezone)}
+            />
+          ) : (
+            <DetailRow
+              label="First choice"
+              value={formatDateTime(hold.starts_at, hold.shop_timezone)}
+            />
+          )}
         </div>
+
+        {hold.preferred_slots?.length ? (
+          <div className="mt-6 rounded-xl border border-[var(--shell-border)] p-4">
+            <p className="text-[0.8rem] font-semibold uppercase tracking-[0.06em] text-[var(--shell-text-muted)]">
+              Selected times
+            </p>
+            <div className="mt-3 space-y-2">
+              {hold.preferred_slots.map((slot) => (
+                <p key={slot.starts_at} className="text-[0.9rem] text-[var(--shell-text)]">
+                  {formatDateTime(slot.starts_at, hold.shop_timezone)}
+                </p>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <p className="mt-8 text-center text-[0.7rem] text-[var(--shell-text-subtle)]">
