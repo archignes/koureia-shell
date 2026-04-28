@@ -55,7 +55,7 @@ export function RequestRenderer({
 
       // Update URL to reflect staff selection (human-readable name)
       const url = new URL(window.location.href)
-      if (staffId) {
+      if (staffId && staffId !== "any") {
         const staffList = (initialSpec.elements["staff-pick"]?.props as { staff?: { id: string; name: string }[] })?.staff
         const staffName = staffList?.find((s) => s.id === staffId)?.name
         url.searchParams.set("staff", staffName?.toLowerCase() ?? staffId)
@@ -68,11 +68,28 @@ export function RequestRenderer({
       const staffMap = state.serviceStaffMap
       if (!allServices || !staffMap) return
 
-      const filtered = staffId
+      const filtered = staffId && staffId !== "any"
         ? allServices.filter((s) => staffMap[s.id]?.includes(staffId))
         : allServices
 
       const effectiveServices = filtered.length > 0 ? filtered : allServices
+
+      // Separate booking-mode services from regular services for the service-menu
+      const MODE_PATTERNS = ["AFTER HOURS", "LOCAL AT HOME SERVICE"]
+      const regularServices = effectiveServices.filter(
+        (s) => !MODE_PATTERNS.some((p) => s.name.toUpperCase().includes(p))
+      )
+
+      // Split into primary/extras using the same heuristic as splitServices
+      const EXTRA_PATTERNS = ["+", "waxing", "add-on", "therapy"]
+      const isExtra = (s: { name: string; duration?: string; priceCents?: number }) => {
+        const lower = s.name.toLowerCase()
+        return s.name.startsWith("+") ||
+          EXTRA_PATTERNS.some((p) => lower.includes(p)) ||
+          false // duration/price heuristic requires raw values not available here
+      }
+      const primaryFiltered = regularServices.filter((s) => !isExtra(s))
+      const extrasFiltered = regularServices.filter((s) => isExtra(s))
 
       setSpec((prev) => {
         const updates: typeof prev.elements = {}
@@ -92,7 +109,8 @@ export function RequestRenderer({
             ...prev.elements["service-menu"],
             props: {
               ...prev.elements["service-menu"].props,
-              primary: effectiveServices,
+              primary: primaryFiltered,
+              extras: extrasFiltered,
             },
           }
         }

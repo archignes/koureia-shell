@@ -136,6 +136,9 @@ function loadRequestComponents() {
     if (id === "@/lib/components/service-menu") {
       return { ServiceMenu: () => null }
     }
+    if (id === "@/lib/components/booking-mode-buttons") {
+      return { BookingModeButtons: () => null }
+    }
     if (id === "@/lib/components/staff-picker") {
       return { StaffPicker: () => null }
     }
@@ -375,6 +378,14 @@ function loadBuildRequestSpec() {
       return {
         staffToFirstNames: (staff: Array<{ id: string; name: string; role?: string }>) =>
           staff.map((m) => ({ id: m.id, name: m.name.split(" ")[0], role: m.role })),
+        extractBookingModes: (services: Array<{ name: string }>) => ({
+          regular: services.filter(
+            (s) => !s.name.toUpperCase().includes("AFTER HOURS") && !s.name.toUpperCase().includes("LOCAL AT HOME SERVICE")
+          ),
+          modes: [],
+        }),
+        hasSharedServices: (services: Array<{ staff_ids: string[] }>) =>
+          services.some((s) => s.staff_ids.length > 1),
       }
     }
     if (id === "./request-page") {

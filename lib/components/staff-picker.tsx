@@ -31,17 +31,17 @@ export function StaffPicker({ staff, allowNoPreference }: StaffPickerProps) {
           <label
             className={cn(
               "flex cursor-pointer items-center gap-3 border-b border-b-[rgba(228,231,239,0.06)] bg-[rgba(228,231,239,0.02)] px-4 py-[0.6rem] last:border-b-0 hover:bg-[rgba(228,231,239,0.05)] before:content-[''] before:h-[1.125rem] before:w-[1.125rem] before:shrink-0 before:rounded-full before:border-2 before:border-[var(--shell-border-strong)] before:bg-transparent before:transition-[border-color,background] before:duration-150 before:ease-[var(--shell-transition)]",
-              !selectedStaffId && "border-b-[var(--shell-accent)] bg-[rgba(199,164,106,0.1)] before:border-[var(--shell-accent)] before:bg-[var(--shell-accent)] before:shadow-[inset_0_0_0_3px_var(--shell-bg-elevated)]"
+              selectedStaffId === "any" && "border-b-[var(--shell-accent)] bg-[rgba(199,164,106,0.1)] before:border-[var(--shell-accent)] before:bg-[var(--shell-accent)] before:shadow-[inset_0_0_0_3px_var(--shell-bg-elevated)]"
             )}
             htmlFor="staff-no-preference"
           >
             <input
-              checked={!selectedStaffId}
+              checked={selectedStaffId === "any"}
               className="absolute h-px w-px overflow-hidden [clip:rect(0,0,0,0)]"
               id="staff-no-preference"
               name="selectedStaffId"
               type="radio"
-              onChange={() => setSelectedStaffId(undefined)}
+              onChange={() => setSelectedStaffId("any")}
             />
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgba(228,231,239,0.08)] text-sm text-[var(--shell-text-muted)] max-sm:size-8">
               ?

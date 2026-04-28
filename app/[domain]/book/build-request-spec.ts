@@ -4,11 +4,12 @@ import {
   splitServices,
   type BookingContext,
 } from "@/lib/booking-context"
-import { staffToFirstNames } from "@/lib/booking-filters"
+import { staffToFirstNames, extractBookingModes, hasSharedServices } from "@/lib/booking-filters"
 import type { BookingRequestVariant } from "./request-page"
 
 export function buildRequestSpec({
   shopName,
+  shopLogoUrl,
   source,
   variant,
   services,
@@ -25,6 +26,7 @@ export function buildRequestSpec({
   waitlistHorizonDays,
 }: {
   shopName: string
+  shopLogoUrl?: string
   source: "after-hours" | "waitlist" | "sms-refinement"
   variant: BookingRequestVariant
   services: BookingContext["services"]
@@ -61,14 +63,21 @@ export function buildRequestSpec({
 
   const isAfterHours = variant === "after-hours" && afterHours
   const hideStaffPicker = isAfterHours && preselectedStaffId
-  const { primary, extras } = splitServices(services)
+
+  // Extract booking-mode services (After Hours, Home Service) from regular list
+  const { regular: regularServices, modes: bookingModes } = extractBookingModes(services)
+  const { primary, extras } = splitServices(regularServices)
+
+  const hasBookingModes = variant === "waitlist" && bookingModes.length > 0
 
   const children = isAfterHours
     ? ["hero", "surcharge-banner", ...(hideStaffPicker ? [] : ["staff-pick"]),
        "service-menu", "availability-pick", "contact-fields", "order-summary",
        "policy-confirm", "submit"]
     : variant === "waitlist"
-      ? ["hero", "staff-pick", "service-pick", "availability-pick", "prefs", "submit"]
+      ? ["hero", "staff-pick", "service-menu",
+         ...(hasBookingModes ? ["booking-modes"] : []),
+         "availability-pick", "prefs", "submit"]
       : ["hero", ...(hideStaffPicker ? [] : ["staff-pick"]),
          "service-pick", "prefs", "submit"]
 
@@ -94,6 +103,7 @@ export function buildRequestSpec({
               ? `Choose a service and preferred time. ${staffName} will confirm by text.`
               : "Pick your preferences and we'll confirm your time.",
         shopName,
+        shopLogoUrl,
         staffName: variant === "waitlist" ? undefined : staffName,
       },
     },
@@ -101,7 +111,7 @@ export function buildRequestSpec({
       type: "StaffPicker",
       props: {
         staff: staffToFirstNames(staff),
-        allowNoPreference: variant === "waitlist",
+        allowNoPreference: variant === "waitlist" && hasSharedServices(services),
         preselectedId: variant === "waitlist" ? undefined : preselectedStaffId,
       },
     },
@@ -112,6 +122,31 @@ export function buildRequestSpec({
         preselectedId: preselectedServiceId,
       },
     },
+    ...(variant === "waitlist" ? {
+      "service-menu": {
+        type: "ServiceMenu",
+        props: {
+          primary: primary.map(fmt),
+          extras: extras.map(fmt),
+          preselectedId: preselectedServiceId,
+          sectionLabel: "Services",
+        },
+      },
+      ...(hasBookingModes ? {
+        "booking-modes": {
+          type: "BookingModeButtons",
+          props: {
+            modes: bookingModes.map((m) => ({
+              mode: m.mode,
+              label: m.label,
+              description: m.description,
+              price: m.price,
+              serviceId: m.serviceId,
+            })),
+          },
+        },
+      } : {}),
+    } : {}),
     ...(isAfterHours ? {
       "service-menu": {
         type: "ServiceMenu",

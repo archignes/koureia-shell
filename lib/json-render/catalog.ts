@@ -91,6 +91,7 @@ export const catalog = defineCatalog(schema, {
         headline: z.string(),
         subtitle: z.string(),
         shopName: z.string(),
+        shopLogoUrl: z.string().optional(),
         staffName: z.string().optional(),
       }),
       description: "Hero section for booking request pages with shop/staff context",
@@ -159,6 +160,20 @@ export const catalog = defineCatalog(schema, {
         sectionLabel: z.string().optional(),
       }),
       description: "Service menu with primary single-select and extras multi-select",
+    },
+    BookingModeButtons: {
+      props: z.object({
+        modes: z.array(
+          z.object({
+            mode: z.enum(["after-hours", "home-service"]),
+            label: z.string(),
+            description: z.string(),
+            price: z.string(),
+            serviceId: z.string(),
+          })
+        ),
+      }),
+      description: "Special booking mode buttons (after-hours, home service) shown on waitlist",
     },
     SurchargeBanner: {
       props: z.object({

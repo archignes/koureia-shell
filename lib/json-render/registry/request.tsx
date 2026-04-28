@@ -4,6 +4,7 @@ import { useStateStore, type Components } from "@json-render/react"
 import { AvailabilityPicker } from "@/lib/components/availability-picker"
 import { ServicePicker as ServicePickerComponent } from "@/lib/components/service-picker"
 import { ServiceMenu as ServiceMenuComponent } from "@/lib/components/service-menu"
+import { BookingModeButtons as BookingModeButtonsComponent } from "@/lib/components/booking-mode-buttons"
 import { StaffPicker as StaffPickerComponent } from "@/lib/components/staff-picker"
 import { OrderSummary as OrderSummaryComponent } from "@/lib/components/order-summary"
 import { PreferenceForm as PreferenceFormComponent } from "@/lib/components/preference-form"
@@ -15,6 +16,7 @@ type RequestComponentKeys =
   | "RequestHero"
   | "ServicePicker"
   | "ServiceMenu"
+  | "BookingModeButtons"
   | "StaffPicker"
   | "SurchargeBanner"
   | "AvailabilityPicker"
@@ -29,16 +31,37 @@ type RequestComponentKeys =
 export const requestComponents: Pick<Components<typeof catalog>, RequestComponentKeys> = {
   RequestHero: ({ props }) => (
     <header className="m-0 px-0 pb-2">
-      <p className="m-0 mb-[0.15rem] text-base font-normal text-[var(--shell-accent)]">
-        {props.shopName}
-        {props.staffName ? <> &middot; {props.staffName}</> : null}
-      </p>
-      <h1 className="m-0 text-[1.35rem] leading-[1.15] font-semibold text-[var(--shell-text)] text-balance">
-        {props.headline}
-      </h1>
-      <p className="mt-1 mr-0 mb-0 ml-0 text-[0.85rem] leading-[1.5] text-[var(--shell-text-muted)] text-pretty">
-        {props.subtitle}
-      </p>
+      {props.shopLogoUrl ? (
+        <div className="grid grid-cols-[80px_1fr] items-center gap-x-3 gap-y-0">
+          <img
+            src={props.shopLogoUrl}
+            alt={props.shopName}
+            className="row-span-3 size-[80px] rounded object-contain"
+          />
+          <p className="m-0 text-[0.8rem] font-medium text-[var(--shell-accent)]">
+            {props.shopName}
+          </p>
+          <h1 className="m-0 text-[1.35rem] leading-[1.15] font-semibold text-[var(--shell-text)] text-balance">
+            {props.headline}
+          </h1>
+          <p className="m-0 mt-[0.15rem] text-[0.85rem] leading-[1.5] text-[var(--shell-text-muted)] text-pretty">
+            {props.subtitle}
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="m-0 mb-[0.15rem] font-[var(--shell-font-display,inherit)] text-lg font-semibold text-[var(--shell-accent)]">
+            {props.shopName}
+            {props.staffName ? <> &middot; {props.staffName}</> : null}
+          </p>
+          <h1 className="m-0 text-[1.35rem] leading-[1.15] font-semibold text-[var(--shell-text)] text-balance">
+            {props.headline}
+          </h1>
+          <p className="mt-1 mr-0 mb-0 ml-0 text-[0.85rem] leading-[1.5] text-[var(--shell-text-muted)] text-pretty">
+            {props.subtitle}
+          </p>
+        </>
+      )}
     </header>
   ),
 
@@ -46,14 +69,40 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     <ServicePickerComponent services={props.services} preselectedId={props.preselectedId} />
   ),
 
-  ServiceMenu: ({ props }) => (
-    <ServiceMenuComponent
-      primary={props.primary}
-      extras={props.extras}
-      preselectedId={props.preselectedId}
-      sectionLabel={props.sectionLabel}
-    />
-  ),
+  ServiceMenu: ({ props }) => {
+    const { state } = useStateStore()
+    const typedState = state as Record<string, unknown>
+    // In waitlist mode (no surchargeCents), gate behind staff selection
+    if (!typedState.surchargeCents && !typedState.selectedStaffId) {
+      return (
+        <p className="mt-4 px-0 py-4 text-center text-[0.8rem] text-[var(--shell-text-muted)]">
+          Select a staff member to see their services
+        </p>
+      )
+    }
+    return (
+      <ServiceMenuComponent
+        primary={props.primary}
+        extras={props.extras}
+        preselectedId={props.preselectedId}
+        sectionLabel={props.sectionLabel}
+      />
+    )
+  },
+
+  BookingModeButtons: ({ props }) => {
+    const { state } = useStateStore()
+    const typedState = state as Record<string, unknown>
+    if (!typedState.selectedStaffId) return null
+    // Filter modes to only those offered by the selected staff
+    const staffMap = typedState.serviceStaffMap as Record<string, string[]> | undefined
+    const staffId = typedState.selectedStaffId as string
+    const filteredModes = staffMap && staffId !== "any"
+      ? props.modes.filter((m) => staffMap[m.serviceId]?.includes(staffId))
+      : props.modes
+    if (filteredModes.length === 0) return null
+    return <BookingModeButtonsComponent modes={filteredModes} />
+  },
 
   StaffPicker: ({ props }) => (
     <StaffPickerComponent staff={props.staff} preselectedId={props.preselectedId} allowNoPreference={props.allowNoPreference} />
@@ -64,6 +113,8 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     const typedState = state as Record<string, unknown>
     // In after-hours flow (has surchargeCents), gate behind slot selection
     if (typedState.surchargeCents && !typedState.preferredSlotStart) return null
+    // In waitlist flow, gate behind service selection
+    if (!typedState.surchargeCents && !typedState.selectedServiceId) return null
     return (
       <PreferenceFormComponent
         fields={props.fields}
@@ -116,7 +167,9 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
 
   WaitlistAvailabilityPicker: ({ props }) => {
     const { update, state } = useStateStore()
-    const typedState = state as { selectedStaffId?: string }
+    const typedState = state as { selectedStaffId?: string; selectedServiceId?: string }
+    // Gate behind service selection
+    if (!typedState.selectedServiceId) return null
     const hours =
       typedState.selectedStaffId && props.staffHoursById?.[typedState.selectedStaffId]
         ? props.staffHoursById[typedState.selectedStaffId]
@@ -149,6 +202,13 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     // In after-hours flow, gate behind slot selection
     if (typedState.surchargeCents && !typedState.preferredSlotStart) return null
     const submitError = typedState.submitError as string | undefined
+    // In waitlist flow, disable until service + availability selected
+    const isWaitlist = typedState.source === "waitlist" || typedState.source === "sms-refinement"
+    const availabilityBlocks = typedState.availabilityBlocks as unknown[] | undefined
+    const waitlistReady = isWaitlist
+      ? !!(typedState.selectedServiceId && availabilityBlocks && availabilityBlocks.length > 0)
+      : true // after-hours has its own gating via hidden submit
+    const isDisabled = loading || !waitlistReady
     return (
     <div className="mt-4">
       {submitError ? (
@@ -191,8 +251,12 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
         </a>
       </div>
       <button
-        className="mb-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-0 bg-[var(--shell-accent)] px-5 py-[0.65rem] text-[0.9rem] font-bold text-[var(--shell-accent-contrast)] shadow-[0_12px_28px_rgba(199,164,106,0.15)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-[var(--shell-accent-strong)] disabled:cursor-wait disabled:bg-[var(--shell-accent-strong)] disabled:opacity-100"
-        disabled={loading}
+        className={`mb-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-0 px-5 py-[0.65rem] text-[0.9rem] font-bold transition-[transform,background-color,box-shadow,opacity] ${
+          isDisabled && !loading
+            ? "cursor-default bg-[rgba(199,164,106,0.3)] text-[var(--shell-accent-contrast)] opacity-50"
+            : "bg-[var(--shell-accent)] text-[var(--shell-accent-contrast)] shadow-[0_12px_28px_rgba(199,164,106,0.15)] hover:-translate-y-px hover:bg-[var(--shell-accent-strong)] disabled:cursor-wait disabled:bg-[var(--shell-accent-strong)] disabled:opacity-100"
+        }`}
+        disabled={isDisabled}
         type="button"
         onClick={() => emit("submit")}
       >
