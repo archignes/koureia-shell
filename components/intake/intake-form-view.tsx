@@ -97,7 +97,9 @@ export function IntakePageView({
               <p className="truncate text-[1.45rem] leading-none text-[var(--shell-text)]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
                 {tenantName}
               </p>
-              <p className="mt-0.5 truncate text-sm text-[var(--shell-text-muted)]">{form.title}</p>
+              <p className="mt-0.5 truncate text-sm text-[var(--shell-text-muted)]">
+                {form.linkedClient ? `${form.title} for ${form.linkedClient.displayName}` : form.title}
+              </p>
             </div>
             {hasDraft ? (
               <button
