@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { NextRequest } from "next/server"
 
+import { KO_KS_PUBLIC_CONTRACT } from "@/lib/ko-ks-public-contract"
+
 import { POST } from "../[...path]/route"
 
 function makeRequest(body: unknown) {
@@ -28,29 +30,33 @@ describe("booking proxy route", () => {
     vi.restoreAllMocks()
   })
 
-  it("forwards waitlist POST requests upstream and returns the upstream response", async () => {
-    fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify({ ok: true, id: "waitlist-1" }), {
-        status: 201,
-        headers: { "Content-Type": "application/json" },
+  it.each(KO_KS_PUBLIC_CONTRACT.bookingWriteProxyPaths)(
+    "forwards contracted booking POST path %s upstream",
+    async (path) => {
+      const subpath = path.replace("/api/booking/", "")
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true, path }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+      const response = await POST(makeRequest({ clientName: "Taylor" }), {
+        params: Promise.resolve({ path: [subpath] }),
       })
-    )
 
-    const response = await POST(makeRequest({ clientName: "Taylor" }), {
-      params: Promise.resolve({ path: ["waitlist"] }),
-    })
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://upstream.example.com/api/booking/waitlist",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientName: "Taylor" }),
-      }
-    )
-    expect(response.status).toBe(201)
-    expect(await response.json()).toEqual({ ok: true, id: "waitlist-1" })
-  })
+      expect(fetchMock).toHaveBeenCalledWith(
+        `https://upstream.example.com${path}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clientName: "Taylor" }),
+        }
+      )
+      expect(response.status).toBe(201)
+      expect(await response.json()).toEqual({ ok: true, path })
+    },
+  )
 
   it("forwards holds POST requests upstream", async () => {
     fetchMock.mockResolvedValueOnce(
