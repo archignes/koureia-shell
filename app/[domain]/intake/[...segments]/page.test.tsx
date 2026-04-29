@@ -7,14 +7,26 @@ import type * as IntakeModule from "@/lib/intake"
 
 import TenantIntakeFormPage from "./page"
 
+const { fetchIntakeFormMock, notFoundMock } = vi.hoisted(() => ({
+  fetchIntakeFormMock: vi.fn(async (_apiUrl: string, _shop: string, type: string) => ({
+    id: `form-${type}`,
+    shop_id: "shop-1",
+    title: `Intake ${type}`,
+    description: null,
+    form_type: type,
+    fields_json: [],
+  })),
+  notFoundMock: vi.fn(() => {
+    throw new Error("NEXT_NOT_FOUND")
+  }),
+}))
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers({ host: KO_KS_PUBLIC_CONTRACT.intake.tenantDomain })),
 }))
 
 vi.mock("next/navigation", () => ({
-  notFound: vi.fn(() => {
-    throw new Error("NEXT_NOT_FOUND")
-  }),
+  notFound: notFoundMock,
 }))
 
 vi.mock("@/lib/tenant", () => ({
@@ -30,14 +42,7 @@ vi.mock("@/lib/intake", async (importOriginal) => {
   const intakeModule = actual as typeof IntakeModule
   return {
     ...intakeModule,
-    fetchIntakeForm: vi.fn(async () => ({
-      id: "form-1",
-      shop_id: "shop-1",
-      title: "Barber Intake",
-      description: null,
-      form_type: "barber",
-      fields_json: [],
-    })),
+    fetchIntakeForm: fetchIntakeFormMock,
   }
 })
 
@@ -63,7 +68,7 @@ vi.mock("@/components/intake/intake-form-view", () => ({
   ),
 }))
 
-describe("tenant intake form route", () => {
+describe("tenant intake catch-all route contract", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -71,6 +76,29 @@ describe("tenant intake form route", () => {
   afterEach(() => {
     cleanup()
   })
+
+  it.each(KO_KS_PUBLIC_CONTRACT.intake.generatedPaths)(
+    "serves KO-generated intake path %s",
+    async (path) => {
+      const type = path.replace("/intake/", "")
+
+      const page = await TenantIntakeFormPage({
+        params: Promise.resolve({
+          domain: KO_KS_PUBLIC_CONTRACT.intake.tenantDomain,
+          segments: [type],
+        }),
+      })
+
+      render(page)
+
+      expect(screen.getByRole("heading", { name: `Intake ${type}` })).toBeTruthy()
+      expect(fetchIntakeFormMock).toHaveBeenCalledWith(
+        expect.any(String),
+        KO_KS_PUBLIC_CONTRACT.intake.shopSlug,
+        type,
+      )
+    },
+  )
 
   it.each(KO_KS_PUBLIC_CONTRACT.intake.legacySupportedPaths)(
     "keeps legacy intake SMS path supported: %s",
@@ -80,18 +108,31 @@ describe("tenant intake form route", () => {
       const page = await TenantIntakeFormPage({
         params: Promise.resolve({
           domain: KO_KS_PUBLIC_CONTRACT.intake.tenantDomain,
-          shop,
-          type,
+          segments: [shop, type],
         }),
       })
 
       render(page)
 
-      expect(screen.getByRole("heading", { name: "Barber Intake" })).toBeTruthy()
-      expect(screen.getByText("Beauty and the Barber")).toBeTruthy()
-      expect(screen.getByRole("link", { name: "Back" }).getAttribute("href")).toBe(
-        `/${KO_KS_PUBLIC_CONTRACT.intake.tenantDomain}`,
+      expect(screen.getByRole("heading", { name: `Intake ${type}` })).toBeTruthy()
+      expect(fetchIntakeFormMock).toHaveBeenCalledWith(
+        expect.any(String),
+        KO_KS_PUBLIC_CONTRACT.intake.shopSlug,
+        type,
       )
     },
   )
+
+  it("404s malformed intake paths instead of rewriting forever", async () => {
+    await expect(
+      TenantIntakeFormPage({
+        params: Promise.resolve({
+          domain: KO_KS_PUBLIC_CONTRACT.intake.tenantDomain,
+          segments: ["too", "many", "segments"],
+        }),
+      }),
+    ).rejects.toThrow("NEXT_NOT_FOUND")
+
+    expect(notFoundMock).toHaveBeenCalled()
+  })
 })
