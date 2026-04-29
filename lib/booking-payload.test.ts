@@ -93,6 +93,25 @@ describe("buildRequestPayload — waitlist variant", () => {
     })
     expect(result.body.waitlistId).toBe("abc-123")
   })
+
+  it("passes waitlist link token without client contact fields", () => {
+    const result = buildRequestPayload({
+      shopId: "shop-1",
+      shopSlug: "test-shop",
+      state: makeState({
+        name: undefined,
+        email: undefined,
+        phone: undefined,
+        waitlistLinkToken: "raw-token",
+      }),
+      variant: "waitlist",
+    })
+
+    expect(result.body.waitlistLinkToken).toBe("raw-token")
+    expect(result.body.clientName).toBeUndefined()
+    expect(result.body.clientEmail).toBeUndefined()
+    expect(result.body.clientPhone).toBeUndefined()
+  })
 })
 
 describe("buildRequestPayload — general request variant", () => {
