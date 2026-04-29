@@ -93,13 +93,20 @@ export function IntakePageView({
               <SparklesIcon />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-[0.28em] text-[var(--shell-accent)]/80">Welcome to</p>
-              <p className="truncate text-[1.45rem] leading-none text-[var(--shell-text)]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
-                {tenantName}
-              </p>
-              <p className="mt-0.5 truncate text-sm text-[var(--shell-text-muted)]">
-                {form.linkedClient ? `${form.title} for ${form.linkedClient.displayName}` : form.title}
-              </p>
+              {form.linkedClient ? (
+                <>
+                  <p className="text-[10px] uppercase tracking-[0.28em] text-[var(--shell-accent)]/80">{tenantName}</p>
+                  <p className="truncate text-lg font-bold leading-tight text-[var(--shell-text)]">{form.title} for {form.linkedClient.displayName}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[10px] uppercase tracking-[0.28em] text-[var(--shell-accent)]/80">Welcome to</p>
+                  <p className="truncate text-[1.45rem] leading-none text-[var(--shell-text)]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                    {tenantName}
+                  </p>
+                  <p className="mt-0.5 truncate text-sm text-[var(--shell-text-muted)]">{form.title}</p>
+                </>
+              )}
             </div>
             {hasDraft ? (
               <button
