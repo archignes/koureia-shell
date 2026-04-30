@@ -126,6 +126,12 @@ export const catalog = defineCatalog(schema, {
       }),
       description: "Avatar radio group for selecting a staff member",
     },
+    LinkedEntryNotice: {
+      props: z.object({
+        label: z.string().optional(),
+      }),
+      description: "Notice for tokenized waitlist links for known clients",
+    },
     PreferenceForm: {
       props: z.object({
         fields: z.array(

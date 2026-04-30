@@ -280,6 +280,7 @@ function buildTestRegistry() {
         React.createElement(React.Fragment, null, children),
       RequestHero: requestComponents.RequestHero,
       StaffPicker: requestComponents.StaffPicker,
+      LinkedEntryNotice: requestComponents.LinkedEntryNotice,
       ServicePicker: requestComponents.ServicePicker,
       ServiceMenu: requestComponents.ServiceMenu,
       BookingModeButtons: requestComponents.BookingModeButtons,
