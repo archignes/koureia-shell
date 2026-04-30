@@ -13,6 +13,7 @@ type AvailabilityPickerProps = {
   staffId?: string
   minAdvanceHours?: number
   shopTimezone?: string
+  mode?: "regular" | "after_hours"
 }
 
 type SlotCache = Map<string, AvailabilitySlot[]>
@@ -29,6 +30,7 @@ export function AvailabilityPicker({
   staffId,
   minAdvanceHours = 24,
   shopTimezone,
+  mode = "after_hours",
 }: AvailabilityPickerProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
@@ -73,6 +75,7 @@ export function AvailabilityPicker({
           staffId: stfId,
           dateFrom: toDateString(minDate),
           days: 14,
+          mode,
           signal: controller.signal,
         })
 
@@ -113,7 +116,7 @@ export function AvailabilityPicker({
         }
       }
     },
-    [apiUrl, shopSlug, minDate, shopTimezone, selectedDate]
+    [apiUrl, shopSlug, minDate, mode, shopTimezone, selectedDate]
   )
 
   // Pre-fetch when serviceId + staffId are available
@@ -210,22 +213,11 @@ export function AvailabilityPicker({
 
         {selectedDate && !loading && !prefetching && !error && slots.length > 0 && (
           <>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2 max-sm:grid-cols-1">
-              {slots.map((slot) => (
-                <button
-                  key={slot.start}
-                  type="button"
-                  disabled={!slot.available}
-                  className={cn(
-                    "cursor-pointer rounded-[var(--shell-radius-sm)] border border-[var(--shell-border-strong)] bg-[rgba(228,231,239,0.02)] px-[0.4rem] py-2 text-center text-[0.9rem] font-semibold tabular-nums text-[var(--shell-text)] transition-[background,border-color] duration-150 ease-[var(--shell-transition)] hover:border-[var(--shell-accent)] hover:bg-[rgba(228,231,239,0.06)] disabled:cursor-not-allowed disabled:opacity-30 disabled:line-through disabled:hover:border-[var(--shell-border-strong)] disabled:hover:bg-[rgba(228,231,239,0.02)] max-sm:p-[0.85rem]",
-                    selectedSlot?.start === slot.start && "border-[var(--shell-accent)] bg-[var(--shell-accent)] font-bold text-[var(--shell-accent-contrast)] hover:border-[var(--shell-accent-strong)] hover:bg-[var(--shell-accent-strong)]"
-                  )}
-                  onClick={() => handleSlotClick(slot)}
-                >
-                  {formatTime(slot.start)}
-                </button>
-              ))}
-            </div>
+            <GroupedSlots
+              handleSlotClick={handleSlotClick}
+              selectedSlot={selectedSlot}
+              slots={slots}
+            />
             {timezone && (
               <p className="mt-3 text-center text-[0.8rem] text-[var(--shell-text-subtle)]">
                 Times shown in {timezone.replace(/_/g, " ")}
@@ -234,6 +226,90 @@ export function AvailabilityPicker({
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+function getSlotPeriod(slot: AvailabilitySlot) {
+  const hour = Number(slot.start.slice(0, 2))
+  if (hour < 12) return "Morning"
+  if (hour < 17) return "Afternoon"
+  return "Evening"
+}
+
+function SlotButton({
+  handleSlotClick,
+  selectedSlot,
+  slot,
+}: {
+  handleSlotClick: (slot: AvailabilitySlot) => void
+  selectedSlot: AvailabilitySlot | null
+  slot: AvailabilitySlot
+}) {
+  return (
+    <button
+      key={slot.start}
+      type="button"
+      disabled={!slot.available}
+      className={cn(
+        "cursor-pointer rounded-[var(--shell-radius-sm)] border border-[var(--shell-border-strong)] bg-[rgba(228,231,239,0.02)] px-[0.4rem] py-2 text-center text-[0.9rem] font-semibold tabular-nums text-[var(--shell-text)] transition-[background,border-color] duration-150 ease-[var(--shell-transition)] hover:border-[var(--shell-accent)] hover:bg-[rgba(228,231,239,0.06)] disabled:cursor-not-allowed disabled:opacity-30 disabled:line-through disabled:hover:border-[var(--shell-border-strong)] disabled:hover:bg-[rgba(228,231,239,0.02)] max-sm:p-[0.85rem]",
+        selectedSlot?.start === slot.start && "border-[var(--shell-accent)] bg-[var(--shell-accent)] font-bold text-[var(--shell-accent-contrast)] hover:border-[var(--shell-accent-strong)] hover:bg-[var(--shell-accent-strong)]"
+      )}
+      onClick={() => handleSlotClick(slot)}
+    >
+      {formatTime(slot.start)}
+    </button>
+  )
+}
+
+function GroupedSlots({
+  handleSlotClick,
+  selectedSlot,
+  slots,
+}: {
+  handleSlotClick: (slot: AvailabilitySlot) => void
+  selectedSlot: AvailabilitySlot | null
+  slots: AvailabilitySlot[]
+}) {
+  if (slots.length <= 8) {
+    return (
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2 max-sm:grid-cols-1">
+        {slots.map((slot) => (
+          <SlotButton
+            key={slot.start}
+            handleSlotClick={handleSlotClick}
+            selectedSlot={selectedSlot}
+            slot={slot}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  const groups = ["Morning", "Afternoon", "Evening"].map((period) => ({
+    period,
+    slots: slots.filter((slot) => getSlotPeriod(slot) === period),
+  })).filter((group) => group.slots.length > 0)
+
+  return (
+    <div className="space-y-3">
+      {groups.map((group) => (
+        <section key={group.period}>
+          <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[var(--shell-text-muted)]">
+            {group.period}
+          </p>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2 max-sm:grid-cols-1">
+            {group.slots.map((slot) => (
+              <SlotButton
+                key={slot.start}
+                handleSlotClick={handleSlotClick}
+                selectedSlot={selectedSlot}
+                slot={slot}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   )
 }

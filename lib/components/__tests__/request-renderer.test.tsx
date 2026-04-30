@@ -13,8 +13,8 @@ import * as bookingApi from "@/lib/booking-api"
 
 type BuildRequestSpec = (opts: {
   shopName: string
-  source: "after-hours" | "waitlist" | "sms-refinement"
-  variant: "after-hours" | "waitlist"
+  source: "after-hours" | "waitlist" | "sms-refinement" | "request"
+  variant: "after-hours" | "waitlist" | "request"
   services: Array<{
     id: string
     name: string
@@ -502,7 +502,47 @@ function buildAfterHoursSpec(stateOverrides: Partial<Record<string, unknown>> = 
   }
 }
 
-function renderRequestRenderer(spec: Spec) {
+function buildRegularRequestSpec(stateOverrides: Partial<Record<string, unknown>> = {}): Spec {
+  return {
+    root: "container",
+    elements: {
+      container: {
+        type: "Container",
+        props: {},
+        children: ["submit"],
+      },
+      submit: {
+        type: "SubmitButton",
+        props: { label: "Send Request", submittingLabel: "Sending..." },
+        on: { submit: { action: "submit" } },
+      },
+    },
+    state: {
+      selectedServiceId: "svc-1",
+      selectedStaffId: "staff-1",
+      preferredDate: "2026-05-01",
+      preferredSlotStart: "14:00",
+      preferredSlotEnd: "14:40",
+      preferredStartsAt: "2026-05-01T21:00:00.000Z",
+      name: "Test User",
+      phone: "5551234567",
+      email: "",
+      source: "request",
+      allFormattedServices: [
+        {
+          id: "svc-1",
+          name: "Signature Cut",
+          duration: "40 min",
+          price: "$45",
+          priceCents: 4500,
+        },
+      ],
+      ...stateOverrides,
+    },
+  }
+}
+
+function renderRequestRenderer(spec: Spec, variant: "after-hours" | "waitlist" | "request" = "after-hours") {
   const { RequestRenderer } = loadRequestRenderer()
   return render(
     React.createElement(RequestRenderer, {
@@ -510,7 +550,7 @@ function renderRequestRenderer(spec: Spec) {
       shopId: "shop-1",
       shopSlug: "example-shop",
       apiUrl: "https://api.example.com",
-      variant: "after-hours",
+      variant,
     })
   )
 }
@@ -697,6 +737,65 @@ describe("RequestRenderer after-hours submit flow", () => {
     expect(
       await screen.findByRole("heading", { name: "Your time is being held" })
     ).toBeInTheDocument()
+  })
+
+  it("creates a pending regular hold and shows request-received copy", async () => {
+    createBookingHoldSpy.mockResolvedValueOnce({
+      hold: {
+        id: "hold-regular-1",
+        staff_id: "staff-1",
+        service_id: "svc-1",
+        starts_at: "2026-05-01T21:00:00.000Z",
+        ends_at: "2026-05-01T21:40:00.000Z",
+        expires_at: "2026-05-02T21:00:00.000Z",
+        status: "pending",
+        source: "public",
+      },
+    })
+
+    renderRequestRenderer(buildRegularRequestSpec(), "request")
+
+    await userEvent.click(screen.getByRole("button", { name: "Send Request" }))
+
+    await waitFor(() => {
+      expect(createBookingHoldSpy).toHaveBeenCalledWith({
+        shopSlug: "example-shop",
+        serviceId: "svc-1",
+        staffId: "staff-1",
+        date: "2026-05-01",
+        slotStart: "14:00",
+        startsAt: "2026-05-01T21:00:00.000Z",
+        mode: "regular",
+        clientName: "Test User",
+        clientPhone: "+15551234567",
+      })
+    })
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/booking/waitlist",
+      expect.anything(),
+    )
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/booking/request",
+      expect.anything(),
+    )
+    expect(
+      await screen.findByRole("heading", { name: "Request received" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("Your request has been sent. Staff will review it and confirm by text.")
+    ).toBeInTheDocument()
+    expect(screen.queryByText("✓")).not.toBeInTheDocument()
+  })
+
+  it("requires name and phone before regular request submission", async () => {
+    renderRequestRenderer(buildRegularRequestSpec({ name: "", phone: "" }), "request")
+
+    await userEvent.click(screen.getByRole("button", { name: "Send Request" }))
+
+    expect(
+      await screen.findByText("Please enter your name and phone number.")
+    ).toBeInTheDocument()
+    expect(createBookingHoldSpy).not.toHaveBeenCalled()
   })
 
   it("disables the submit button while the submit handler is loading", async () => {

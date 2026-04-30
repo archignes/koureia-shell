@@ -13,7 +13,7 @@ import {
 import { RequestRenderer } from "./after-hours/request-renderer"
 import { buildRequestSpec } from "./build-request-spec"
 
-export type BookingRequestVariant = "after-hours" | "waitlist"
+export type BookingRequestVariant = "after-hours" | "waitlist" | "request"
 
 type SharedPageProps = {
   params: Promise<{ domain: string }>
@@ -186,7 +186,9 @@ export async function BookingRequestPage({
 }
 
 function formatBookingRequestTitle(variant: BookingRequestVariant) {
-  return variant === "after-hours" ? "After-Hours Booking" : "Join Waitlist"
+  if (variant === "after-hours") return "After-Hours Booking"
+  if (variant === "request") return "Request an Appointment"
+  return "Join Waitlist"
 }
 
 function formatBookingRequestDescription(variant: BookingRequestVariant, shopName: string | null) {
@@ -194,6 +196,11 @@ function formatBookingRequestDescription(variant: BookingRequestVariant, shopNam
     return shopName
       ? `Book an after-hours appointment at ${shopName}.`
       : "Book an after-hours appointment."
+  }
+  if (variant === "request") {
+    return shopName
+      ? `Request an appointment at ${shopName}.`
+      : "Request an appointment."
   }
   return shopName
     ? `Join the waitlist at ${shopName}.`
