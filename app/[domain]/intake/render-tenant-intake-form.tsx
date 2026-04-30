@@ -11,10 +11,12 @@ export async function renderTenantIntakeForm({
   domain,
   shop,
   type,
+  intakeLinkToken,
 }: {
   domain: string
   shop?: string
   type: string
+  intakeLinkToken?: string | null
 }) {
   const headersList = await headers()
   const tenantDomain = resolveTenantDomain({ domainParam: domain, headersList })
@@ -31,11 +33,12 @@ export async function renderTenantIntakeForm({
   const apiUrl = process.env.KOUREIA_API_URL ?? "https://koureia.com"
 
   try {
-    const form = await fetchIntakeForm(apiUrl, tenant.slug, type)
+    const form = await fetchIntakeForm(apiUrl, tenant.slug, type, intakeLinkToken)
     if (!form) notFound()
 
     return createElement(IntakeFormClient, {
       form,
+      intakeLinkToken,
       returnHref: `/${domain}`,
       tenantName: tenant.name,
     })

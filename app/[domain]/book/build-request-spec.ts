@@ -49,6 +49,7 @@ export function buildRequestSpec({
   siteHours,
   staffHoursById,
   waitlistHorizonDays,
+  waitlistLinkToken,
 }: {
   shopName: string
   shopLogoUrl?: string
@@ -76,6 +77,7 @@ export function buildRequestSpec({
   siteHours?: Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>
   staffHoursById?: Record<string, Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>>
   waitlistHorizonDays?: number
+  waitlistLinkToken?: string
 }): Spec {
   const fmt = (s: BookingContext["services"][number]) => ({
     id: s.id,
@@ -250,7 +252,7 @@ export function buildRequestSpec({
       prefs: {
         type: "PreferenceForm",
         props: variant === "waitlist" ? {
-          fields: ["notes", "name", "email", "phone"],
+          fields: waitlistLinkToken ? ["notes"] : ["notes", "name", "email", "phone"],
           notesLabel: "What are you looking for?",
           notesPlaceholder: "e.g., Color correction, balayage touch-up, first-time consultation...",
         } : {
@@ -287,6 +289,7 @@ export function buildRequestSpec({
       source,
       serviceStaffMap,
       allFormattedServices,
+      ...(waitlistLinkToken ? { waitlistLinkToken } : {}),
       ...(variant === "waitlist" ? { availabilityBlocks: [] } : {}),
       ...(isAfterHours
         ? {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { IntakeFormData } from "@/lib/intake"
+import { filterLinkedIntakeFields } from "@/lib/intake-linked-fields"
 import type { IntakeAnswerValue, MissingField } from "./intake-form-types"
 import { buildSections } from "./intake-sections"
 import {
@@ -18,14 +19,20 @@ import { IntakePageView, SuccessState } from "./intake-form-view"
 
 export function IntakeFormClient({
   form,
+  intakeLinkToken,
   tenantName,
   returnHref,
 }: {
   form: IntakeFormData
+  intakeLinkToken?: string | null
   tenantName: string
   returnHref: string
 }) {
-  const storageKey = `shell-intake-${form.shop_id}-${form.form_type}`
+  const effectiveForm = useMemo(
+    () => form.linkedClient ? { ...form, fields_json: filterLinkedIntakeFields(form.fields_json) } : form,
+    [form],
+  )
+  const storageKey = `shell-intake-${form.shop_id}-${form.form_type}${intakeLinkToken ? "-linked" : ""}`
   const [draftSubmissionId] = useState(() => getOrCreateDraftSubmissionId(storageKey))
   const [answers, setAnswers] = useState<Record<string, IntakeAnswerValue>>(() => loadSessionJson(`${storageKey}-answers`, {}))
   const [photosByField, setPhotosByField] = useState<Record<string, string[]>>(() => loadSessionJson(`${storageKey}-photos`, {}))
@@ -45,7 +52,7 @@ export function IntakeFormClient({
     localStorage.setItem(`${storageKey}-photos`, JSON.stringify(photosByField))
   }, [photosByField, storageKey])
 
-  const sections = useMemo(() => buildSections(form.fields_json), [form.fields_json])
+  const sections = useMemo(() => buildSections(effectiveForm.fields_json), [effectiveForm.fields_json])
   const totalSections = sections.length + 1
 
   const setAnswer = useCallback((key: string, value: IntakeAnswerValue) => {
@@ -55,7 +62,7 @@ export function IntakeFormClient({
   const addPhoto = useCallback(async (fieldKey: string, file: File) => {
     const upload = await uploadIntakePhoto({
       file,
-      shopId: form.shop_id,
+      shopId: effectiveForm.shop_id,
       submissionId: draftSubmissionId || undefined,
     })
 
@@ -63,7 +70,7 @@ export function IntakeFormClient({
       ...current,
       [fieldKey]: [...(current[fieldKey] ?? []), upload.url],
     }))
-  }, [draftSubmissionId, form.shop_id])
+  }, [draftSubmissionId, effectiveForm.shop_id])
 
   const removePhoto = useCallback((fieldKey: string, index: number) => {
     setPhotosByField((current) => ({
@@ -128,7 +135,7 @@ export function IntakeFormClient({
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [activeIndex, scrollTo, totalSections])
 
-  const canSubmit = useMemo(() => canSubmitForm(form, answers, photosByField), [answers, form, photosByField])
+  const canSubmit = useMemo(() => canSubmitForm(effectiveForm, answers, photosByField), [answers, effectiveForm, photosByField])
   const hasStarted = useMemo(
     () =>
       Object.values(answers).some((value) => Array.isArray(value) ? value.length > 0 : Boolean(value?.trim())) ||
@@ -137,12 +144,12 @@ export function IntakeFormClient({
   )
   const missingFields = useMemo<MissingField[]>(
     () =>
-      getMissingRequiredFields(form, answers, photosByField).map((field) => ({
+      getMissingRequiredFields(effectiveForm, answers, photosByField).map((field) => ({
         key: field.key,
         label: field.label,
         sectionIndex: sections.findIndex((section) => section.fields.some((sectionField) => sectionField.key === field.key)),
       })),
-    [answers, form, photosByField, sections],
+    [answers, effectiveForm, photosByField, sections],
   )
 
   const handleSubmit = useCallback(async () => {
@@ -153,7 +160,8 @@ export function IntakeFormClient({
     try {
       const res = await submitIntakeForm({
         answers,
-        form,
+        form: effectiveForm,
+        intakeLinkToken,
         photosByField,
       })
 
@@ -169,11 +177,11 @@ export function IntakeFormClient({
     } finally {
       setSubmitting(false)
     }
-  }, [answers, canSubmit, form, photosByField, storageKey, submitting])
+  }, [answers, canSubmit, effectiveForm, intakeLinkToken, photosByField, storageKey, submitting])
 
   if (submitted) {
     const photoCount = Object.values(photosByField).reduce((count, urls) => count + urls.length, 0)
-    return <SuccessState formTitle={form.title} href={returnHref} photoCount={photoCount} />
+    return <SuccessState formTitle={effectiveForm.title} href={returnHref} photoCount={photoCount} />
   }
 
   return (
@@ -182,7 +190,7 @@ export function IntakeFormClient({
       answers={answers}
       canSubmit={canSubmit}
       error={error}
-      form={form}
+      form={effectiveForm}
       hasStarted={hasStarted}
       missingFields={missingFields}
       tenantName={tenantName}

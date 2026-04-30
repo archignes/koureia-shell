@@ -33,6 +33,7 @@ export type RequestState = {
   surchargeCents?: number
   notes?: string
   source?: RequestSource
+  waitlistLinkToken?: string
   serviceStaffMap?: Record<string, string[]>
   allFormattedServices?: FormattedService[]
   policyAccepted?: boolean
@@ -73,6 +74,7 @@ export function buildRequestPayload(opts: {
         notes: toNonEmptyString(state.notes),
         source: isRequestSource(state.source) ? state.source : "public",
         waitlistId,
+        waitlistLinkToken: toNonEmptyString(state.waitlistLinkToken),
       },
     }
   }

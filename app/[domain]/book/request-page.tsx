@@ -91,6 +91,7 @@ export async function BookingRequestPage({
   const requestedServiceId = getSingleParam(query.service)
   const requestedSource = getSingleParam(query.source)
   const requestedEntry = getSingleParam(query.entry)
+  const requestedWaitlistToken = getSingleParam(query.wlt)
 
   // Use real after_hours policy from API, or mock for dev until API is ready
   const afterHours = bookingContext.after_hours ?? (variant === "after-hours" ? {
@@ -161,6 +162,7 @@ export async function BookingRequestPage({
     siteHours: siteSpec.hours,
     staffHoursById: Object.fromEntries(siteSpec.staff.map((member) => [member.id, member.hours])),
     waitlistHorizonDays: siteSpec.waitlist.horizonDays,
+    waitlistLinkToken: variant === "waitlist" ? requestedWaitlistToken : undefined,
   })
 
   return (
@@ -171,6 +173,7 @@ export async function BookingRequestPage({
       spec={spec}
       variant={variant}
       waitlistId={waitlistId}
+      waitlistLinkToken={variant === "waitlist" ? requestedWaitlistToken : undefined}
     />
   )
 }
