@@ -122,12 +122,17 @@ export async function BookingRequestPage({
 
   const source = requestedSource === "sms-refinement" ? "sms-refinement" : variant
 
-  // Filter services: pre-selected takes priority, then staff-based filtering for after-hours
-  const baseServices = selectedService
-    ? [selectedService]
-    : selectedStaff
+  // In waitlist, a service query param should preselect, not narrow the menu.
+  // Staff links still scope the visible service set to that staff member.
+  const baseServices = variant === "waitlist"
+    ? selectedStaff
       ? bookingContext.services.filter((s) => s.staff_ids.includes(selectedStaff.id))
       : bookingContext.services
+    : selectedService
+      ? [selectedService]
+      : selectedStaff
+        ? bookingContext.services.filter((s) => s.staff_ids.includes(selectedStaff.id))
+        : bookingContext.services
 
   const services = filterAfterHoursService(baseServices)
 
@@ -149,6 +154,13 @@ export async function BookingRequestPage({
     shopTimezone: bookingContext.shop.timezone,
     apiUrl,
     shopSlug: tenant.slug,
+    siteHours: siteSpec.hours,
+    staffHoursById: Object.fromEntries(
+      siteSpec.staff
+        .filter((member) => member.id)
+        .map((member) => [member.id as string, member.hours]),
+    ),
+    waitlistHorizonDays: siteSpec.waitlist?.horizonDays,
   })
 
   return (

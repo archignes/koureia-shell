@@ -7,6 +7,7 @@ import { cn, formatTime } from "@/lib/utils"
 
 type AvailabilityPickerProps = {
   onSlotSelect: (date: string, slot: AvailabilitySlot) => void
+  onSlotClear?: () => void
   apiUrl?: string
   shopSlug: string
   serviceId?: string
@@ -23,6 +24,7 @@ function toDateString(date: Date) {
 
 export function AvailabilityPicker({
   onSlotSelect,
+  onSlotClear,
   apiUrl,
   shopSlug,
   serviceId,
@@ -51,9 +53,9 @@ export function AvailabilityPicker({
   const [unavailableDates, setUnavailableDates] = useState<Date[]>([])
 
   const prefetchAvailability = useCallback(
-    async (svcId: string, stfId?: string) => {
+    async (svcId: string, stfId?: string, opts?: { force?: boolean }) => {
       const newCacheKey = `${svcId}:${stfId ?? ""}`
-      if (cacheKeyRef.current === newCacheKey) return
+      if (!opts?.force && cacheKeyRef.current === newCacheKey) return
 
       abortRef.current?.abort()
       const controller = new AbortController()
@@ -102,6 +104,10 @@ export function AvailabilityPicker({
           const cached = cache.get(dateStr)
           if (cached) {
             setSlots(cached)
+            if (selectedSlot && !cached.some((slot) => slot.available && slot.start === selectedSlot.start)) {
+              setSelectedSlot(null)
+              onSlotClear?.()
+            }
           }
         }
       } catch (e) {
@@ -113,7 +119,7 @@ export function AvailabilityPicker({
         }
       }
     },
-    [apiUrl, shopSlug, minDate, shopTimezone, selectedDate]
+    [apiUrl, shopSlug, minDate, shopTimezone, selectedDate, selectedSlot, onSlotClear]
   )
 
   // Pre-fetch when serviceId + staffId are available
@@ -123,11 +129,23 @@ export function AvailabilityPicker({
     }
   }, [serviceId, staffId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    function handleRefresh() {
+      if (serviceId) {
+        prefetchAvailability(serviceId, staffId, { force: true })
+      }
+    }
+
+    window.addEventListener("koureia:availability-refresh", handleRefresh)
+    return () => window.removeEventListener("koureia:availability-refresh", handleRefresh)
+  }, [serviceId, staffId, prefetchAvailability])
+
   const handleDateSelect = useCallback(
     (date: Date | undefined) => {
       if (!date) return
       setSelectedDate(date)
       setSelectedSlot(null)
+      onSlotClear?.()
       setError(false)
 
       const dateStr = toDateString(date)
@@ -143,7 +161,7 @@ export function AvailabilityPicker({
         setLoading(false)
       }
     },
-    []
+    [onSlotClear]
   )
 
   const handleSlotClick = useCallback(

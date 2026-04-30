@@ -11,6 +11,16 @@ export type HoldResult = {
   }
 }
 
+export class BookingHoldError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = "BookingHoldError"
+    this.status = status
+  }
+}
+
 export async function createBookingHold(opts: {
   shopSlug: string
   serviceId: string
@@ -44,8 +54,9 @@ export async function createBookingHold(opts: {
 
   if (!response.ok) {
     const data = await response.json().catch(() => null)
-    throw new Error(
-      data?.error || "Unable to hold this time slot. Please try again."
+    throw new BookingHoldError(
+      data?.error || "Unable to hold this time slot. Please try again.",
+      response.status
     )
   }
 

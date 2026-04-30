@@ -6,7 +6,7 @@ import { registry } from "@/lib/json-render/registry"
 import type { Spec } from "@json-render/core"
 import type { BookingRequestVariant } from "../request-page"
 import { buildRequestPayload, normalizePhoneForApi, type RequestState } from "@/lib/booking-payload"
-import { createBookingHold } from "@/lib/booking-api"
+import { BookingHoldError, createBookingHold } from "@/lib/booking-api"
 import { formatTime } from "@/lib/utils"
 
 type RequestRendererProps = {
@@ -107,8 +107,8 @@ export function RequestRenderer({
       store.set("submitError", "Please select a service.")
       return
     }
-    if (!state.flexibleDates?.trim()) {
-      store.set("submitError", "Please let us know when works for you.")
+    if (!state.availabilityBlocks || state.availabilityBlocks.length === 0) {
+      store.set("submitError", "Please select when you're available.")
       return
     }
     if (!state.name?.trim()) {
@@ -129,6 +129,18 @@ export function RequestRenderer({
       }
       setSpec(buildWaitlistSuccessSpec(variant))
     } catch (submitError) {
+      if (
+        submitError instanceof BookingHoldError &&
+        submitError.status === 409
+      ) {
+        store.set("preferredSlotStart", undefined)
+        store.set("preferredSlotEnd", undefined)
+        store.set("preferredStartsAt", undefined)
+        window.dispatchEvent(new CustomEvent("koureia:availability-refresh"))
+        setError("That time was just taken. Pick another available time.")
+        return
+      }
+
       setError(
         submitError instanceof Error
           ? submitError.message

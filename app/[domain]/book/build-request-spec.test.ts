@@ -100,16 +100,16 @@ describe("buildRequestSpec — staff names", () => {
 })
 
 describe("buildRequestSpec — waitlist structure", () => {
-  it("includes staff-pick, service-pick, prefs, submit in waitlist children", () => {
+  it("includes staff-pick, service-menu, availability-pick, prefs, submit in waitlist children", () => {
     const spec = buildWaitlistSpec()
     const container = spec.elements.container
-    expect(container.children).toEqual(["hero", "staff-pick", "service-pick", "prefs", "submit"])
+    expect(container.children).toEqual(["hero", "staff-pick", "service-menu", "availability-pick", "prefs", "submit"])
   })
 
-  it("allows no-preference for waitlist staff picker", () => {
+  it("does not allow no-preference when no services are shared across staff", () => {
     const spec = buildWaitlistSpec()
     const staffProps = spec.elements["staff-pick"].props as { allowNoPreference: boolean }
-    expect(staffProps.allowNoPreference).toBe(true)
+    expect(staffProps.allowNoPreference).toBe(false)
   })
 
   it("does not preselect staff for waitlist", () => {
@@ -118,10 +118,10 @@ describe("buildRequestSpec — waitlist structure", () => {
     expect(staffProps.preselectedId).toBeUndefined()
   })
 
-  it("waitlist prefs form has flexibleDates, notes, name, email, phone fields", () => {
+  it("waitlist prefs form has notes, name, email, phone fields", () => {
     const spec = buildWaitlistSpec()
     const prefsProps = spec.elements.prefs.props as { fields: string[] }
-    expect(prefsProps.fields).toEqual(["flexibleDates", "notes", "name", "email", "phone"])
+    expect(prefsProps.fields).toEqual(["notes", "name", "email", "phone"])
   })
 
   it("waitlist state does not preselect staff", () => {

@@ -222,6 +222,11 @@ function loadRequestComponents() {
     componentRequireMap,
     "ServicePicker"
   )
+  const ServiceMenu = loadModule<React.ComponentType<Record<string, unknown>>>(
+    resolve(process.cwd(), "lib/components/service-menu.tsx"),
+    componentRequireMap,
+    "ServiceMenu"
+  )
   const PreferenceForm = loadModule<React.ComponentType<Record<string, unknown>>>(
     resolve(process.cwd(), "lib/components/preference-form.tsx"),
     {
@@ -240,10 +245,22 @@ function loadRequestComponents() {
       "@json-render/react": jsonRenderTestModule,
       "@/lib/components/availability-picker": { AvailabilityPicker: () => null },
       "@/lib/components/service-picker": { ServicePicker },
-      "@/lib/components/service-menu": { ServiceMenu: () => null },
+      "@/lib/components/service-menu": { ServiceMenu },
+      "@/lib/components/booking-mode-buttons": { BookingModeButtons: () => null },
       "@/lib/components/staff-picker": { StaffPicker },
       "@/lib/components/order-summary": { OrderSummary: () => null },
       "@/lib/components/preference-form": { PreferenceForm },
+      "@/lib/components/waitlist-availability-picker": {
+        WaitlistAvailabilityPicker: ({ onChange }: { onChange: (blocks: Array<Record<string, string>>) => void }) =>
+          React.createElement(
+            "button",
+            {
+              type: "button",
+              onClick: () => onChange([{ date: "2026-05-01", start_time: "10:00", end_time: "11:00" }]),
+            },
+            "Pick availability"
+          ),
+      },
       "../catalog": { catalog: {} },
     }
   )
@@ -261,6 +278,9 @@ function buildTestRegistry() {
       RequestHero: requestComponents.RequestHero,
       StaffPicker: requestComponents.StaffPicker,
       ServicePicker: requestComponents.ServicePicker,
+      ServiceMenu: requestComponents.ServiceMenu,
+      BookingModeButtons: requestComponents.BookingModeButtons,
+      WaitlistAvailabilityPicker: requestComponents.WaitlistAvailabilityPicker,
       PreferenceForm: requestComponents.PreferenceForm,
       SubmitButton: requestComponents.SubmitButton,
       ConfirmationMessage: requestComponents.ConfirmationMessage,
@@ -306,6 +326,7 @@ function loadRequestRenderer(): LoadedRequestRenderer {
             clientEmail: state.email,
             clientPhone: state.phone,
             flexibleDates: state.flexibleDates,
+            availability_blocks: state.availabilityBlocks,
             notes: state.notes,
             source: state.source,
           },
@@ -374,6 +395,14 @@ function loadBuildRequestSpec(): BuildRequestSpec {
             name: member.name.split(" ")[0],
             role: member.role,
           })),
+        extractBookingModes: (services: Array<{ name: string; id: string; price_cents: number; price_display?: string | null }>) => {
+          const regular = services.filter(
+            (s) => !s.name.toUpperCase().includes("AFTER HOURS") && !s.name.toUpperCase().includes("LOCAL AT HOME SERVICE")
+          )
+          return { regular, modes: [] }
+        },
+        hasSharedServices: (services: Array<{ staff_ids: string[] }>) =>
+          services.some((service) => service.staff_ids.length > 1),
       }
     }
     if (id === "./request-page") {
@@ -505,7 +534,7 @@ describe("RequestRenderer waitlist flow", () => {
   it("filters the visible service list after selecting a staff member", async () => {
     renderRequestRenderer(buildWaitlistSpec())
 
-    const serviceFieldset = screen.getByText("Select a service").closest("fieldset")
+    const serviceFieldset = screen.getByText("Services").closest("fieldset")
     expect(serviceFieldset).not.toBeNull()
     expect(within(serviceFieldset as HTMLElement).getAllByRole("radio")).toHaveLength(3)
 
@@ -524,7 +553,7 @@ describe("RequestRenderer waitlist flow", () => {
   it("restores all services when No preference is selected again", async () => {
     renderRequestRenderer(buildWaitlistSpec())
 
-    const serviceFieldset = screen.getByText("Select a service").closest("fieldset")
+    const serviceFieldset = screen.getByText("Services").closest("fieldset")
     expect(serviceFieldset).not.toBeNull()
 
     await userEvent.click(screen.getByLabelText(/Enzo/i))
@@ -549,11 +578,8 @@ describe("RequestRenderer waitlist flow", () => {
     renderRequestRenderer(buildWaitlistSpec())
 
     await userEvent.click(screen.getByLabelText(/Enzo/i))
-    await userEvent.click(screen.getByLabelText(/Signature Cut/i))
-    await userEvent.type(
-      screen.getByLabelText(/When works for you\?/i),
-      "Weekday evenings are ideal"
-    )
+    await userEvent.click(screen.getByRole("radio", { name: /Signature Cut/i }))
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
 
     await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
     await userEvent.tab()
@@ -569,6 +595,7 @@ describe("RequestRenderer waitlist flow", () => {
         "/api/booking/waitlist",
         expect.objectContaining({
           method: "POST",
+          body: expect.stringContaining("availability_blocks"),
         })
       )
     })
@@ -577,18 +604,14 @@ describe("RequestRenderer waitlist flow", () => {
     ).toBeInTheDocument()
   })
 
-  it("shows the required flexibleDates validation error before submitting", async () => {
+  it("keeps submit disabled until availability is selected", async () => {
     renderRequestRenderer(buildWaitlistSpec())
 
-    await userEvent.click(screen.getByLabelText(/Signature Cut/i))
+    await userEvent.click(screen.getByRole("radio", { name: /Signature Cut/i }))
     await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
     await userEvent.tab()
 
-    await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
-
-    expect(
-      await screen.findByText("Please let us know when works for you.")
-    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Join Waitlist" })).toBeDisabled()
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -598,18 +621,15 @@ describe("RequestRenderer waitlist flow", () => {
 
     renderRequestRenderer(buildWaitlistSpec())
 
-    await userEvent.click(screen.getByLabelText(/Signature Cut/i))
-    await userEvent.type(
-      screen.getByLabelText(/When works for you\?/i),
-      "Any weekday this month"
-    )
+    await userEvent.click(screen.getByRole("radio", { name: /Signature Cut/i }))
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
     await userEvent.type(screen.getByLabelText(/^Name/i), "Taylor Client")
     await userEvent.tab()
 
     await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Sending..." })).toBeDisabled()
+      expect(screen.getByRole("button", { name: "Joining Waitlist..." })).toBeDisabled()
     })
 
     response.resolve(createFetchResponse({ ok: true }, true, 201))

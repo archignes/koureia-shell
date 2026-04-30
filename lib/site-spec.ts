@@ -46,6 +46,9 @@ export type SiteSpec = {
   staff: SiteStaffMember[]
   /** Composite shop hours (earliest open → latest close across all staff) */
   hours: SiteHours[]
+  waitlist?: {
+    horizonDays?: number
+  }
   social: SiteSocialLink[]
   bookingUrl: string
 }
@@ -60,6 +63,7 @@ export type SiteService = {
 }
 
 export type SiteStaffMember = {
+  id?: string
   name: string
   role: string
   bio?: string

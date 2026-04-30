@@ -160,6 +160,20 @@ export const catalog = defineCatalog(schema, {
       }),
       description: "Service menu with primary single-select and extras multi-select",
     },
+    BookingModeButtons: {
+      props: z.object({
+        modes: z.array(
+          z.object({
+            mode: z.enum(["after-hours", "home-service"]),
+            label: z.string(),
+            description: z.string(),
+            price: z.string(),
+            serviceId: z.string(),
+          })
+        ),
+      }),
+      description: "Special booking mode buttons (after-hours, home service) shown on waitlist",
+    },
     SurchargeBanner: {
       props: z.object({
         message: z.string(),
@@ -176,6 +190,32 @@ export const catalog = defineCatalog(schema, {
         shopTimezone: z.string().optional(),
       }),
       description: "Calendar date picker with time slot selection for after-hours booking",
+    },
+    WaitlistAvailabilityPicker: {
+      props: z.object({
+        shopHours: z.array(
+          z.object({
+            dayOfWeek: z.number(),
+            startTime: z.string(),
+            endTime: z.string(),
+            isClosed: z.boolean(),
+          })
+        ),
+        staffHoursById: z.record(
+          z.string(),
+          z.array(
+            z.object({
+              dayOfWeek: z.number(),
+              startTime: z.string(),
+              endTime: z.string(),
+              isClosed: z.boolean(),
+            })
+          )
+        ).optional(),
+        horizonDays: z.number().optional(),
+        timezone: z.string().optional(),
+      }),
+      description: "When2meet-style availability grid for public waitlist signups",
     },
     OrderSummary: {
       props: z.object({

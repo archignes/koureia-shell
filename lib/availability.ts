@@ -48,7 +48,7 @@ export async function fetchAvailability(opts: {
     // (client-side fetch to koureia.com from *.koureia.com is cross-origin)
     const response = await fetch(
       `/api/booking/availability?${params.toString()}`,
-      { signal }
+      { cache: "no-store", signal }
     )
 
     if (!response.ok) {
@@ -95,7 +95,7 @@ export async function fetchBulkAvailability(opts: {
   try {
     const response = await fetch(
       `/api/booking/availability?${params.toString()}`,
-      { signal }
+      { cache: "no-store", signal }
     )
 
     if (!response.ok) {

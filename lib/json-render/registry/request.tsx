@@ -4,9 +4,11 @@ import { useStateStore, type Components } from "@json-render/react"
 import { AvailabilityPicker } from "@/lib/components/availability-picker"
 import { ServicePicker as ServicePickerComponent } from "@/lib/components/service-picker"
 import { ServiceMenu as ServiceMenuComponent } from "@/lib/components/service-menu"
+import { BookingModeButtons as BookingModeButtonsComponent } from "@/lib/components/booking-mode-buttons"
 import { StaffPicker as StaffPickerComponent } from "@/lib/components/staff-picker"
 import { OrderSummary as OrderSummaryComponent } from "@/lib/components/order-summary"
 import { PreferenceForm as PreferenceFormComponent } from "@/lib/components/preference-form"
+import { WaitlistAvailabilityPicker as WaitlistAvailabilityPickerComponent } from "@/lib/components/waitlist-availability-picker"
 
 import { catalog } from "../catalog"
 
@@ -14,9 +16,11 @@ type RequestComponentKeys =
   | "RequestHero"
   | "ServicePicker"
   | "ServiceMenu"
+  | "BookingModeButtons"
   | "StaffPicker"
   | "SurchargeBanner"
   | "AvailabilityPicker"
+  | "WaitlistAvailabilityPicker"
   | "OrderSummary"
   | "PreferenceForm"
   | "SubmitButton"
@@ -51,6 +55,10 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
       preselectedId={props.preselectedId}
       sectionLabel={props.sectionLabel}
     />
+  ),
+
+  BookingModeButtons: ({ props }) => (
+    <BookingModeButtonsComponent modes={props.modes} />
   ),
 
   StaffPicker: ({ props }) => (
@@ -108,6 +116,31 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
           preferredSlotEnd: slot.end,
           preferredStartsAt: slot.startsAt,
         })}
+        onSlotClear={() => update({
+          preferredSlotStart: undefined,
+          preferredSlotEnd: undefined,
+          preferredStartsAt: undefined,
+        })}
+      />
+    )
+  },
+
+  WaitlistAvailabilityPicker: ({ props }) => {
+    const { update, state } = useStateStore()
+    const typedState = state as { selectedStaffId?: string; selectedServiceId?: string }
+    if (!typedState.selectedServiceId) return null
+
+    const hours =
+      typedState.selectedStaffId && props.staffHoursById?.[typedState.selectedStaffId]
+        ? props.staffHoursById[typedState.selectedStaffId]
+        : props.shopHours
+
+    return (
+      <WaitlistAvailabilityPickerComponent
+        hours={hours ?? []}
+        horizonDays={props.horizonDays}
+        timezone={props.timezone}
+        onChange={(availabilityBlocks) => update({ availabilityBlocks })}
       />
     )
   },
@@ -129,6 +162,12 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     // In after-hours flow, gate behind slot selection
     if (typedState.surchargeCents && !typedState.preferredSlotStart) return null
     const submitError = typedState.submitError as string | undefined
+    const isWaitlist = typedState.source === "waitlist" || typedState.source === "sms-refinement"
+    const availabilityBlocks = typedState.availabilityBlocks as unknown[] | undefined
+    const waitlistReady = isWaitlist
+      ? !!(typedState.selectedServiceId && availabilityBlocks && availabilityBlocks.length > 0)
+      : true
+    const isDisabled = loading || !waitlistReady
     return (
     <div className="mt-4">
       {submitError ? (
@@ -172,7 +211,7 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
       </div>
       <button
         className="mb-2 inline-flex min-h-11 w-full items-center justify-center rounded-full border-0 bg-[var(--shell-accent)] px-5 py-[0.65rem] text-[0.9rem] font-bold text-[var(--shell-accent-contrast)] shadow-[0_12px_28px_rgba(199,164,106,0.15)] hover:-translate-y-px hover:bg-[var(--shell-accent-strong)] disabled:cursor-wait disabled:opacity-72"
-        disabled={loading}
+        disabled={isDisabled}
         type="button"
         onClick={() => emit("submit")}
       >

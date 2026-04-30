@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 /**
  * Proxy for the Koureia availability API.
  *
@@ -26,7 +29,7 @@ export async function GET(request: NextRequest) {
     upstream.searchParams.set(key, value)
   }
 
-  const response = await fetch(upstream.toString())
+  const response = await fetch(upstream.toString(), { cache: "no-store" })
 
   if (!response.ok) {
     return NextResponse.json(
@@ -52,6 +55,8 @@ export async function GET(request: NextRequest) {
       dates,
       timezone: shopTimezone,
       surcharge_cents: data.surcharge_cents ?? null,
+    }, {
+      headers: noStoreHeaders(),
     })
   }
 
@@ -67,6 +72,8 @@ export async function GET(request: NextRequest) {
     timezone: shopTimezone,
     slots,
     surcharge_cents: data.surcharge_cents ?? null,
+  }, {
+    headers: noStoreHeaders(),
   })
 }
 
@@ -80,6 +87,12 @@ function transformSlots(raw: RawSlot[], timezone: string): TransformedSlot[] {
     startsAt: s.startsAt,
     available: s.state === "available",
   }))
+}
+
+function noStoreHeaders() {
+  return {
+    "Cache-Control": "no-store, max-age=0",
+  }
 }
 
 /** Convert a UTC ISO string to "HH:mm" in the given timezone. */
