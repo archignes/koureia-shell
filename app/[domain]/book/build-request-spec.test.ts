@@ -145,8 +145,9 @@ describe("buildRequestSpec — waitlist structure", () => {
     expect(spec.state?.selectedStaffId).toBeUndefined()
   })
 
-  it("excludes new-client services from waitlist options", () => {
+  it("excludes new-client services from waitlist options for repeat clients", () => {
     const spec = buildWaitlistSpec({
+      hideNewClientOptions: true,
       services: [
         makeService({ id: "svc-new", name: "(NEW CLIENT) Men's Cut", staff_ids: ["staff-enzo"] }),
         makeService({ id: "svc-return", name: "Men's Cut", staff_ids: ["staff-enzo"] }),
@@ -154,6 +155,17 @@ describe("buildRequestSpec — waitlist structure", () => {
     })
     const serviceMenu = spec.elements["service-menu"].props as { primary: Array<{ id: string; name: string }> }
     expect(serviceMenu.primary.map((service) => service.id)).toEqual(["svc-return"])
+  })
+
+  it("keeps new-client services in waitlist options when repeat-client flag is absent", () => {
+    const spec = buildWaitlistSpec({
+      services: [
+        makeService({ id: "svc-new", name: "(NEW CLIENT) Men's Cut", staff_ids: ["staff-enzo"] }),
+        makeService({ id: "svc-return", name: "Men's Cut", staff_ids: ["staff-enzo"] }),
+      ],
+    })
+    const serviceMenu = spec.elements["service-menu"].props as { primary: Array<{ id: string; name: string }> }
+    expect(serviceMenu.primary.map((service) => service.id)).toEqual(["svc-new", "svc-return"])
   })
 })
 

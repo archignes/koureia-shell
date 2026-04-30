@@ -54,6 +54,7 @@ export function buildRequestSpec({
   staffHoursById,
   waitlistHorizonDays,
   waitlistLinkToken,
+  hideNewClientOptions,
 }: {
   shopName: string
   shopLogoUrl?: string
@@ -82,9 +83,10 @@ export function buildRequestSpec({
   staffHoursById?: Record<string, Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>>
   waitlistHorizonDays?: number
   waitlistLinkToken?: string
+  hideNewClientOptions?: boolean
 }): Spec {
   const visibleServices =
-    variant === "waitlist"
+    variant === "waitlist" && hideNewClientOptions
       ? services.filter((service) => !isNewClientServiceName(service.name))
       : services
 
