@@ -7,6 +7,10 @@ import {
 import { staffToFirstNames, extractBookingModes, hasSharedServices } from "@/lib/booking-filters"
 import type { BookingRequestVariant } from "./request-page"
 
+function isNewClientServiceName(name: string) {
+  return /\bnew\s*client\b/i.test(name)
+}
+
 function pickAfterHoursPackageDescription({
   services,
   preselectedServiceId,
@@ -49,6 +53,8 @@ export function buildRequestSpec({
   siteHours,
   staffHoursById,
   waitlistHorizonDays,
+  waitlistLinkToken,
+  hideNewClientOptions,
 }: {
   shopName: string
   shopLogoUrl?: string
@@ -76,7 +82,14 @@ export function buildRequestSpec({
   siteHours?: Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>
   staffHoursById?: Record<string, Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>>
   waitlistHorizonDays?: number
+  waitlistLinkToken?: string
+  hideNewClientOptions?: boolean
 }): Spec {
+  const visibleServices =
+    variant === "waitlist" && hideNewClientOptions
+      ? services.filter((service) => !isNewClientServiceName(service.name))
+      : services
+
   const fmt = (s: BookingContext["services"][number]) => ({
     id: s.id,
     name: s.name,
@@ -86,9 +99,9 @@ export function buildRequestSpec({
     priceCents: s.price_cents,
   })
 
-  const allFormattedServices = services.map(fmt)
+  const allFormattedServices = visibleServices.map(fmt)
   const serviceStaffMap: Record<string, string[]> = {}
-  for (const service of services) {
+  for (const service of visibleServices) {
     serviceStaffMap[service.id] = service.staff_ids
   }
 
@@ -97,7 +110,7 @@ export function buildRequestSpec({
   const hideStaffPicker = isAfterHours && preselectedStaffId
 
   // Extract booking-mode services (After Hours, Home Service) from regular list
-  const { regular: regularServices, modes: bookingModes } = extractBookingModes(services)
+  const { regular: regularServices, modes: bookingModes } = extractBookingModes(visibleServices)
   const { primary, extras } = splitServices(regularServices)
 
   const hasBookingModes = variant === "waitlist" && bookingModes.length > 0
@@ -149,7 +162,7 @@ export function buildRequestSpec({
       type: "StaffPicker",
       props: {
         staff: staffToFirstNames(staff),
-        allowNoPreference: variant === "waitlist" && hasSharedServices(services),
+        allowNoPreference: variant === "waitlist" && hasSharedServices(visibleServices),
         preselectedId: variant === "waitlist" ? undefined : preselectedStaffId,
       },
     },
@@ -250,7 +263,7 @@ export function buildRequestSpec({
       prefs: {
         type: "PreferenceForm",
         props: variant === "waitlist" ? {
-          fields: ["notes", "name", "email", "phone"],
+          fields: waitlistLinkToken ? ["notes"] : ["notes", "name", "email", "phone"],
           notesLabel: "What are you looking for?",
           notesPlaceholder: "e.g., Color correction, balayage touch-up, first-time consultation...",
         } : {
@@ -287,6 +300,7 @@ export function buildRequestSpec({
       source,
       serviceStaffMap,
       allFormattedServices,
+      ...(waitlistLinkToken ? { waitlistLinkToken } : {}),
       ...(variant === "waitlist" ? { availabilityBlocks: [] } : {}),
       ...(isAfterHours
         ? {

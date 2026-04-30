@@ -92,10 +92,12 @@ export function getMissingRequiredFields(
 export async function submitIntakeForm({
   answers,
   form,
+  intakeLinkToken,
   photosByField,
 }: {
   answers: IntakeAnswers
   form: IntakeFormData
+  intakeLinkToken?: string | null
   photosByField: IntakePhotosByField
 }) {
   const responsesJson: Record<string, unknown> = { ...answers }
@@ -117,6 +119,7 @@ export async function submitIntakeForm({
       respondent_phone: scalarValue(answers.phone),
       responses_json: responsesJson,
       photos_json: photosJson,
+      intake_link_token: intakeLinkToken,
     }),
   })
 }

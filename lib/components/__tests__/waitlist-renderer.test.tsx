@@ -331,6 +331,7 @@ function loadRequestRenderer(): LoadedRequestRenderer {
             availability_blocks: state.availabilityBlocks,
             notes: state.notes,
             source: state.source,
+            waitlistLinkToken: state.waitlistLinkToken,
           },
         }),
       }
@@ -507,7 +508,7 @@ function buildWaitlistSpec(specOverrides: Record<string, unknown> = {}): Spec {
   })
 }
 
-function renderRequestRenderer(spec: Spec) {
+function renderRequestRenderer(spec: Spec, props: Record<string, unknown> = {}) {
   const RequestRenderer = loadRequestRenderer()
 
   return render(
@@ -517,6 +518,7 @@ function renderRequestRenderer(spec: Spec) {
       shopSlug: "example-shop",
       apiUrl: "https://api.example.com",
       variant: "waitlist",
+      ...props,
     })
   )
 }
@@ -641,6 +643,32 @@ describe("RequestRenderer waitlist flow", () => {
     expect(
       await screen.findByRole("heading", { name: "You're on the waitlist!" })
     ).toBeInTheDocument()
+  })
+
+  it("submits linked waitlist token without requiring public contact fields", async () => {
+    fetchMock.mockResolvedValueOnce(createFetchResponse({ ok: true }, true, 201))
+
+    renderRequestRenderer(buildWaitlistSpec({
+      waitlistLinkToken: "raw-token",
+    }), { waitlistLinkToken: "raw-token" })
+
+    expect(screen.queryByLabelText(/^Name/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Email/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Phone/i)).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByLabelText(/Enzo/i))
+    await userEvent.click(screen.getByRole("radio", { name: /Signature Cut/i }))
+    await userEvent.click(screen.getByRole("button", { name: "Pick availability" }))
+    await userEvent.click(screen.getByRole("button", { name: "Join Waitlist" }))
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/booking/waitlist",
+        expect.objectContaining({
+          body: expect.stringContaining("\"waitlistLinkToken\":\"raw-token\""),
+        })
+      )
+    })
   })
 
   it("submits waitlist data even when fields have not blurred", async () => {

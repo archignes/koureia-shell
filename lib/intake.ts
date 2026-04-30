@@ -18,6 +18,9 @@ export interface IntakeFormSummary {
 
 export interface IntakeFormData extends IntakeFormSummary {
   shop_id: string
+  linkedClient?: {
+    displayName: string
+  } | null
 }
 
 export function resolveTenantDomain({
@@ -51,10 +54,16 @@ export async function fetchIntakeForms(apiUrl: string, shopSlug: string): Promis
   return body.forms ?? []
 }
 
-export async function fetchIntakeForm(apiUrl: string, shopSlug: string, formType: string): Promise<IntakeFormData | null> {
+export async function fetchIntakeForm(apiUrl: string, shopSlug: string, formType: string, intakeLinkToken?: string | null): Promise<IntakeFormData | null> {
   const resolvedFormType = formType === "new-client" ? "new-client-cassie" : formType
+  const query = new URLSearchParams({
+    shop: shopSlug,
+    type: resolvedFormType,
+  })
+  if (intakeLinkToken) query.set("ilt", intakeLinkToken)
+
   const res = await fetch(
-    `${apiUrl}/api/intake/forms/resolve?shop=${encodeURIComponent(shopSlug)}&type=${encodeURIComponent(resolvedFormType)}`,
+    `${apiUrl}/api/intake/forms/resolve?${query.toString()}`,
     { cache: "no-store" },
   )
 
@@ -63,6 +72,6 @@ export async function fetchIntakeForm(apiUrl: string, shopSlug: string, formType
     throw new Error(`Failed to resolve intake form (${res.status})`)
   }
 
-  const body = await res.json() as { form?: IntakeFormData }
-  return body.form ?? null
+  const body = await res.json() as { form?: IntakeFormData; linkedClient?: { displayName: string } | null }
+  return body.form ? { ...body.form, linkedClient: body.linkedClient ?? null } : null
 }

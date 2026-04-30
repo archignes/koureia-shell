@@ -18,6 +18,7 @@ type RequestRendererProps = {
   apiUrl: string
   variant: BookingRequestVariant
   waitlistId?: string
+  waitlistLinkToken?: string
 }
 
 function readInputValue(id: string) {
@@ -59,6 +60,7 @@ export function RequestRenderer({
   apiUrl: _apiUrl,
   variant,
   waitlistId,
+  waitlistLinkToken,
 }: RequestRendererProps) {
   const initialState = (initialSpec.state ?? {}) as RequestState
   const packageConfig = initialState.afterHoursPackage
@@ -160,6 +162,7 @@ export function RequestRenderer({
     const state = store.getSnapshot() as RequestState
     const hydratedState: RequestState = {
       ...state,
+      waitlistLinkToken: waitlistLinkToken ?? state.waitlistLinkToken,
       name: readInputValue("preference-name") ?? state.name,
       email: readInputValue("preference-email") ?? state.email,
       phone: readInputValue("preference-phone") ?? state.phone,
@@ -185,11 +188,12 @@ export function RequestRenderer({
       store.set("submitError", "Please select at least one time block.")
       return
     }
-    if (!hydratedState.name?.trim()) {
+    const hasWaitlistLinkToken = Boolean(hydratedState.waitlistLinkToken?.trim())
+    if (!hasWaitlistLinkToken && !hydratedState.name?.trim()) {
       store.set("submitError", "Please enter your name.")
       return
     }
-    if (!hydratedState.email?.trim()) {
+    if (!hasWaitlistLinkToken && !hydratedState.email?.trim()) {
       store.set("submitError", "Please enter your email.")
       return
     }

@@ -96,6 +96,7 @@ describe("tenant intake catch-all route contract", () => {
         expect.any(String),
         KO_KS_PUBLIC_CONTRACT.intake.shopSlug,
         type,
+        null,
       )
     },
   )
@@ -119,9 +120,30 @@ describe("tenant intake catch-all route contract", () => {
         expect.any(String),
         KO_KS_PUBLIC_CONTRACT.intake.shopSlug,
         type,
+        null,
       )
     },
   )
+
+  it("passes the client-specific intake token through to KO", async () => {
+    const page = await TenantIntakeFormPage({
+      params: Promise.resolve({
+        domain: KO_KS_PUBLIC_CONTRACT.intake.tenantDomain,
+        segments: ["new-client-cassie"],
+      }),
+      searchParams: Promise.resolve({ ilt: "raw-token" }),
+    })
+
+    render(page)
+
+    expect(screen.getByRole("heading", { name: "Intake new-client-cassie" })).toBeTruthy()
+    expect(fetchIntakeFormMock).toHaveBeenCalledWith(
+      expect.any(String),
+      KO_KS_PUBLIC_CONTRACT.intake.shopSlug,
+      "new-client-cassie",
+      "raw-token",
+    )
+  })
 
   it("404s malformed intake paths instead of rewriting forever", async () => {
     await expect(
