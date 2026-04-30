@@ -1,6 +1,6 @@
 import type { BookingRequestVariant } from "@/app/[domain]/book/request-page"
 
-type RequestSource = "after-hours" | "waitlist" | "sms-refinement"
+type RequestSource = "after-hours" | "waitlist" | "sms-refinement" | "request"
 type TimeWindow = "morning" | "afternoon" | "evening" | "anytime"
 type AvailabilityBlock = {
   date: string
@@ -79,6 +79,26 @@ export function buildRequestPayload(opts: {
     }
   }
 
+  if (variant === "request") {
+    return {
+      path: "/api/booking/holds",
+      body: {
+        shopSlug,
+        serviceId: toNonEmptyString(state.selectedServiceId),
+        staffId: toNonEmptyString(state.selectedStaffId),
+        startsAt: toNonEmptyString(state.preferredStartsAt) ?? (
+          state.preferredDate && state.preferredSlotStart
+            ? `${state.preferredDate}T${state.preferredSlotStart}:00`
+            : undefined
+        ),
+        source: "public" as const,
+        mode: "regular" as const,
+        clientName: toNonEmptyString(state.name),
+        clientPhone: normalizePhoneForApi(state.phone),
+      },
+    }
+  }
+
   return {
     path: "/api/booking/request",
     body: {
@@ -125,7 +145,7 @@ export function normalizePhoneForApi(value: string | undefined) {
 }
 
 function isRequestSource(value: string | undefined): value is RequestSource {
-  return value === "after-hours" || value === "waitlist" || value === "sms-refinement"
+  return value === "after-hours" || value === "waitlist" || value === "sms-refinement" || value === "request"
 }
 
 function isTimeWindow(value: string | undefined): value is TimeWindow {

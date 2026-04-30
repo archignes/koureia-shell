@@ -118,6 +118,7 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
     return (
       <PreferenceFormComponent
         fields={props.fields}
+        optionalFields={props.optionalFields}
         dateRangeLabel={props.dateRangeLabel}
         dateRangePlaceholder={props.dateRangePlaceholder}
         timeWindowLabel={props.timeWindowLabel}
@@ -155,6 +156,7 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
         staffId={staffId}
         minAdvanceHours={props.minAdvanceHours}
         shopTimezone={props.shopTimezone}
+        mode={props.mode}
         onSlotSelect={(date, slot) => update({
           preferredDate: date,
           preferredSlotStart: slot.start,
@@ -286,7 +288,7 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
         aria-hidden="true"
         className="inline-flex size-14 items-center justify-center rounded-full bg-[rgba(199,164,106,0.14)] text-[1.8rem] text-[var(--shell-accent)]"
       >
-        ✓
+        {props.icon === "pending" ? "◷" : "✓"}
       </div>
       <h2 className="mt-4 text-[1.8rem] leading-[1.15] text-[var(--shell-text)] text-balance">
         {props.headline}

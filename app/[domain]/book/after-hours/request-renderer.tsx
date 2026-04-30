@@ -179,6 +179,11 @@ export function RequestRenderer({
       return
     }
 
+    if (variant === "request") {
+      await handleRegularRequestSubmit(hydratedState)
+      return
+    }
+
     // Waitlist validation — write to store so SubmitButton shows error inline
     if (!hydratedState.selectedServiceId) {
       store.set("submitError", "Please select a service.")
@@ -210,6 +215,46 @@ export function RequestRenderer({
         throw new Error(data?.error || "Something went wrong. Please try again.")
       }
       setSpec(buildWaitlistSuccessSpec(variant))
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Something went wrong. Please try again.",
+      )
+    }
+  }
+
+  async function handleRegularRequestSubmit(state: RequestState) {
+    if (!state.selectedServiceId) {
+      store.set("submitError", "Please select a service.")
+      return
+    }
+    if (!state.selectedStaffId || state.selectedStaffId === "any") {
+      store.set("submitError", "Please select a staff member.")
+      return
+    }
+    if (!state.preferredDate || !state.preferredSlotStart) {
+      store.set("submitError", "Please select a date and time.")
+      return
+    }
+    if (!state.name?.trim() || !state.phone?.trim()) {
+      store.set("submitError", "Please enter your name and phone number.")
+      return
+    }
+
+    try {
+      await createBookingHold({
+        shopSlug,
+        serviceId: state.selectedServiceId,
+        staffId: state.selectedStaffId,
+        date: state.preferredDate,
+        slotStart: state.preferredSlotStart,
+        startsAt: state.preferredStartsAt,
+        mode: "regular",
+        clientName: state.name.trim(),
+        clientPhone: normalizePhoneForApi(state.phone),
+      })
+      setSpec(buildRegularRequestSuccessSpec())
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -343,6 +388,23 @@ function buildWaitlistSuccessSpec(variant: BookingRequestVariant): Spec {
             variant === "waitlist"
               ? "We'll reach out when a slot opens."
               : "We'll review your preferences and follow up to confirm a time.",
+        },
+      },
+    },
+  }
+}
+
+function buildRegularRequestSuccessSpec(): Spec {
+  return {
+    root: "container",
+    elements: {
+      container: { type: "Container", props: {}, children: ["confirmation"] },
+      confirmation: {
+        type: "ConfirmationMessage",
+        props: {
+          headline: "Request received",
+          body: "Your request has been sent. Staff will review it and confirm by text.",
+          icon: "pending",
         },
       },
     },

@@ -5,6 +5,7 @@ import { useStateBinding, useStateStore } from "@json-render/react"
 
 type PreferenceFormProps = {
   fields: string[]
+  optionalFields?: string[]
   dateRangeLabel?: string
   dateRangePlaceholder?: string
   timeWindowLabel?: string
@@ -20,7 +21,7 @@ const fieldClassName = "grid gap-[0.2rem]"
 const labelClassName = "text-[0.75rem] leading-[1.3] text-[var(--shell-text-muted)]"
 const inputClassName = "w-full rounded-lg border border-[var(--shell-border-strong)] bg-[var(--shell-bg-elevated)] px-3 py-2 text-[0.85rem] leading-[1.4] text-[var(--shell-text)] placeholder:text-[var(--shell-text-subtle)] focus:border-[var(--shell-accent)] focus:bg-[var(--shell-bg-soft)] focus:outline-none autofill:shadow-[inset_0_0_0_100px_var(--shell-bg-elevated)] autofill:[-webkit-text-fill-color:var(--shell-text)] autofill:caret-[var(--shell-text)]"
 
-export function PreferenceForm({ fields, dateRangeLabel, dateRangePlaceholder, timeWindowLabel, notesLabel, notesPlaceholder }: PreferenceFormProps) {
+export function PreferenceForm({ fields, optionalFields = [], dateRangeLabel, dateRangePlaceholder, timeWindowLabel, notesLabel, notesPlaceholder }: PreferenceFormProps) {
   const { set } = useStateStore()
   const [dateRange, setDateRange] = useStateBinding<string | undefined>("dateRange")
   const [flexibleDates, setFlexibleDates] = useStateBinding<string | undefined>("flexibleDates")
@@ -30,6 +31,7 @@ export function PreferenceForm({ fields, dateRangeLabel, dateRangePlaceholder, t
   const [name, setName] = React.useState("")
   const [email, setEmail] = React.useState("")
   const sync = (key: string, val: string) => set(key, val || undefined)
+  const isOptional = (field: string) => optionalFields.includes(field)
 
   const minDate = formatDateInputValue(new Date())
   const maxDateValue = new Date()
@@ -59,7 +61,7 @@ export function PreferenceForm({ fields, dateRangeLabel, dateRangePlaceholder, t
           autoComplete="tel"
           className={inputClassName}
           id="preference-phone"
-          inputMode="tel"
+          inputMode="numeric"
           required
           type="tel"
           value={phone}
@@ -70,12 +72,18 @@ export function PreferenceForm({ fields, dateRangeLabel, dateRangePlaceholder, t
     ),
     email: () => (
       <label className={fieldClassName} htmlFor="preference-email">
-        <span className={labelClassName}>Email <span className="font-semibold text-[var(--shell-accent)]">*</span></span>
+        <span className={labelClassName}>
+          Email {isOptional("email") ? (
+            <span className="text-[0.7rem] font-normal text-[var(--shell-text-subtle)]">(optional)</span>
+          ) : (
+            <span className="font-semibold text-[var(--shell-accent)]">*</span>
+          )}
+        </span>
         <input
           autoComplete="email"
           className={inputClassName}
           id="preference-email"
-          required
+          required={!isOptional("email")}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}

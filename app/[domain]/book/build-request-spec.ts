@@ -58,7 +58,7 @@ export function buildRequestSpec({
 }: {
   shopName: string
   shopLogoUrl?: string
-  source: "after-hours" | "waitlist" | "sms-refinement"
+  source: "after-hours" | "waitlist" | "sms-refinement" | "request"
   variant: BookingRequestVariant
   services: BookingContext["services"]
   staff: BookingContext["staff"]
@@ -126,8 +126,7 @@ export function buildRequestSpec({
       ? ["hero", "staff-pick", "service-menu",
          ...(hasBookingModes ? ["booking-modes"] : []),
          "availability-pick", "prefs", "submit"]
-      : ["hero", ...(hideStaffPicker ? [] : ["staff-pick"]),
-         "service-pick", "prefs", "submit"]
+      : ["hero", "staff-pick", "service-menu", "availability-pick", "contact-fields", "submit"]
 
   const elements: Spec["elements"] = {
     container: {
@@ -198,6 +197,36 @@ export function buildRequestSpec({
         },
       } : {}),
     } : {}),
+    ...(variant === "request" ? {
+      "service-menu": {
+        type: "ServiceMenu",
+        props: {
+          primary: primary.map(fmt),
+          extras: extras.map(fmt),
+          preselectedId: preselectedServiceId,
+          sectionLabel: "Services",
+        },
+      },
+      "availability-pick": {
+        type: "AvailabilityPicker",
+        props: {
+          apiUrl,
+          shopSlug,
+          staffId: preselectedStaffId,
+          minAdvanceHours: 2,
+          shopTimezone,
+          mode: "regular",
+        },
+      },
+      "contact-fields": {
+        type: "PreferenceForm",
+        props: {
+          fields: ["name", "phone", "email", "notes"],
+          optionalFields: ["email"],
+          notesPlaceholder: "Anything we should know? First time, specific requests, etc.",
+        },
+      },
+    } : {}),
     ...(isAfterHours ? {
       "service-menu": {
         type: "ServiceMenu",
@@ -223,6 +252,7 @@ export function buildRequestSpec({
           minAdvanceHours: afterHours.min_advance_hours,
           surchargeCents: afterHours.surcharge_cents,
           shopTimezone,
+          mode: "after_hours",
         },
       },
       "contact-fields": {

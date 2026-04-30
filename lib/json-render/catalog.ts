@@ -131,6 +131,7 @@ export const catalog = defineCatalog(schema, {
         fields: z.array(
           z.enum(["dateRange", "flexibleDates", "timeWindow", "notes", "phone", "name", "email"])
         ),
+        optionalFields: z.array(z.enum(["dateRange", "flexibleDates", "timeWindow", "notes", "phone", "name", "email"])).optional(),
         dateRangeLabel: z.string().optional(),
         dateRangePlaceholder: z.string().optional(),
         timeWindowLabel: z.string().optional(),
@@ -190,6 +191,7 @@ export const catalog = defineCatalog(schema, {
         minAdvanceHours: z.number().optional(),
         surchargeCents: z.number().optional(),
         shopTimezone: z.string().optional(),
+        mode: z.enum(["regular", "after_hours"]).optional(),
       }),
       description: "Calendar date picker with time slot selection for after-hours booking",
     },
@@ -246,6 +248,7 @@ export const catalog = defineCatalog(schema, {
       props: z.object({
         headline: z.string(),
         body: z.string(),
+        icon: z.enum(["pending"]).optional(),
       }),
       description: "Success message shown after form submission",
     },

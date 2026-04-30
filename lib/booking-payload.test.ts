@@ -114,6 +114,36 @@ describe("buildRequestPayload — waitlist variant", () => {
   })
 })
 
+describe("buildRequestPayload — regular request variant", () => {
+  it("routes regular appointment requests to booking holds", () => {
+    const result = buildRequestPayload({
+      shopId: "shop-1",
+      shopSlug: "test-shop",
+      state: makeState({
+        preferredDate: "2026-04-24",
+        preferredSlotStart: "09:00",
+        preferredSlotEnd: "09:40",
+        preferredStartsAt: "2026-04-24T16:00:00.000Z",
+        source: "request",
+      }),
+      variant: "request",
+    })
+
+    expect(result.path).toBe("/api/booking/holds")
+    expect(result.body).toMatchObject({
+      shopSlug: "test-shop",
+      serviceId: "svc-1",
+      staffId: "staff-1",
+      startsAt: "2026-04-24T16:00:00.000Z",
+      mode: "regular",
+      source: "public",
+      clientName: "Daniel Griffin",
+      clientPhone: "+14255551234",
+    })
+    expect(result.body).not.toHaveProperty("availability_blocks")
+  })
+})
+
 describe("buildRequestPayload — general request variant", () => {
   it("routes to /api/booking/request", () => {
     const result = buildRequestPayload({

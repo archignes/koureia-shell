@@ -71,6 +71,20 @@ function buildAfterHoursSpec(overrides: Record<string, unknown> = {}) {
   })
 }
 
+function buildRegularRequestSpec(overrides: Record<string, unknown> = {}) {
+  return buildRequestSpec({
+    shopName: "Test Shop",
+    source: "request",
+    variant: "request",
+    services: defaultServices,
+    staff: defaultStaff,
+    shopTimezone: "America/Los_Angeles",
+    apiUrl: "https://api.example.com",
+    shopSlug: "test-shop",
+    ...overrides,
+  })
+}
+
 describe("buildRequestSpec — submit wiring", () => {
   it("submit element has on.submit binding for waitlist", () => {
     const spec = buildWaitlistSpec()
@@ -81,6 +95,11 @@ describe("buildRequestSpec — submit wiring", () => {
 
   it("submit element has on.submit binding for after-hours", () => {
     const spec = buildAfterHoursSpec()
+    expect(spec.elements.submit.on).toEqual({ submit: { action: "submit" } })
+  })
+
+  it("submit element has on.submit binding for regular appointment requests", () => {
+    const spec = buildRegularRequestSpec()
     expect(spec.elements.submit.on).toEqual({ submit: { action: "submit" } })
   })
 })
@@ -166,6 +185,41 @@ describe("buildRequestSpec — waitlist structure", () => {
     })
     const serviceMenu = spec.elements["service-menu"].props as { primary: Array<{ id: string; name: string }> }
     expect(serviceMenu.primary.map((service) => service.id)).toEqual(["svc-new", "svc-return"])
+  })
+})
+
+describe("buildRequestSpec — regular request structure", () => {
+  it("uses on-hours availability with contact fields before submit", () => {
+    const spec = buildRegularRequestSpec()
+    const children = spec.elements.container.children as string[]
+
+    expect(children).toEqual([
+      "hero",
+      "staff-pick",
+      "service-menu",
+      "availability-pick",
+      "contact-fields",
+      "submit",
+    ])
+    expect(spec.elements["availability-pick"].type).toBe("AvailabilityPicker")
+    expect(spec.elements["service-menu"].type).toBe("ServiceMenu")
+  })
+
+  it("collects name and phone for regular appointment requests", () => {
+    const spec = buildRegularRequestSpec()
+    const props = spec.elements["contact-fields"].props as { fields: string[] }
+    expect(props.fields).toEqual(["name", "phone", "email", "notes"])
+  })
+
+  it("uses request-and-confirm copy for regular appointment requests", () => {
+    const spec = buildRegularRequestSpec()
+    const heroProps = spec.elements.hero.props as { headline: string; subtitle: string }
+    const submitProps = spec.elements.submit.props as { label: string; submittingLabel: string }
+
+    expect(heroProps.headline).toBe("Request an appointment")
+    expect(heroProps.subtitle).toContain("confirm")
+    expect(submitProps.label).toBe("Send Request")
+    expect(submitProps.submittingLabel).toBe("Sending...")
   })
 })
 
