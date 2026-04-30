@@ -159,6 +159,30 @@ describe("buildRequestSpec — waitlist structure", () => {
     expect(prefsProps.fields).toEqual(["notes", "name", "email", "phone"])
   })
 
+  it("linked waitlist entry shows initials and only asks for notes", () => {
+    const spec = buildWaitlistSpec({
+      waitlistLinkToken: "raw-token",
+      waitlistClientLabel: "Avery M.",
+    })
+    const children = spec.elements.container.children as string[]
+    const noticeProps = spec.elements["linked-entry-notice"].props as { label: string }
+    const prefsProps = spec.elements.prefs.props as { fields: string[] }
+
+    expect(children).toContain("linked-entry-notice")
+    expect(noticeProps.label).toBe("Avery M.")
+    expect(prefsProps.fields).toEqual(["notes"])
+    expect(spec.state?.isLinkedWaitlistEntry).toBe(true)
+  })
+
+  it("linked waitlist entry does not ask for contact fields", () => {
+    const spec = buildWaitlistSpec({ waitlistLinkToken: "raw-token" })
+    const prefsProps = spec.elements.prefs.props as { fields: string[] }
+
+    expect(prefsProps.fields).not.toContain("name")
+    expect(prefsProps.fields).not.toContain("email")
+    expect(prefsProps.fields).not.toContain("phone")
+  })
+
   it("waitlist state does not preselect staff", () => {
     const spec = buildWaitlistSpec()
     expect(spec.state?.selectedStaffId).toBeUndefined()

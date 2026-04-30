@@ -54,6 +54,7 @@ export function buildRequestSpec({
   staffHoursById,
   waitlistHorizonDays,
   waitlistLinkToken,
+  waitlistClientLabel,
   hideNewClientOptions,
 }: {
   shopName: string
@@ -83,8 +84,10 @@ export function buildRequestSpec({
   staffHoursById?: Record<string, Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>>
   waitlistHorizonDays?: number
   waitlistLinkToken?: string
+  waitlistClientLabel?: string
   hideNewClientOptions?: boolean
 }): Spec {
+  const isLinkedWaitlistEntry = Boolean(waitlistLinkToken)
   const visibleServices =
     variant === "waitlist" && hideNewClientOptions
       ? services.filter((service) => !isNewClientServiceName(service.name))
@@ -123,7 +126,7 @@ export function buildRequestSpec({
        "service-menu", "availability-pick", "contact-fields", "order-summary",
        "policy-confirm", "submit"]
     : variant === "waitlist"
-      ? ["hero", "staff-pick", "service-menu",
+      ? ["hero", ...(isLinkedWaitlistEntry ? ["linked-entry-notice"] : []), "staff-pick", "service-menu",
          ...(hasBookingModes ? ["booking-modes"] : []),
          "availability-pick", "prefs", "submit"]
       : ["hero", "staff-pick", "service-menu", "availability-pick", "contact-fields", "submit"]
@@ -165,6 +168,14 @@ export function buildRequestSpec({
         preselectedId: variant === "waitlist" ? undefined : preselectedStaffId,
       },
     },
+    ...(variant === "waitlist" && isLinkedWaitlistEntry ? {
+      "linked-entry-notice": {
+        type: "LinkedEntryNotice",
+        props: {
+          label: waitlistClientLabel,
+        },
+      },
+    } : {}),
     "service-pick": {
       type: "ServicePicker",
       props: {
@@ -328,6 +339,7 @@ export function buildRequestSpec({
       selectedStaffId: preselectedStaffId,
       selectedServiceId: preselectedServiceId,
       source,
+      isLinkedWaitlistEntry,
       serviceStaffMap,
       allFormattedServices,
       ...(waitlistLinkToken ? { waitlistLinkToken } : {}),

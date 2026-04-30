@@ -23,7 +23,7 @@ type SharedPageProps = {
 
 export type BookingRequestPageProps = Omit<SharedPageProps, "variant">
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function generateBookingRequestMetadata({
   params,
@@ -91,8 +91,10 @@ export async function BookingRequestPage({
   const requestedServiceId = getSingleParam(query.service)
   const requestedSource = getSingleParam(query.source)
   const requestedEntry = getSingleParam(query.entry)
-  const requestedWaitlistToken = getSingleParam(query.wlt)
+  const requestedWaitlistLinkToken = getSingleParam(query.wlt)
   const requestedRepeatClient = getSingleParam(query.rp)
+  const requestedClientLabel =
+    sanitizeClientLabel(getSingleParam(query.client)) ?? sanitizeClientLabel(getSingleParam(query.initials))
 
   // Use real after_hours policy from API, or mock for dev until API is ready
   const afterHours = bookingContext.after_hours ?? (variant === "after-hours" ? {
@@ -125,7 +127,7 @@ export async function BookingRequestPage({
       : undefined
 
   const waitlistId =
-    requestedSource === "sms-refinement" && requestedEntry && UUID_RE.test(requestedEntry)
+    requestedEntry && (requestedWaitlistLinkToken || UUID_RE.test(requestedEntry))
       ? requestedEntry
       : undefined
 
@@ -168,7 +170,8 @@ export async function BookingRequestPage({
     siteHours: siteSpec.hours,
     staffHoursById: Object.fromEntries(siteSpec.staff.map((member) => [member.id, member.hours])),
     waitlistHorizonDays: siteSpec.waitlist.horizonDays,
-    waitlistLinkToken: variant === "waitlist" ? requestedWaitlistToken : undefined,
+    waitlistLinkToken: variant === "waitlist" ? requestedWaitlistLinkToken : undefined,
+    waitlistClientLabel: requestedClientLabel,
     hideNewClientOptions: variant === "waitlist" && requestedRepeatClient === "1",
   })
 
@@ -180,9 +183,15 @@ export async function BookingRequestPage({
       spec={spec}
       variant={variant}
       waitlistId={waitlistId}
-      waitlistLinkToken={variant === "waitlist" ? requestedWaitlistToken : undefined}
+      waitlistLinkToken={variant === "waitlist" ? requestedWaitlistLinkToken : undefined}
     />
   )
+}
+
+function sanitizeClientLabel(value: string | undefined) {
+  if (!value) return undefined
+  const cleaned = value.replace(/[^A-Za-z.\s]/g, "").replace(/\s+/g, " ").trim()
+  return cleaned.length > 0 && cleaned.length <= 40 ? cleaned : undefined
 }
 
 function formatBookingRequestTitle(variant: BookingRequestVariant) {

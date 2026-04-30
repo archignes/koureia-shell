@@ -23,6 +23,7 @@ type RequestComponentKeys =
   | "WaitlistAvailabilityPicker"
   | "OrderSummary"
   | "PreferenceForm"
+  | "LinkedEntryNotice"
   | "SubmitButton"
   | "ConfirmationMessage"
   | "PolicyConfirm"
@@ -106,6 +107,14 @@ export const requestComponents: Pick<Components<typeof catalog>, RequestComponen
 
   StaffPicker: ({ props }) => (
     <StaffPickerComponent staff={props.staff} preselectedId={props.preselectedId} allowNoPreference={props.allowNoPreference} />
+  ),
+
+  LinkedEntryNotice: ({ props }) => (
+    <div className="mt-4 rounded-xl border border-[var(--shell-border)] bg-[rgba(228,231,239,0.04)] px-5 py-4">
+      <p className="m-0 text-[1.25rem] leading-[1.25] font-semibold text-[var(--shell-text)]">
+        For {props.label || "this client"}
+      </p>
+    </div>
   ),
 
   PreferenceForm: ({ props }) => {
