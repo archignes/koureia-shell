@@ -131,12 +131,17 @@ export async function BookingRequestPage({
 
   const source = requestedSource === "sms-refinement" ? "sms-refinement" : variant
 
-  // Filter services: pre-selected takes priority, then staff-based filtering for after-hours
-  const baseServices = selectedService
-    ? [selectedService]
-    : selectedStaff
+  // In waitlist, a service query param should preselect, not narrow the menu.
+  // Staff links still scope the visible service set to that staff member.
+  const baseServices = variant === "waitlist"
+    ? selectedStaff
       ? bookingContext.services.filter((s) => s.staff_ids.includes(selectedStaff.id))
       : bookingContext.services
+    : selectedService
+      ? [selectedService]
+      : selectedStaff
+        ? bookingContext.services.filter((s) => s.staff_ids.includes(selectedStaff.id))
+        : bookingContext.services
 
   const services = filterAfterHoursService(baseServices)
   const packageBaseService = isPackageMode ? services[0] : selectedService
