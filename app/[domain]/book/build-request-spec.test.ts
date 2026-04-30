@@ -144,6 +144,17 @@ describe("buildRequestSpec — waitlist structure", () => {
     const spec = buildWaitlistSpec()
     expect(spec.state?.selectedStaffId).toBeUndefined()
   })
+
+  it("excludes new-client services from waitlist options", () => {
+    const spec = buildWaitlistSpec({
+      services: [
+        makeService({ id: "svc-new", name: "(NEW CLIENT) Men's Cut", staff_ids: ["staff-enzo"] }),
+        makeService({ id: "svc-return", name: "Men's Cut", staff_ids: ["staff-enzo"] }),
+      ],
+    })
+    const serviceMenu = spec.elements["service-menu"].props as { primary: Array<{ id: string; name: string }> }
+    expect(serviceMenu.primary.map((service) => service.id)).toEqual(["svc-return"])
+  })
 })
 
 describe("buildRequestSpec — after-hours structure", () => {
